@@ -15,6 +15,7 @@ import { fridayReminders } from '@/lib/reminders';
 import ConfirmButton from '@/components/ConfirmButton';
 import ClearLocalState from '@/components/ClearLocalState';
 import MonsterEditor, { type Monster } from '@/components/MonsterEditor';
+import Nav from '@/components/Nav';
 
 export const dynamic = 'force-dynamic';
 
@@ -121,6 +122,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
 
   return (
     <>
+      <Nav current="/yllapito" />
       <h1 className="display">Ylläpito</h1>
       <Link className="btn btn-ghost" href="/yllapito/korjaukset">🛠️ Korjaukset: iskut, sairaudet ja varmuuskopio</Link>
       {lastRecap ? (
