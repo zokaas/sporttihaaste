@@ -1,17 +1,18 @@
 import type { loadBattle } from './battle';
 import { addDays, seasonWeek, weekRange } from './season';
-import { weekPledgeTarget } from './weekly';
+import { isSickOn, weekPledgeTarget } from './weekly';
 
 /** Minun viikkoni -kortin tiedot. */
 export function myWeekProps(b: NonNullable<Awaited<ReturnType<typeof loadBattle>>>, userId: string) {
   const { start, end } = weekRange(b.week);
-  const days: { day: string; stepped: boolean; future: boolean; patrol: boolean }[] = [];
+  const days: { day: string; stepped: boolean; future: boolean; patrol: boolean; sick: boolean }[] = [];
   for (let d = start; d <= end; d = addDays(d, 1)) {
     days.push({
       day: d,
       stepped: b.steps.some((s) => s.user_id === userId && s.day === d),
       future: d > b.today,
       patrol: b.patrols.some((p) => p.day === d),
+      sick: d <= b.today && isSickOn(b.periods, userId, d),
     });
   }
   const status = b.pledgeStatus(userId, b.week);

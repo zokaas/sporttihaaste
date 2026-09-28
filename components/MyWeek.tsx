@@ -1,13 +1,15 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { setSick, toggleStep } from '@/app/actions';
+import { toggleSickDay, toggleStep } from '@/app/actions';
 import { formatDay } from '@/lib/season';
 import Hint from '@/components/Hint';
 
+type Day = { day: string; stepped: boolean; future: boolean; patrol: boolean; sick: boolean };
+
 type Props = {
   week: number;
-  days: { day: string; stepped: boolean; future: boolean; patrol: boolean }[];
+  days: Day[];
   target: number;
   hours: number;
   sickDays: number;
@@ -27,7 +29,7 @@ export default function MyWeek(p: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [sickPick, setSickPick] = useState<string | null>(null);
+  const [askContinue, setAskContinue] = useState(false);
 
   async function run(fn: () => Promise<{ ok: boolean; error?: string }>) {
     setBusy(true);
@@ -40,9 +42,15 @@ export default function MyWeek(p: Props) {
 
   const pct = p.target > 0 ? Math.min(100, (p.hours / p.target) * 100) : 100;
   const kept = p.target > 0 && p.hours >= p.target;
-
   const today = p.days.filter((d) => !d.future).at(-1)?.day;
   const stepCount = p.days.filter((d) => d.stepped).length;
+  const shortWeek = p.days.length < 7;
+
+  function tapSick(d: Day) {
+    // Tämän päivän merkinnästä kysytään, jatkuuko sairaus (silloin tulevat päivät merkitään automaattisesti).
+    if (!d.sick && d.day === today) return setAskContinue(true);
+    run(() => toggleSickDay(d.day, !d.sick));
+  }
 
   return (
     <section className="card">
@@ -52,77 +60,79 @@ export default function MyWeek(p: Props) {
       </div>
 
       <div className="myweek-block">
-        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span className="muted small">Treenit / lupaus</span>
-          <strong className={kept ? 'ok' : ''} style={{ fontSize: 22 }}>{h(p.hours)} / {h(p.target)}{kept ? ' ✓' : ''}</strong>
-        </div>
+        <Hint
+          id="pledge-hours"
+          title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Lupaustunnit</span><strong className={kept ? 'ok' : ''} style={{ fontSize: 22 }}>{h(p.hours)} / {h(p.target)}{kept ? ' ✓' : ''}</strong></div>}
+        >
+          Lupaustunnit lasketaan lajin arvolla: tunti useimpia lajeja = 1 h, tunti uintia = 2 h, tunti joogaa, liikkuvuutta tai golfia = 0,5 h. Bonukset eivät kasvata lupaustunteja.
+        </Hint>
         <div className="hpbar"><span style={{ width: `${pct}%`, background: kept ? 'var(--moss-text)' : 'var(--ember)' }} /></div>
         <span className="muted small">
           {kept ? 'Lupaus pidetty! +100 pottiin, kun viikko lukittuu.' : p.target === 0 ? 'Ei lupausta tällä viikolla sairauden vuoksi.' : `Vielä ${h(p.target - p.hours)}. Pidetty lupaus tuo +100 pottiin.`}
         </span>
+        {shortWeek ? <span className="muted small">Lyhyt viikko ({p.days.length} pv): tavoite on {p.days.length}/7 lupauksestasi ({h(p.pledge)}).</span> : null}
+        {p.sickDays ? <span className="small" style={{ color: 'var(--gold)' }}>🤒 {p.sickDays} sairaspäivää: tavoite {h(p.fullTarget)} → {h(p.target)}{p.inSeal ? '' : ' · ei sinettivelvollisuutta tällä viikolla'}</span> : null}
       </div>
 
       <div className="myweek-block">
-        <Hint id="steps" title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Askeleet (10 000 / pv)</span><strong>{stepCount} / {p.days.length} pv</strong></div>}>Napauta päivää, kun olet kävellyt 10 000 askelta: +50. Jos kaikki terveet kuittaavat saman päivän, siitä tulee partiopäivä ⭐ +250.</Hint>
+        <Hint id="steps" title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Askeleet ja sairaspäivät</span><strong>{stepCount} / {p.days.length} pv</strong></div>}>
+          Ylärivi: napauta päivää, kun olet kävellyt 10 000 askelta (+50). Jos kaikki terveet kuittaavat saman päivän, siitä tulee partiopäivä ⭐ +250. Alarivi 🤒: merkitse päivät, joina olit kipeä. Sairaspäivä pienentää viikon lupausta 1/7:lla, ja yksikin sairaspäivä vapauttaa sinut sen viikon sinetistä.
+        </Hint>
         <div className="weekstrip" style={{ gridTemplateColumns: `repeat(${p.days.length}, 1fr)` }}>
           {p.days.map((d) => {
             const [wd, date] = formatDay(d.day).split(' ');
-            const state = d.stepped ? 'done' : d.future ? 'future' : d.day === today ? 'today' : 'missed';
+            const state = d.sick ? 'sickday' : d.stepped ? 'done' : d.future ? 'future' : d.day === today ? 'today' : 'missed';
             return (
               <button
                 key={d.day}
                 type="button"
                 className={`daycell ${state}`}
                 aria-pressed={d.stepped}
-                aria-label={`${formatDay(d.day)}: ${d.stepped ? 'kuitattu' : d.future ? 'tulossa' : 'ei kuitattu'}${d.patrol ? ', partiopäivä' : ''}`}
-                disabled={d.future || busy}
+                aria-label={`${formatDay(d.day)}: ${d.sick ? 'sairaspäivä' : d.stepped ? 'askeleet kuitattu' : d.future ? 'tulossa' : 'ei kuitattu'}${d.patrol ? ', partiopäivä' : ''}`}
+                disabled={d.future || d.sick || busy}
                 onClick={() => run(() => toggleStep(d.day, !d.stepped))}
               >
                 <span>{wd}</span>
-                <b>{d.patrol ? '⭐' : d.stepped ? '✓' : date.replace(/\.$/, '').split('.')[0]}</b>
+                <b>{d.sick ? '🤒' : d.patrol ? '⭐' : d.stepped ? '✓' : date.replace(/\.$/, '').split('.')[0]}</b>
               </button>
             );
           })}
+          {p.days.map((d) => (
+            <button
+              key={`s-${d.day}`}
+              type="button"
+              className={`sickcell${d.sick ? ' on' : ''}`}
+              aria-pressed={d.sick}
+              aria-label={`${formatDay(d.day)}: ${d.sick ? 'poista sairaspäivä' : 'merkitse sairaspäiväksi'}`}
+              disabled={d.future || busy}
+              onClick={() => tapSick(d)}
+            >
+              {d.future ? '' : d.sick ? '🤒' : '+'}
+            </button>
+          ))}
         </div>
+        {askContinue ? (
+          <div className="sick-box">
+            <strong>🤒 Oletko kipeänä myös huomenna?</strong>
+            <span className="muted small">Jos sairaus jatkuu, tulevat päivät merkitään automaattisesti, kunnes painat &quot;Olen taas terve&quot;.</span>
+            <div className="row" style={{ flexWrap: 'wrap' }}>
+              <button type="button" className="btn grow" disabled={busy} onClick={() => { setAskContinue(false); run(() => toggleSickDay(today!, true, true)); }}>Kyllä, jatkuu</button>
+              <button type="button" className="btn btn-ghost grow" disabled={busy} onClick={() => { setAskContinue(false); run(() => toggleSickDay(today!, true, false)); }}>Vain tänään</button>
+            </div>
+            <button type="button" className="linklike small" onClick={() => setAskContinue(false)}>Peru</button>
+          </div>
+        ) : null}
+        {p.sick && p.sickSince ? (
+          <div className="row" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
+            <span className="small grow">🤒 Kipeänä {formatDay(p.sickSince)} alkaen, jatkuu kunnes merkitset itsesi terveeksi.</span>
+            <button type="button" className="btn btn-ghost" style={{ minHeight: 40 }} disabled={busy} onClick={() => run(() => toggleSickDay(today!, false))}>💪 Olen taas terve</button>
+          </div>
+        ) : null}
       </div>
 
       <p className="muted small" style={{ margin: 0 }}>
         Voimasi tällä viikolla <strong style={{ color: 'var(--text)' }}>{p.weekDamage.toLocaleString('fi-FI')}</strong> (askeleista {p.stepDamage}) · yhteistreenejä {p.togetherCount}
       </p>
-
-      {p.sick ? (
-        <div className="sick-box">
-          <strong>🤒 Kipeänä {p.sickSince ? `${formatDay(p.sickSince)} alkaen` : ''}</strong>
-          <ul>
-            <li>Lupaus tällä viikolla: {h(p.fullTarget)} → <strong>{h(p.target)}</strong></li>
-            <li>Et ole mukana tämän viikon sinetissä.</li>
-            <li>Partiopäivään riittävät terveet sankarit.</li>
-          </ul>
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => run(() => setSick(false))}>💪 Olen taas terve</button>
-          <span className="muted small">{p.sickSince && p.sickSince >= (today ?? '') ? 'Tänään tehty merkintä perutaan kokonaan.' : 'Viimeiseksi sairaspäiväksi merkitään eilinen.'}</span>
-        </div>
-      ) : sickPick !== null ? (
-        <div className="sick-box">
-          <strong>🤒 Mistä päivästä alkaen olet kipeä?</strong>
-          <div className="chips">
-            {p.days.filter((d) => !d.future).reverse().map((d) => (
-              <button key={d.day} type="button" className="chip" aria-pressed={sickPick === d.day} onClick={() => setSickPick(d.day)}>{d.day === today ? 'Tänään' : formatDay(d.day)}</button>
-            ))}
-          </div>
-          <span className="muted small">Viikon lupaus pienenee sairaspäivien verran, etkä ole mukana tämän viikon sinetissä.</span>
-          <div className="row">
-            <button type="button" className="btn grow" disabled={busy || !sickPick} onClick={() => run(() => setSick(true, sickPick!)).then(() => setSickPick(null))}>Merkitse kipeäksi</button>
-            <button type="button" className="btn btn-ghost" onClick={() => setSickPick(null)}>Peru</button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {p.sickDays ? <p className="note" style={{ margin: 0 }}>Olit tällä viikolla kipeänä {p.sickDays} pv: lupaus {h(p.fullTarget)} → {h(p.target)}{p.inSeal ? '' : ', etkä ole mukana tämän viikon sinetissä'}.</p> : null}
-          <div className="row" style={{ flexWrap: 'wrap', gap: 16 }}>
-            <button type="button" className="linklike small" disabled={busy} onClick={() => setSickPick(today ?? '')}>🤒 Olen kipeä</button>
-          </div>
-        </>
-      )}
 
       {error ? <p className="error" role="alert" style={{ margin: 0 }}>{error}</p> : null}
     </section>

@@ -187,7 +187,7 @@ export function recapText(r: WeekRecap) {
   if (r.killed.length) lines.push(`💀 Kaatui: ${r.killed.join(', ')}`);
   for (const s of r.survived) lines.push(`😈 Jäi henkiin: ${s.name} (${fmt(s.hp)} HP rästiin)`);
   lines.push(`💥 Voimaa yhteensä ${fmt(r.damage)} (bonusten osuus ${r.bonusShare} %)`);
-  if (r.lostToSeal) lines.push(`🛡️ Sinetti jäi vajaaksi: ${fmt(r.lostToSeal)} padottua voimaa menetettiin`);
+  if (r.lostToSeal) lines.push(`🛡️ Sinetti jäi vajaaksi: ${fmt(r.lostToSeal)} voimaa sinettirajan yli menetettiin`);
   lines.push(`💰 Potti +${fmt(r.potGain)} → ${fmt(r.pot)}`);
   if (r.mvp) lines.push(`🏆 Viikon sankari: ${r.mvp.name} (${fmt(r.mvp.damage)})`);
   lines.push(`🤝 Lupauksen piti ${r.pledgesKept}/${r.participants}`);

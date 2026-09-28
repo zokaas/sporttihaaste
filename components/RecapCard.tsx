@@ -14,7 +14,7 @@ export default function RecapCard({ r }: { r: WeekRecap }) {
         <div className="stat"><span className="muted small">Voimaa</span><strong>{fmt(r.damage)}</strong><span className="muted small">bonuksista {r.bonusShare} %</span></div>
         <div className="stat"><span className="muted small">Potti</span><strong>+{fmt(r.potGain)}</strong><span className="muted small">yhteensä {fmt(r.pot)}</span></div>
       </div>
-      {r.lostToSeal ? <p className="note threat" style={{ margin: 0 }}>🛡️ Sinetti jäi vajaaksi: {fmt(r.lostToSeal)} padottua voimaa menetettiin.</p> : null}
+      {r.lostToSeal ? <p className="note threat" style={{ margin: 0 }}>🛡️ Sinetti jäi vajaaksi: {fmt(r.lostToSeal)} voimaa sinettirajan yli menetettiin.</p> : null}
       {r.mvp ? <p style={{ margin: 0 }}>🏆 Viikon sankari: <strong>{r.mvp.name}</strong> ({fmt(r.mvp.damage)})</p> : null}
       <p style={{ margin: 0 }}>🤝 Lupauksen piti {r.pledgesKept}/{r.participants}</p>
       <p style={{ margin: 0 }}>👣 Askelpäiviä {r.stepDays}, partiopäiviä {r.patrolDays} · yhteistreenejä {r.jointTrainings}</p>

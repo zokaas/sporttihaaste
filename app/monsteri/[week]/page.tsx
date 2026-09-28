@@ -80,7 +80,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
         {weak ? <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">Heikkous</span><span>{weak} (+50 %)</span></div> : null}
         <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">Tila</span>
           <span>{killed?.killedAt ? <span className="ok">Kaatui {helsinki(killed.killedAt, { weekday: 'short', day: 'numeric', month: 'numeric' })}</span>
-            : view?.dam ? <span style={{ color: 'var(--gold)' }}>{fmt(view.hp)} HP sinettirajalla, {fmt(view.dam)} padottuna</span>
+            : view?.dam ? <span style={{ color: 'var(--gold)' }}>{fmt(view.hp)} HP, sinettirajalla</span>
             : view ? `${fmt(view.hp)} / ${fmt(m?.hp ?? 0)} HP` : '–'}</span>
         </div>
         {blow ? <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">Viimeinen isku</span><Link href={`/sankari/${blow}`}>⚔️ {heroName(blow)}</Link></div> : null}
