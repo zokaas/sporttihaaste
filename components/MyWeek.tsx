@@ -39,14 +39,20 @@ export default function MyWeek(p: Props) {
   const pct = p.target > 0 ? Math.min(100, (p.hours / p.target) * 100) : 100;
   const kept = p.target > 0 && p.hours >= p.target;
 
+  const today = p.days.filter((d) => !d.future).at(-1)?.day;
+  const stepCount = p.days.filter((d) => d.stepped).length;
+
   return (
     <section className="card">
-      <h2 className="display">Minun viikkoni</h2>
+      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <h2 className="display">Minun viikkoni</h2>
+        <span className="muted small">Viikko {p.week}</span>
+      </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div className="myweek-block">
         <div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <strong>Lupaus</strong>
-          <span className={kept ? 'ok' : ''}>{h(p.hours)} / {h(p.target)}{kept ? ' ✓' : ''}</span>
+          <span className="muted small">Treenit / lupaus</span>
+          <strong className={kept ? 'ok' : ''} style={{ fontSize: 22 }}>{h(p.hours)} / {h(p.target)}{kept ? ' ✓' : ''}</strong>
         </div>
         <div className="hpbar"><span style={{ width: `${pct}%`, background: kept ? 'var(--moss-text)' : 'var(--ember)' }} /></div>
         <span className="muted small">
@@ -55,41 +61,48 @@ export default function MyWeek(p: Props) {
         </span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <strong>Askeleet <span className="muted small">(10 000 askelta = +50, kaikki terveet samana päivänä: partio +250)</span></strong>
-        <div className="chips">
-          {p.days.map((d) => (
-            <button
-              key={d.day}
-              type="button"
-              className="chip"
-              aria-pressed={d.stepped}
-              disabled={d.future || busy}
-              style={d.future ? { opacity: 0.35 } : undefined}
-              onClick={() => run(() => toggleStep(d.day, !d.stepped))}
-              title={d.patrol ? 'Partiopäivä!' : undefined}
-            >
-              {d.patrol ? '⭐ ' : d.stepped ? '✓ ' : ''}{formatDay(d.day)}
-            </button>
-          ))}
+      <div className="myweek-block">
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span className="muted small">Askeleet (10 000 / pv)</span>
+          <strong>{stepCount} / {p.days.length} pv</strong>
         </div>
+        <div className="weekstrip" style={{ gridTemplateColumns: `repeat(${p.days.length}, 1fr)` }}>
+          {p.days.map((d) => {
+            const [wd, date] = formatDay(d.day).split(' ');
+            const state = d.stepped ? 'done' : d.future ? 'future' : d.day === today ? 'today' : 'missed';
+            return (
+              <button
+                key={d.day}
+                type="button"
+                className={`daycell ${state}`}
+                aria-pressed={d.stepped}
+                aria-label={`${formatDay(d.day)}: ${d.stepped ? 'kuitattu' : d.future ? 'tulossa' : 'ei kuitattu'}${d.patrol ? ', partiopäivä' : ''}`}
+                disabled={d.future || busy}
+                onClick={() => run(() => toggleStep(d.day, !d.stepped))}
+              >
+                <span>{wd}</span>
+                <b>{d.patrol ? '⭐' : d.stepped ? '✓' : date.replace(/\.$/, '').split('.')[0]}</b>
+              </button>
+            );
+          })}
+        </div>
+        <span className="muted small">Napauta päivää, kun olet kävellyt 10 000 askelta: +50. Jos kaikki terveet kuittaavat saman päivän, siitä tulee partiopäivä ⭐ +250.</span>
       </div>
 
-      <div className="stat-row">
-        <div className="stat"><span className="muted small">Vahinkosi tällä viikolla</span><strong>{p.weekDamage.toLocaleString('fi-FI')}</strong><span className="muted small">josta askeleet {p.stepDamage}</span></div>
-        <div className="stat"><span className="muted small">Yhteistreenit</span><strong>{p.togetherCount}</strong><span className="muted small">3+ hengen iskut</span></div>
-      </div>
+      <p className="muted small" style={{ margin: 0 }}>
+        Vahinkosi tällä viikolla <strong style={{ color: 'var(--text)' }}>{p.weekDamage.toLocaleString('fi-FI')}</strong> (askeleista {p.stepDamage}) · yhteistreenejä {p.togetherCount}
+      </p>
 
-      <div className="row" style={{ flexWrap: 'wrap' }}>
-        <button type="button" className="btn btn-ghost grow" disabled={busy} onClick={() => run(() => setSick(!p.sick))}>
-          {p.sick ? 'Olen taas terve' : 'Olen kipeä'}
+      {p.sick ? <p className="note" style={{ margin: 0 }}>Olet merkinnyt itsesi kipeäksi. Lupauksesi pienenee sairaspäivien verran, eikä sinua tarvita sinettiin tällä viikolla.</p> : null}
+      <div className="row" style={{ flexWrap: 'wrap', gap: 16 }}>
+        <button type="button" className="linklike small" disabled={busy} onClick={() => run(() => setSick(!p.sick))}>
+          {p.sick ? '💪 Olen taas terve' : '🤒 Olen kipeä'}
         </button>
       </div>
-      {p.sick ? <p className="note" style={{ margin: 0 }}>Olet merkinnyt itsesi kipeäksi. Lupauksesi pienenee sairaspäivien verran, eikä sinua tarvita sinettiin tällä viikolla.</p> : null}
 
       {p.canChangePledge ? (
         <details>
-          <summary className="muted" style={{ cursor: 'pointer' }}>Muuta lupausta ensi viikosta{p.nextPledge !== null ? ` (muutettu: ${h(p.nextPledge)})` : ''}</summary>
+          <summary className="muted small" style={{ cursor: 'pointer' }}>Muuta lupausta ensi viikosta{p.nextPledge !== null ? ` (muutettu: ${h(p.nextPledge)})` : ''}</summary>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 10 }}>
             <div className="stepper">
               <button type="button" aria-label="Pienennä" onClick={() => setNewPledge((x) => Math.max(1, x - 0.5))}>−</button>

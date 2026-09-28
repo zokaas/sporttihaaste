@@ -132,6 +132,12 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         <QuickStep day={data.today} stepped={data.steps.some((s) => s.user_id === userId && s.day === data.today)} />
       ) : null}
 
+      {target && !missing.length && required.length ? (
+        <section className="card">
+          <p style={{ margin: 0 }}><strong className="ok">✓ Sinetti täynnä.</strong> Kaikki terveet sankarit ovat lyöneet. {nameOf(target.week)} kaatuu heti, kun sen HP loppuu.</p>
+        </section>
+      ) : null}
+
       {target && missing.length ? (
         <section className={`card${target.padded ? ' threat' : ''}`}>
           {target.padded ? (
