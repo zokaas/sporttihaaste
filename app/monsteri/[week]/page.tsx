@@ -58,8 +58,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
 
       {parts && m?.parts ? (
         <section className="card">
-          <h2 className="display">Kolmikko</h2>
-          <Hint id="trio">Kolme osaa jakavat viikon HP:n tasan ja kaatuvat järjestyksessä. Viimeinen kaatuu vasta, kun sinetti on täynnä.</Hint>
+          <Hint id="trio" title={<h2 className="display">Kolmikko</h2>}>Kolme osaa jakavat viikon HP:n tasan ja kaatuvat järjestyksessä. Viimeinen kaatuu vasta, kun sinetti on täynnä.</Hint>
           <ul className="people">
             {m.parts.map((part, i) => (
               <li key={i} style={parts[i].dead ? { opacity: 0.6 } : undefined}>

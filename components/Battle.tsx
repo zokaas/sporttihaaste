@@ -121,11 +121,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
 
       {target && target.week < week ? (
         <section className="card threat">
-          <p style={{ margin: 0 }}>
-            <strong style={{ color: 'var(--gold)' }}>{week === BOSS_WEEK ? 'Loppupomo odottaa rästien takana.' : `${nameOf(week)} odottaa rästien takana.`}</strong>
-            {overdue >= 2 ? ` Rästejä on ${overdue}. Vauhti ei riitä: tarvitaan yhteistreenejä ja heikkousbonuksia.` : ''}
-          </p>
-          <Hint id="backlog-wait">Iskut osuvat ensin vanhimpaan rästiin, ja vasta sen kaaduttua seuraavaan.</Hint>
+          <Hint id="backlog-wait" title={<strong style={{ color: 'var(--gold)' }}>{week === BOSS_WEEK ? 'Loppupomo odottaa rästien takana.' : `${nameOf(week)} odottaa rästien takana.`}</strong>}>Iskut osuvat ensin vanhimpaan rästiin, ja vasta sen kaaduttua seuraavaan.</Hint>
+          {overdue >= 2 ? <p style={{ margin: 0 }}>Rästejä on {overdue}. Vauhti ei riitä: tarvitaan yhteistreenejä ja heikkousbonuksia.</p> : null}
         </section>
       ) : null}
 
@@ -146,10 +143,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
               <strong style={{ color: 'var(--gold)' }}>{fmt(target.padded)} vahinkoa padottuna!</strong> {nameOf(target.week)} kaatuu heti, kun sinetti täyttyy. Muuten pato menetetään su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59.
             </p>
           ) : (
-            <>
-              <p style={{ margin: 0 }}><strong>Sinetti {required.length - missing.length}/{required.length}.</strong></p>
-              <Hint id="seal">Monsteri kaatuu vasta, kun jokainen terve sankari on lyönyt sitä treenillä. Askeleet eivät täytä sinettiä.</Hint>
-            </>
+            <Hint id="seal" title={<strong>Sinetti {required.length - missing.length}/{required.length}</strong>}>Monsteri kaatuu vasta, kun jokainen terve sankari on lyönyt sitä treenillä. Askeleet eivät täytä sinettiä.</Hint>
           )}
           <p className="small" style={{ margin: 0 }}>Puuttuu: {missing.map((id) => heroById.get(id)?.hero_name).join(', ')}</p>
           {missing.some((id) => id !== userId) ? <NudgeButton count={missing.filter((id) => id !== userId).length} /> : null}
@@ -163,9 +157,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
 
       {backlog.length ? (
         <section className="card">
-          <h2 className="display">Rästit</h2>
+          <Hint id="backlog" className="muted small" title={<h2 className="display">Rästit</h2>}>Vanhin rästi ottaa iskut ensin, ja sen jälkeen ylijäämä siirtyy seuraavaan.</Hint>
           {backlog.map((f) => <p key={f.week} style={{ margin: 0 }}>{nameOf(f.week)}: {f.padded ? `HP 0, ${fmt(f.padded)} padottuna` : `${fmt(f.hp)} HP`}</p>)}
-          <Hint id="backlog">Vanhin rästi ottaa iskut ensin, ja sen jälkeen ylijäämä siirtyy seuraavaan.</Hint>
         </section>
       ) : null}
 

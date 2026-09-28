@@ -3,6 +3,7 @@ import { upcomingCelebrations } from '@/lib/stats';
 import { formatDay } from '@/lib/season';
 import { isSickOn } from '@/lib/weekly';
 import { weaknessesOf } from '@/lib/trio';
+import { avatarUrl } from '@/lib/supabase/client';
 
 /** Tänään: viikon heikkous, päivän juhlapäivä (tai seuraava) ja päivän partiotilanne. */
 export default function TodayCard({ b }: { b: Battle }) {
@@ -12,7 +13,10 @@ export default function TodayCard({ b }: { b: Battle }) {
   const next = celebrations.find((c) => c.day > b.today);
   const healthy = b.participants.filter((u) => !isSickOn(b.periods, u, b.today));
   const stepped = new Set(b.steps.filter((s) => s.day === b.today).map((s) => s.user_id));
-  const missing = healthy.filter((u) => !stepped.has(u)).map((u) => b.heroes.find((h) => h.id === u)?.hero_name).filter(Boolean);
+  const people = b.participants.map((u) => {
+    const h = b.heroes.find((x) => x.id === u);
+    return { id: u, name: h?.hero_name ?? '?', avatar: avatarUrl(h?.avatar_path), done: stepped.has(u), sick: !healthy.includes(u) };
+  });
   const patrol = b.patrols.some((p) => p.day === b.today);
 
   return (
@@ -24,13 +28,19 @@ export default function TodayCard({ b }: { b: Battle }) {
       ) : next ? (
         <div className="row"><span aria-hidden="true">🎂</span><span className="muted">Seuraava juhlapäivä {formatDay(next.day)}: {next.name}</span></div>
       ) : null}
-      <div className="row">
+      <div className="row" style={{ alignItems: 'center' }}>
         <span aria-hidden="true">{patrol ? '⭐' : '👣'}</span>
-        <span>
-          {patrol ? <strong className="ok">Partiopäivä! Kaikki terveet kuittasivat askeleet (+250).</strong>
-            : <>Askeleet {stepped.size}/{healthy.length}.{stepped.size ? <> Kuitanneet: {[...stepped].map((u) => b.heroes.find((h) => h.id === u)?.hero_name).filter(Boolean).join(', ')}.</> : null} {missing.length ? <span className="muted">Puuttuu: {missing.join(', ')}</span> : null}</>}
-        </span>
+        {patrol ? <strong className="ok">Partiopäivä! Kaikki terveet kuittasivat askeleet (+250).</strong> : <span>Askeleet <strong>{stepped.size}/{healthy.length}</strong></span>}
       </div>
+      {!patrol ? (
+        <div className="step-dots" aria-label={`Kuitanneet: ${people.filter((p) => p.done).map((p) => p.name).join(', ') || 'ei vielä kukaan'}`}>
+          {people.map((p) => (
+            <span key={p.id} className={`step-dot${p.done ? ' done' : ''}${p.sick ? ' sick' : ''}`} title={`${p.name}${p.done ? ' ✓' : p.sick ? ' (kipeä)' : ''}`}>
+              {p.avatar ? <img src={p.avatar} alt="" /> : p.name.slice(0, 1)}
+            </span>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
