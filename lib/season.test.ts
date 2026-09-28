@@ -22,3 +22,9 @@ assert.equal(formatDay('2026-10-01'), 'to 1.10.');
 assert.equal(helsinkiToday(new Date('2026-09-30T23:30:00Z')), '2026-10-01');
 
 console.log('Kaikki kalenteritestit menivät läpi.');
+
+import { helsinkiMs } from './season.ts';
+// Kesäaika (lokakuun alku) ja talviaika (joulukuu)
+assert.equal(new Date(helsinkiMs('2026-10-11')).toISOString(), '2026-10-11T20:59:59.000Z');
+assert.equal(new Date(helsinkiMs('2026-12-20')).toISOString(), '2026-12-20T21:59:59.000Z');
+console.log('Aikavyöhyketestit menivät läpi.');

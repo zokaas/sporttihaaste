@@ -3,6 +3,9 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { addDays, loggableDays, seasonWeek } from '@/lib/season';
 import { today } from '@/lib/today';
+import { afterStep } from '@/lib/events';
+import { loadBattle } from '@/lib/battle';
+import { sendPush } from '@/lib/push';
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -26,6 +29,7 @@ export async function toggleStep(day: string, on: boolean): Promise<Result> {
   const { error } = on
     ? await supabase.from('step_days').upsert({ user_id: user.id, day })
     : await supabase.from('step_days').delete().eq('user_id', user.id).eq('day', day);
+  if (!error && on) await afterStep(supabase, day).catch(() => {});
   return done(error);
 }
 
@@ -55,4 +59,30 @@ export async function changePledge(hours: number): Promise<Result> {
   if (next < 2 || next > 11) return { ok: false, error: 'Lupausta ei voi enää muuttaa.' };
   if (!(hours >= 1 && hours <= 15 && Number.isInteger(hours * 2))) return { ok: false, error: 'Lupauksen pitää olla 1–15 h puolen tunnin välein.' };
   return done((await supabase.from('pledge_changes').upsert({ user_id: user.id, from_week: next, hours })).error);
+}
+
+/** Muistuttaa sinetistä puuttuvia push-ilmoituksella. Kerran kolmessa tunnissa per lähettäjä. */
+export async function nudgeMissing(): Promise<Result & { sent?: number }> {
+  const { supabase, user } = await me();
+  if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
+  const b = await loadBattle(supabase, today());
+  const target = b.ledger?.alive[0];
+  if (!target) return { ok: false, error: 'Ei monsteria, jota muistuttaa.' };
+  const missing = b.required.filter((id) => !target.hitters.includes(id) && id !== user.id);
+  if (!missing.length) return { ok: false, error: 'Kaikki muut ovat jo lyöneet.' };
+
+  const since = new Date(Date.now() - 3 * 3600_000).toISOString();
+  const { data: recent } = await supabase.from('nudges').select('id').eq('sender', user.id).gte('created_at', since).limit(1);
+  if (recent?.length) return { ok: false, error: 'Muistutit jo äskettäin. Voit muistuttaa uudelleen kolmen tunnin päästä.' };
+  await supabase.from('nudges').insert({ sender: user.id, week: b.week });
+
+  const sender = b.heroes.find((h) => h.id === user.id)?.hero_name ?? 'Sankari';
+  const monster = b.monsters.get(target.week)?.name ?? 'Monsteri';
+  const sent = await sendPush(supabase, {
+    title: '⏳ Sinetti odottaa sinua',
+    body: target.padded
+      ? `${sender} muistuttaa: ${monster} on jo nollissa, ${target.padded} vahinkoa odottaa padottuna. Tarvitaan vain sinun iskusi!`
+      : `${sender} muistuttaa: ${monster} kaatuu vasta, kun jokainen on lyönyt. Sinun iskusi puuttuu.`,
+  }, missing);
+  return { ok: true, sent };
 }
