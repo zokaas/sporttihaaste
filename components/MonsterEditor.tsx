@@ -18,6 +18,9 @@ export type Monster = {
   taunt_low?: string | null;
   teaser?: string | null;
   boss_whisper?: string | null;
+  hit_lines?: string | null;
+  hit_crit?: string | null;
+  taunt_full?: string | null;
 };
 
 type Part = { name: string; description: string | null; weakness: string | null; image_path: string | null };
@@ -82,7 +85,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
   }
 
   function saveAll() {
-    const extras = { taunt_half: m.taunt_half?.trim() || null, taunt_low: m.taunt_low?.trim() || null, teaser: m.teaser?.trim() || null, boss_whisper: m.boss_whisper?.trim() || null };
+    const extras = { taunt_half: m.taunt_half?.trim() || null, taunt_low: m.taunt_low?.trim() || null, teaser: m.teaser?.trim() || null, boss_whisper: m.boss_whisper?.trim() || null, hit_lines: m.hit_lines?.trim() || null, hit_crit: m.hit_crit?.trim() || null, taunt_full: m.taunt_full?.trim() || null };
     if (!parts) return save({ name: m.name?.trim() || null, description: m.description?.trim() || null, weakness: m.weakness, parts: null, ...extras });
     const clean = parts.map((x) => ({ name: x.name.trim(), description: x.description?.trim() || null, weakness: x.weakness || null, image_path: x.image_path }));
     if (clean.some((x) => !x.name)) return setMsg({ ok: false, text: 'Anna jokaiselle kolmikon osalle nimi.' });
@@ -106,7 +109,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
     setBusy(true);
     setMsg(null);
     const supabase = createClient();
-    const cols = 'name, description, weakness, image_path, parts, teaser, taunt_half, taunt_low, boss_whisper';
+    const cols = 'name, description, weakness, image_path, parts, teaser, taunt_half, taunt_low, boss_whisper, hit_lines, hit_crit, taunt_full';
     const [{ data: a, error: e1 }, { data: b, error: e2 }] = await Promise.all([
       supabase.from('monsters').select(cols).eq('week', m.week).single(),
       supabase.from('monsters').select(cols).eq('week', other).single(),
@@ -183,6 +186,18 @@ function MonsterRow({ monster }: { monster: Monster }) {
         <label className="field">
           Arvoitus (näkyy kaikille edellisen viikon perjantaista alkaen)
           <textarea className="input" rows={2} style={{ padding: 12 }} placeholder="Esim. Ensi viikolla vastaan tulee jotain, mikä pelkää palloja…" value={m.teaser ?? ''} onChange={(e) => setM({ ...m, teaser: e.target.value })} />
+        </label>
+        <label className="field">
+          Repliikki täydellä HP:lla (ennen kuin sitä on lyöty kunnolla)
+          <input className="input" placeholder="Tulkaa vain, sankarit. Olen odottanut teitä." value={m.taunt_full ?? ''} onChange={(e) => setM({ ...m, taunt_full: e.target.value })} />
+        </label>
+        <label className="field">
+          Iskureaktiot (yksi per rivi, arvotaan omaan iskuun)
+          <textarea className="input" rows={4} style={{ padding: 12 }} placeholder={'Auts!\nTuoko oli kaikki?\nKutittaa.'} value={m.hit_lines ?? ''} onChange={(e) => setM({ ...m, hit_lines: e.target.value })} />
+        </label>
+        <label className="field">
+          Reaktio kriittiseen iskuun
+          <input className="input" placeholder="AARGH! Mistä tuo tuli?!" value={m.hit_crit ?? ''} onChange={(e) => setM({ ...m, hit_crit: e.target.value })} />
         </label>
         <label className="field">
           Repliikki, kun HP alle 50 %

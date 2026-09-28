@@ -487,3 +487,7 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .strike-sheet { width: 100%; max-width: 480px; margin: 0 auto; padding: 20px 20px calc(24px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--line); border-radius: 20px 20px 0 0; display: flex; flex-direction: column; gap: 12px; animation: sheet-up 0.22s ease-out; }
 .strike-sheet strong { font-size: 22px; }
 @keyframes sheet-up { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Monsterin reaktio omaan iskuun: punertava kupla, joka pomppaa */
+@keyframes reply-pop { 0% { opacity: 0; transform: scale(0.6) rotate(-4deg); } 60% { opacity: 1; transform: scale(1.08) rotate(1deg); } 100% { transform: none; } }
+.stage-taunt.is-reply { background: #f6d9cf; border: 2px solid var(--blood); font-size: 16px; animation: reply-pop 0.45s ease-out both; }

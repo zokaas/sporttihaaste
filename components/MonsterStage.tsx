@@ -33,6 +33,8 @@ type Props = {
   endMs?: number;
   /** Monsterin repliikki (HP alle 50 % / 20 %), näytetään puhekuplana. */
   taunt?: string | null;
+  /** Monsterin reaktio omaan juuri kirjattuun iskuun; näkyy hetken tauntin tilalla. */
+  hitLine?: string | null;
   /** Kuluva viikko, jos näyttämöllä on rästi (yläpalkin otsikko). */
   currentWeek?: number;
   offsetMs?: number;
@@ -70,6 +72,7 @@ export default function MonsterStage(p: Props) {
   const [revealing, setRevealing] = useState(false);
   const [partFall, setPartFall] = useState<string | null>(null);
   const [claw, setClaw] = useState(0);
+  const [reply, setReply] = useState(false);
   const timers = useRef<number[]>([]);
   const parts = p.parts?.length ? p.parts : null;
   const front = parts ? parts.find((x) => !x.dead) ?? parts[parts.length - 1] : null;
@@ -98,6 +101,7 @@ export default function MonsterStage(p: Props) {
       setHit(true);
       // Oma isku jättää hetkeksi kynnenjäljen monsteriin.
       if (label) { setClaw(Date.now()); later(() => setClaw(0), 2200); }
+      if (label && p.hitLine) { later(() => setReply(true), 500); later(() => setReply(false), 5500); }
       later(() => setShownHp(p.hp), 450);
       later(() => setHit(false), 900);
       later(() => setFlying(null), crit ? 2300 : 1800);
@@ -196,7 +200,8 @@ export default function MonsterStage(p: Props) {
         </div>
       ) : null}
 
-      {p.taunt && !p.dead ? <div className="stage-taunt" role="note">“{p.taunt}”</div> : null}
+      {reply && p.hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status">“{p.hitLine}”</div>
+        : p.taunt && !p.dead ? <div key="taunt" className="stage-taunt" role="note">“{p.taunt}”</div> : null}
 
       <div className="stage-info">
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
