@@ -24,7 +24,7 @@ export async function afterHit(supabase: SupabaseClient) {
     await sendOnce(
       supabase,
       `last-${b.week}-${target.week}-${missing[0]}`,
-      { title: '⚔️ Vain sinä puutut sinetistä', body: `Kaikki muut ovat lyöneet ${nameOf(b, target.week)}a. Yksi treeni, niin se voi kaatua.` },
+      { title: '⚔️ Vain sinä puutut sinetistä', body: `Kaikki muut ovat jo lyöneet monsteria ${nameOf(b, target.week)}. Yksi treeni, niin se voi kaatua.` },
       missing,
     );
   }

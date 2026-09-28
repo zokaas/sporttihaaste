@@ -141,14 +141,14 @@ export default function Ilmoittaudu() {
           <div className="note">
             <strong>{team.locked + (p.pledge_locked_at ? 1 : 0)}/10 lukinnut.</strong> Lupaukset yhteensä {String(teamHours).replace('.', ',')} h, eli porukan viikkovauhti on noin {Math.round(weeklyPace(teamHours)).toLocaleString('fi-FI')} vahinkoa.
           </div>
-          <p className="muted" style={{ margin: 0 }}>Kauden aikana lupausta voi muuttaa kerran jokaisen monsterin aikana.</p>
+          <p className="muted" style={{ margin: 0 }}>Kauden aikana lupausta voi muuttaa kerran viikossa. Muutos alkaa aina seuraavalta viikolta.</p>
         </section>
       )}
 
       {step === 3 && (
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <h1 className="display">Kotinäyttöön ja ilmoitukset päälle</h1>
-          <p style={{ margin: 0 }}>Sunnuntaisin klo 18 saat muistutuksen, jos viikolta puuttuu jotain. Ilmoitukset toimivat vain, kun sovellus on puhelimen kotinäytöllä.</p>
+          <h1 className="display">Kotinäytölle ja ilmoitukset päälle</h1>
+          <p style={{ margin: 0 }}>Perjantaiaamuisin saat muistutuksen, jos viikolta puuttuu jotain. Ilmoitukset toimivat vain, kun sovellus on puhelimen kotinäytöllä.</p>
           <div className="tabs" role="tablist" aria-label="Puhelin">
             <button role="tab" aria-selected={os === 'ios'} onClick={() => setOs('ios')}>iPhone</button>
             <button role="tab" aria-selected={os === 'android'} onClick={() => setOs('android')}>Android</button>
