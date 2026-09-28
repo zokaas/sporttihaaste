@@ -29,7 +29,7 @@ export async function fridayReminders(supabase: SupabaseClient, day: string, onl
     const status = b.pledgeStatus(id, b.week);
     if (status.target > 0 && status.hours < status.target) lines.push(`Lupauksesta puuttuu ${h(status.target - status.hours)}.`);
     if (target && b.required.includes(id) && !target.hitters.includes(id)) {
-      lines.push(target.padded ? `${monster} odottaa sinun iskuasi – ${target.padded} vahinkoa on padottuna!` : `Et ole vielä lyönyt ${monster}a, ja sinetti tarvitsee sinut.`);
+      lines.push(target.padded ? `${monster} odottaa sinun iskuasi – ${target.padded} vahinkoa on padottuna!` : `Et ole vielä lyönyt viikon monsteria (${monster}), ja sinetti tarvitsee sinut.`);
     }
     const steps = b.steps.filter((s) => s.user_id === id && s.day >= start && s.day <= day).length;
     if (steps < daysSoFar) lines.push(`Askelkuittauksia ${steps}/${daysSoFar} (${STEP_GOAL.toLocaleString('fi-FI')} askelta = +50).`);

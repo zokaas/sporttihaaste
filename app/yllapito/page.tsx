@@ -52,7 +52,7 @@ async function sendTestPush() {
       list.map((s) =>
         webpush.sendNotification(
           { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-          JSON.stringify({ title: 'Monsterijahti', body: 'Testi-ilmoitus toimii. Nähdään torstaina!', url: '/' }),
+          JSON.stringify({ title: 'Monsterijahti', body: 'Testi-ilmoitus toimii! Ilmoitukset tulevat perille.', url: '/' }),
         ),
       ),
     );

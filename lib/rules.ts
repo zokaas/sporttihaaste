@@ -53,7 +53,7 @@ export function hitDamage(h: HitInput) {
   const base = Math.round((h.minutes / 60) * h.sportValue);
   const bonuses: { label: string; pct: number }[] = [];
   const all = h.participants ?? PARTICIPANTS;
-  if (h.groupSize >= all && all >= 3) bonuses.push({ label: all === 10 ? 'Kaikki kymmenen yhdessä' : `Kaikki ${all} yhdessä`, pct: 100 });
+  if (h.groupSize >= all && all >= 3) bonuses.push({ label: 'Koko porukka yhdessä', pct: 100 });
   else if (h.groupSize >= 3) bonuses.push({ label: `Yhdessä (${h.groupSize} henkeä)`, pct: 50 });
   if (h.celebration) bonuses.push({ label: 'Juhlapäivä', pct: 50 });
   if (h.weakness && h.category === h.weakness) bonuses.push({ label: `Heikkous: ${h.weakness}`, pct: 50 });
@@ -98,7 +98,7 @@ export interface LedgerEvent {
   userId: string;
   damage: number;
   isTraining: boolean; // askeleet ja partiopäivät eivät täytä sinettiä
-  allTogether?: boolean; // kaikki kymmenen yhdessä (loppupomon viimeinen isku)
+  allTogether?: boolean; // koko porukka yhdessä (loppupomon viimeinen isku)
 }
 
 export interface LedgerInput {
