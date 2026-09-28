@@ -35,7 +35,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   return (
     <>
       <Nav current="/" />
-      {battle ? <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1'} offsetMs={testOffsetMs()} /> : null}
+      {battle ? <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1'} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} /> : null}
       <div className="row" style={{ alignItems: 'center' }}>
         {img ? <Link href={`/sankari/${user.id}`}><img className="avatar" src={img} alt="Oma profiili" width={56} height={56} /></Link> : null}
         <div className="grow">
