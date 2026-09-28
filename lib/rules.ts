@@ -28,6 +28,7 @@ export const SPORTS: { name: string; value: number; category: Category }[] = [
 ];
 
 export const PARTICIPANTS = 10;
+export const STEP_GOAL = 10000; // askelta päivässä, jotta päivän voi kuitata
 export const STEP_DAY_DAMAGE = 50;
 export const PATROL_DAY_DAMAGE = 250;
 export const PLEDGE_BONUS = 100;
