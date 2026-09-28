@@ -12,7 +12,7 @@ const nameOf = (b: Battle, week: number) => b.monsters.get(week)?.name ?? (week 
 export async function afterHit(supabase: SupabaseClient) {
   if (testDay()) return;
   const b = await loadBattle(supabase, today());
-  if (!b.ledger) return;
+  if (!b.ledger || !b.hpLocked) return;
   for (const k of b.ledger.killed) {
     if (!k.killedAt || k.killedAt < Date.now() - 15 * 60_000) continue;
     await sendOnce(supabase, `kill-${k.week}`, { title: `💀 ${nameOf(b, k.week)} kaatui!`, body: 'Sinetti täyttyi ja vahinko riitti. Katso, kuka löi viimeisen iskun.' });
@@ -34,7 +34,7 @@ export async function afterHit(supabase: SupabaseClient) {
 export async function afterStep(supabase: SupabaseClient, day: string) {
   if (testDay()) return;
   const b = await loadBattle(supabase, today());
-  if (!b.patrols.some((p) => p.day === day)) return;
+  if (!b.hpLocked || !b.patrols.some((p) => p.day === day)) return;
   await sendOnce(supabase, `patrol-${day}`, { title: '⭐ Partiopäivä!', body: 'Kaikki terveet kuittasivat askeleensa. +250 vahinkoa monsterille.' });
 }
 

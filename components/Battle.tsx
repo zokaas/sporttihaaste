@@ -25,9 +25,9 @@ function ago(iso: string) {
   return `${Math.round(h / 24)} pv sitten`;
 }
 
-type Props = { data: BattleData; userId: string; ownHit?: number | null; crit?: boolean; offsetMs?: number };
+type Props = { data: BattleData; userId: string; ownHit?: number | null; crit?: boolean; offsetMs?: number; isAdmin?: boolean };
 
-export default function Battle({ data, userId, ownHit = null, crit = false, offsetMs = 0 }: Props) {
+export default function Battle({ data, userId, ownHit = null, crit = false, offsetMs = 0, isAdmin = false }: Props) {
   const { week, ledger, monsters, heroes, participants, required } = data;
 
   if (!ledger) {
@@ -69,6 +69,11 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   return (
     <>
       <LiveRefresh />
+      {data.hpPreview && isAdmin ? (
+        <p className="note threat" style={{ margin: 0 }}>
+          HP-esikatselu: tavoitetta ei ole lukittu, joten HP:t on laskettu nykyisistä lupauksista. <Link href="/yllapito">Lukitse tavoite ylläpidossa</Link> ke 30.9.
+        </p>
+      ) : null}
       <KillFinale killed={ledger.killed.length} kills={kills} />
       {recap ? <RecapPrompt week={recap.week}><RecapCard r={recap} /></RecapPrompt> : null}
 
