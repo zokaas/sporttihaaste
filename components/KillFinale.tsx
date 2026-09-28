@@ -19,7 +19,14 @@ export default function KillFinale({ killed, kills }: { killed: number; kills: K
   const k = fresh[fresh.length - 1];
   return (
     <div className="finale" role="dialog" aria-label={`${k.name} kaatui`} onClick={() => setFresh([])}>
-      {k.image ? <img className="finale-img" src={k.image} alt="" /> : <div className="finale-img finale-skull">💀</div>}
+      <div className="finale-body">
+        {k.image ? <img className="finale-img" src={k.image} alt="" /> : <div className="finale-img finale-skull">💀</div>}
+        <div className="finale-ash" aria-hidden="true">
+          {Array.from({ length: 18 }, (_, i) => (
+            <i key={i} style={{ left: `${8 + ((i * 37) % 84)}%`, animationDelay: `${0.9 + (i % 6) * 0.18}s`, ['--drift' as string]: `${((i * 53) % 60) - 30}px` }} />
+          ))}
+        </div>
+      </div>
       <div className="finale-text">
         <span>Viikko {k.week}</span>
         <strong className="display">{fresh.map((x) => x.name).join(' ja ')}</strong>

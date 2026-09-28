@@ -414,3 +414,69 @@ details.companions[open] { padding-bottom: 12px; }
 .is-boss .stage-reveal span { color: #ff6a4d; letter-spacing: 0.4em; }
 .is-boss .stage-reveal strong { font-size: 52px; text-shadow: 0 0 32px #ff2a10, 0 0 8px #000; animation: reveal-text 5.2s ease-out forwards; }
 .is-boss .stage-reveal em { font-size: 14px; color: #e8c9bf; animation: reveal-text 5.2s ease-out 0.4s both; }
+
+/* ===== Karmivat efektit (vähennä liikettä -asetus ohittaa kaiken yllä olevan säännön mukaan) ===== */
+
+/* a) Viimeiset sekunnit: alle 10 % HP nykii, välähtää ja halkeilee */
+@keyframes glitch {
+  0%, 86%, 100% { transform: translate(0, 0); clip-path: inset(0 0 0 0); filter: saturate(0.6) contrast(1.15) sepia(0.2) brightness(0.9); }
+  87% { transform: translate(-6px, 1px) skewX(-3deg); clip-path: inset(18% 0 52% 0); filter: hue-rotate(-30deg) saturate(2) brightness(1.3); }
+  89% { transform: translate(5px, -2px); clip-path: inset(60% 0 12% 0); }
+  91% { transform: translate(-2px, 0); clip-path: inset(0 0 0 0); filter: brightness(0.4); }
+  93% { transform: translate(3px, 1px) skewX(2deg); clip-path: inset(34% 0 38% 0); filter: saturate(2.4) brightness(1.2); }
+}
+.near-death:not(.is-revealing) .stage-img { animation: tremble 0.7s steps(6) infinite, glitch 3.4s steps(1) infinite; }
+.near-death .stage-cracks path { stroke: #ff3b24; filter: drop-shadow(0 0 3px #ff3b24); }
+.near-death .stage-art::before { animation-duration: 0.9s; }
+
+/* Kaatuminen: kuva murenee tuhkaksi ylöspäin */
+.finale-body { position: relative; }
+@keyframes crumble { 0% { mask-position: 0 100%; -webkit-mask-position: 0 100%; transform: none; filter: none; } 30% { filter: grayscale(0.7) brightness(0.7); } 100% { mask-position: 0 0; -webkit-mask-position: 0 0; transform: translateY(-4%) rotate(-3deg); filter: grayscale(1) brightness(0.4); } }
+.finale-img { animation: crumble 2.4s cubic-bezier(0.5, 0, 0.7, 1) 0.5s forwards; -webkit-mask-image: linear-gradient(to top, #000 45%, transparent 55%); mask-image: linear-gradient(to top, #000 45%, transparent 55%); -webkit-mask-size: 100% 220%; mask-size: 100% 220%; -webkit-mask-position: 0 100%; mask-position: 0 100%; }
+.finale-ash { position: absolute; inset: 0; pointer-events: none; }
+.finale-ash i { position: absolute; bottom: 30%; width: 4px; height: 4px; border-radius: 50%; background: #d9cfc4; opacity: 0; animation: ash 2.6s ease-out forwards; }
+.finale-ash i:nth-child(3n) { background: #ff6a3d; width: 3px; height: 3px; }
+@keyframes ash { 0% { opacity: 0; transform: translate(0, 0); } 15% { opacity: 0.9; } 100% { opacity: 0; transform: translate(var(--drift), -220px) scale(0.4); } }
+
+/* b) Loppupomon silmät: seuraavat ja räpäyttävät */
+.boss-look { transition: transform 0.35s ease-out; }
+.boss .eyes ellipse { transform-box: fill-box; transform-origin: center; transition: transform 0.12s; }
+.boss .eyes.is-blink ellipse { transform: scaleY(0.08); }
+
+/* c) Yöllinen vierailu */
+.night-visit { position: fixed; inset: 0; z-index: 60; pointer-events: none; animation: night 10s ease-in-out forwards; background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.75)); }
+@keyframes night { 0% { opacity: 0; } 15%, 75% { opacity: 1; } 100% { opacity: 0; } }
+.night-fog { position: absolute; inset: -20%; background: radial-gradient(ellipse at 20% 80%, rgba(120, 110, 100, 0.22), transparent 45%), radial-gradient(ellipse at 80% 90%, rgba(120, 110, 100, 0.18), transparent 50%), radial-gradient(ellipse at 50% 100%, rgba(90, 80, 75, 0.3), transparent 60%); animation: fog-drift 10s ease-in-out forwards; }
+@keyframes fog-drift { from { transform: translateX(-6%); } to { transform: translateX(6%); } }
+.night-eyes { position: absolute; display: flex; gap: 16px; opacity: 0; animation: night-eyes 10s ease-in-out forwards; }
+.night-eyes i { width: 16px; height: 5px; border-radius: 50%; background: #ff4a2e; box-shadow: 0 0 10px #ff4a2e, 0 0 22px rgba(255, 74, 46, 0.6); }
+@keyframes night-eyes { 0%, 30% { opacity: 0; } 40% { opacity: 1; } 55% { opacity: 1; transform: scaleY(1); } 56% { transform: scaleY(0.1); } 58% { transform: scaleY(1); } 68% { opacity: 1; } 70%, 100% { opacity: 0; } }
+
+/* d) Paljastuksen sydämenlyönti ennen kuin kuva nousee */
+@keyframes heartbeat { 0%, 100% { transform: scale(1); box-shadow: inset 0 0 0 0 rgba(179, 38, 30, 0); } 12% { transform: scale(1.035); box-shadow: inset 0 0 90px 10px rgba(179, 38, 30, 0.5); } 24% { transform: scale(1); } 36% { transform: scale(1.025); box-shadow: inset 0 0 70px 6px rgba(179, 38, 30, 0.4); } 60% { transform: scale(1); } }
+.is-revealing .stage-art { animation: heartbeat 1.2s ease-in-out 2; }
+
+/* e) Oman iskun kynnenjälki */
+.stage-claw { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; animation: claw-fade 2.2s ease-in forwards; }
+.stage-claw path { fill: none; stroke: #b3261e; stroke-width: 5px; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-dasharray: 120; stroke-dashoffset: 120; filter: drop-shadow(0 0 4px rgba(179, 38, 30, 0.9)); animation: claw-draw 0.28s ease-out forwards; }
+.stage-claw path:nth-child(2) { animation-delay: 0.05s; }
+.stage-claw path:nth-child(3) { animation-delay: 0.1s; }
+@keyframes claw-draw { to { stroke-dashoffset: 0; } }
+@keyframes claw-fade { 0%, 55% { opacity: 1; } 100% { opacity: 0; } }
+
+/* f) Hitaat kipinät taistelunäyttämöllä */
+.stage-embers { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.stage-embers i { position: absolute; bottom: -6px; width: 3px; height: 3px; border-radius: 50%; background: #ff8a4d; box-shadow: 0 0 6px #ff5a1f; opacity: 0; animation: ember 10s linear infinite; }
+@keyframes ember { 0% { opacity: 0; transform: translate(0, 0); } 10% { opacity: 0.7; } 50% { transform: translate(12px, -45vh); } 85% { opacity: 0.4; } 100% { opacity: 0; transform: translate(-8px, -80vh); } }
+.is-boss .stage-embers i { background: #ff3b24; }
+
+/* g) Loppupomon viikko: koko sovellus on sen valtakuntaa */
+.boss-realm { position: fixed; inset: 0; z-index: 5; pointer-events: none; background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(120, 10, 4, 0.35)); animation: realm-pulse 7s ease-in-out infinite; }
+@keyframes realm-pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+.realm-crack { position: absolute; width: 140px; height: 140px; }
+.realm-crack path { fill: none; stroke: rgba(255, 70, 40, 0.55); stroke-width: 1.4; filter: drop-shadow(0 0 3px rgba(255, 60, 30, 0.7)); }
+.realm-crack.tl { top: 0; left: 0; }
+.realm-crack.br { bottom: 70px; right: 0; }
+@keyframes quake { 0%, 94%, 100% { transform: translate(0, 0); } 95% { transform: translate(-3px, 1px); } 96% { transform: translate(3px, -1px); } 97% { transform: translate(-2px, 0); } 98% { transform: translate(1px, 1px); } }
+/* Vain sisältö tärähtää: kiinteät palkit ja ikkunat eivät saa transform-ancestoria. */
+body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 19s linear infinite; }

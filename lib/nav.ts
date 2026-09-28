@@ -13,5 +13,7 @@ export async function navVisibility() {
   return {
     strike: pick(data?.nav_strike as NavMode | undefined, week >= 1 && week <= BOSS_WEEK),
     bestiary: pick(data?.nav_bestiary as NavMode | undefined, week >= 1),
+    /** Loppupomon viikolla koko sovellus on sen valtakuntaa. */
+    bossRealm: week === BOSS_WEEK,
   };
 }
