@@ -13,7 +13,6 @@ import NudgeButton from '@/components/NudgeButton';
 import LiveRefresh from '@/components/LiveRefresh';
 import RecapPrompt from '@/components/RecapPrompt';
 import RecapCard from '@/components/RecapCard';
-import QuickStep from '@/components/QuickStep';
 import { stageParts, weaknessesOf } from '@/lib/trio';
 import Hint from '@/components/Hint';
 import TodayCard from '@/components/TodayCard';
@@ -180,11 +179,10 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         </section>
       ) : null}
 
-      {seasonWeek(data.today) >= 1 && seasonWeek(data.today) <= BOSS_WEEK ? (
-        isSickOn(data.periods, userId, data.today)
-          ? <p className="note" style={{ margin: 0 }}>🤒 Olet merkinnyt itsesi kipeäksi tänään, joten askelia ei tarvita. Parane pian!</p>
-          : <QuickStep day={data.today} stepped={data.steps.some((s) => s.user_id === userId && s.day === data.today)} />
-      ) : null}
+      {/* Askelet kuitataan alapalkin Lyö-valikosta; tässä vain muistutus sairauspäivästä. */}
+      {seasonWeek(data.today) >= 1 && seasonWeek(data.today) <= BOSS_WEEK && isSickOn(data.periods, userId, data.today)
+        ? <p className="note" style={{ margin: 0 }}>🤒 Olet merkinnyt itsesi kipeäksi tänään, joten askelia ei tarvita. Parane pian!</p>
+        : null}
 
       <TodayCard b={data} showNextReveal={!teaser} />
 
