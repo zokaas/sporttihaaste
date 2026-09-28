@@ -364,3 +364,6 @@ details.companions[open] { padding-bottom: 12px; }
 .sickcell span { font-size: 11px; }
 .sick-details[open] { gap: 10px; }
 .sick-details > span { display: block; }
+.mcell { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 8px; }
+.mcell.trained { background: var(--ember-fill); color: var(--light); }
+.mcell.legend { width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; }
