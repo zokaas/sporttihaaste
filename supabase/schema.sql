@@ -7,6 +7,7 @@ create table public.profiles (
   avatar_path text,
   name_day text check (name_day ~ '^\d{2}-\d{2}$'),      -- KK-PP
   birthday text check (birthday ~ '^\d{2}-\d{2}$'),      -- KK-PP
+  birth_year smallint check (birth_year between 1900 and 2100),
   pledge_hours numeric(3,1) check (pledge_hours between 1 and 15),
   pledge_locked_at timestamptz,
   is_admin boolean not null default false,
@@ -47,6 +48,7 @@ begin
        or new.avatar_path is distinct from old.avatar_path
        or new.name_day is distinct from old.name_day
        or new.birthday is distinct from old.birthday
+       or new.birth_year is distinct from old.birth_year
        or new.pledge_hours is distinct from old.pledge_hours then
       raise exception 'Ilmoittautuminen sulkeutui ke 30.9.';
     end if;

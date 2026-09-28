@@ -6,7 +6,7 @@ Tämä versio sisältää kirjautumisen, ilmoittautumisen (sankarinimi ja kuva, 
 
 ### 1. Supabase
 1. Luo ilmainen projekti osoitteessa supabase.com. Valitse alueeksi esimerkiksi Stockholm.
-2. Avaa **SQL Editor**, liitä koko `supabase/schema.sql` ja aja se.
+2. Avaa **SQL Editor**, liitä koko `supabase/schema.sql` ja aja se. Jos olet ajanut skeeman jo aiemmin, aja lisäksi uudet tiedostot kansiosta `supabase/migrations/` numerojärjestyksessä.
 3. **Authentication → Sign In / Providers → Email:** kytke **Confirm email** pois päältä. Kirjautuminen tapahtuu käyttäjänimellä ja salasanalla, eikä sovellus lähetä sähköposteja.
 4. Kopioi **Project Settings → API** -sivulta *Project URL* ja *anon public key*.
 

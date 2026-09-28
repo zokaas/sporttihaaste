@@ -76,7 +76,7 @@ export default async function Yllapito() {
                     </td>
                     <td>{h.pledge_locked_at ? `${String(h.pledge_hours).replace('.', ',')} h` : <span className="muted">ei lukittu</span>}</td>
                     <td>{dm(h.name_day)}</td>
-                    <td>{dm(h.birthday)}</td>
+                    <td>{dm(h.birthday)}{h.birthday && h.birth_year ? h.birth_year : ''}</td>
                     <td>{withPush.has(h.id) ? 'päällä' : <span className="error">ei</span>}</td>
                   </tr>
                 );

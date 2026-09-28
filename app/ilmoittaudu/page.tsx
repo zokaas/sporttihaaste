@@ -11,6 +11,7 @@ type Profile = {
   avatar_path: string | null;
   name_day: string | null;
   birthday: string | null;
+  birth_year: number | null;
   pledge_hours: number | null;
   pledge_locked_at: string | null;
 };
@@ -52,7 +53,7 @@ export default function Ilmoittaudu() {
       if (!user) return router.replace('/kirjaudu');
       const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       setP(data as Profile);
-      setNeedsBirthday(!data?.birthday);
+      setNeedsBirthday(!data?.birthday || !data?.birth_year);
       setPreview(avatarUrl(data?.avatar_path));
       const { data: all } = await supabase.from('profiles').select('id, pledge_hours, pledge_locked_at');
       const others = (all ?? []).filter((x) => x.pledge_locked_at && x.id !== user.id);
@@ -114,8 +115,8 @@ export default function Ilmoittaudu() {
     if (step === 1) {
       if (!p!.hero_name || p!.hero_name.trim().length < 2) return setError('Kirjoita sankarinimi (vähintään 2 merkkiä).');
       if (!p!.avatar_path) return setError('Lataa profiilikuva.');
-      if (!p!.birthday) return setError('Valitse syntymäpäiväsi.');
-      if (await save({ hero_name: p!.hero_name.trim(), birthday: p!.birthday })) setStep(2);
+      if (!p!.birthday || !p!.birth_year) return setError('Valitse syntymäpäiväsi ja -vuotesi.');
+      if (await save({ hero_name: p!.hero_name.trim(), birthday: p!.birthday, birth_year: p!.birth_year })) setStep(2);
     } else if (step === 2) {
       if (await save({ pledge_hours: pledge, pledge_locked_at: new Date().toISOString() })) setStep(3);
     } else router.push('/');
@@ -146,7 +147,7 @@ export default function Ilmoittaudu() {
             Sankarinimi
             <input className="input" maxLength={20} placeholder="Keksi itsellesi nimi" value={p.hero_name ?? ''} onChange={(e) => setP({ ...p, hero_name: e.target.value })} />
           </label>
-          {needsBirthday ? <DayMonth label="Syntymäpäivä" value={p.birthday} onChange={(v) => setP({ ...p, birthday: v })} /> : null}
+          {needsBirthday ? <DayMonth label="Syntymäpäivä" value={p.birthday} onChange={(v) => setP({ ...p, birthday: v })} year={p.birth_year} onYearChange={(y) => setP({ ...p, birth_year: y })} /> : null}
           <p className="muted" style={{ margin: 0 }}>Nimi ja kuva näkyvät kaikille. Niitä voi vaihtaa ke 30.9. asti.</p>
         </section>
       )}

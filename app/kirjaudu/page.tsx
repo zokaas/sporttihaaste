@@ -13,6 +13,7 @@ export default function Kirjaudu() {
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
   const [birthday, setBirthday] = useState<string | null>(null);
+  const [birthYear, setBirthYear] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,7 +33,7 @@ export default function Kirjaudu() {
       setError('Salasanat eivät täsmää.');
       return;
     }
-    if (mode === 'signup' && !birthday) {
+    if (mode === 'signup' && (!birthday || !birthYear)) {
       setError('Valitse syntymäpäiväsi.');
       return;
     }
@@ -60,7 +61,7 @@ export default function Kirjaudu() {
         return;
       }
       // Profiilirivi syntyy tietokannassa tunnuksen mukana. Jos tallennus epäonnistuu, ilmoittautuminen kysyy päivän uudelleen.
-      await supabase.from('profiles').update({ birthday }).eq('id', data.session.user.id);
+      await supabase.from('profiles').update({ birthday, birth_year: birthYear }).eq('id', data.session.user.id);
     }
     router.replace('/');
     router.refresh();
@@ -97,8 +98,8 @@ export default function Kirjaudu() {
         ) : null}
         {mode === 'signup' ? (
           <>
-            <DayMonth label="Syntymäpäivä" value={birthday} onChange={setBirthday} />
-            <p className="muted small" style={{ margin: 0 }}>Syntymäpäivänäsi kaikkien iskut tekevät +50 %. Vuotta ei kysytä.</p>
+            <DayMonth label="Syntymäpäivä" value={birthday} onChange={setBirthday} year={birthYear} onYearChange={setBirthYear} />
+            <p className="muted small" style={{ margin: 0 }}>Syntymäpäivänäsi kaikkien iskut tekevät +50 %.</p>
           </>
         ) : null}
         <button className="btn" type="submit" disabled={busy}>
