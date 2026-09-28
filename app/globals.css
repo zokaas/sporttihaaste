@@ -113,3 +113,6 @@ details.monster-row summary { cursor: pointer; min-height: 32px; display: flex; 
 textarea.input { font: 400 16px var(--font-body), sans-serif; resize: vertical; }
 
 .seal .sick { outline: 2px dashed var(--muted); outline-offset: 1px; }
+
+.test-banner { position: sticky; top: 0; z-index: 10; background: var(--gold); color: #1a1208; text-align: center; font-size: 13px; font-weight: 600; padding: 6px 12px; }
+.test-banner a { color: inherit; }

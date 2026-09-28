@@ -1,7 +1,8 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { addDays, loggableDays, seasonWeek, today } from '@/lib/season';
+import { addDays, loggableDays, seasonWeek } from '@/lib/season';
+import { today } from '@/lib/today';
 
 type Result = { ok: true } | { ok: false; error: string };
 

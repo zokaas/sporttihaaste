@@ -2,7 +2,9 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { SPORTS, PARTICIPANTS, hitDamage, type Category } from '@/lib/rules';
-import { loggableDays, monthDay, seasonWeek, today } from '@/lib/season';
+import { loggableDays, monthDay, seasonWeek } from '@/lib/season';
+import { today } from '@/lib/today';
+import { monsterOfWeek } from '@/lib/battle';
 
 export type HitInput = { day: string; sport: string; minutes: number; companions: string[] };
 type Result = { ok: true; damage: number } | { ok: false; error: string };
@@ -15,9 +17,9 @@ async function computeHit(input: HitInput, userId: string) {
   if (!loggableDays(today()).includes(input.day)) return { error: 'Päivälle ei voi enää kirjata. Valitse kuluvan viikon päivä.' } as const;
   if (!Number.isInteger(input.minutes) || input.minutes < 15 || input.minutes > 600) return { error: 'Keston pitää olla 15 min – 10 h.' } as const;
 
-  const [{ data: heroes }, { data: monster }] = await Promise.all([
+  const [{ data: heroes }, monster] = await Promise.all([
     supabase.from('profiles').select('id, pledge_locked_at, birthday, name_day'),
-    supabase.from('monsters_public').select('weakness').eq('week', seasonWeek(input.day)).single(),
+    monsterOfWeek(supabase, seasonWeek(input.day)),
   ]);
   const ids = new Set((heroes ?? []).filter((h) => h.pledge_locked_at).map((h) => h.id));
   const companions = [...new Set(input.companions)].filter((id) => id !== userId && ids.has(id));

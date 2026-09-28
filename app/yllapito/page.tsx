@@ -1,9 +1,13 @@
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
+import { TEST_DAY_COOKIE, testDay } from '@/lib/today';
+import { helsinkiToday, formatDay, SEASON_START, SEASON_END } from '@/lib/season';
 import { revalidatePath } from 'next/cache';
 import webpush from 'web-push';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl } from '@/lib/supabase/client';
 import { seasonHp } from '@/lib/rules';
+import ConfirmButton from '@/components/ConfirmButton';
 import MonsterEditor, { type Monster } from '@/components/MonsterEditor';
 
 export const dynamic = 'force-dynamic';
@@ -62,7 +66,29 @@ async function sendTestPush() {
   redirect(`/yllapito?push=${encodeURIComponent(message)}`);
 }
 
-export default async function Yllapito({ searchParams }: { searchParams: { push?: string } }) {
+async function setTestDay(formData: FormData) {
+  'use server';
+  await requireAdmin();
+  const day = String(formData.get('day') ?? '');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(day)) cookies().set(TEST_DAY_COOKIE, day, { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' });
+  redirect('/');
+}
+
+async function clearTestDay() {
+  'use server';
+  await requireAdmin();
+  cookies().delete(TEST_DAY_COOKIE);
+  redirect('/yllapito');
+}
+
+async function resetTestData() {
+  'use server';
+  const supabase = await requireAdmin();
+  const { error } = await supabase.rpc('reset_test_data');
+  redirect(`/yllapito?testi=${encodeURIComponent(error ? `Tyhjennys epäonnistui: ${error.message}` : 'Testidata tyhjennetty.')}`);
+}
+
+export default async function Yllapito({ searchParams }: { searchParams: { push?: string; testi?: string } }) {
   const supabase = await requireAdmin();
   const [{ data: heroes }, { data: subs }, { data: season }, { data: monsters }] = await Promise.all([
     supabase.from('profiles').select('*').order('created_at'),
@@ -78,6 +104,25 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
   return (
     <>
       <h1 className="display">Ylläpito</h1>
+
+      {helsinkiToday() < SEASON_START ? (
+        <section className="card">
+          <h2 className="display">Testitila</h2>
+          <p style={{ margin: 0 }}>Kokeile sovellusta ennen kautta: valitse päivä, niin sovellus toimii sinulle kuin se olisi tänään. Muut näkevät sovelluksen normaalisti.</p>
+          <form action={setTestDay} className="row" style={{ alignItems: 'center' }}>
+            <input className="input grow" type="date" name="day" min={SEASON_START} max={SEASON_END} defaultValue={testDay() ?? '2026-10-05'} required />
+            <button className="btn" type="submit">Aseta</button>
+          </form>
+          {testDay() ? (
+            <form action={clearTestDay}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Lopeta testitila ({formatDay(testDay()!)})</button></form>
+          ) : null}
+          <form action={resetTestData}>
+            <ConfirmButton message="Poistetaanko kaikkien iskut, askeleet, sairaudet ja lupausmuutokset?" className="btn btn-ghost" style={{ width: '100%', color: 'var(--blood-text)' }}>Tyhjennä testidata</ConfirmButton>
+          </form>
+          <p className="muted small" style={{ margin: 0 }}>Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet ja lupausmuutokset. Tunnukset ja ilmoittautumiset säilyvät. Toimii vain ennen kauden alkua 1.10. Muista tyhjentää ennen kautta!</p>
+          {searchParams.testi ? <p className="note" role="status" style={{ margin: 0 }}>{searchParams.testi}</p> : null}
+        </section>
+      ) : null}
 
       <section className="card">
         <h2 className="display">Ilmoittautuneet {locked.length}/10</h2>

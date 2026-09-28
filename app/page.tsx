@@ -6,7 +6,8 @@ import { avatarUrl } from '@/lib/supabase/client';
 import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
-import { addDays, seasonWeek, today, weekRange } from '@/lib/season';
+import { addDays, seasonWeek, weekRange } from '@/lib/season';
+import { today } from '@/lib/today';
 import MyWeek from '@/components/MyWeek';
 
 export const dynamic = 'force-dynamic';
