@@ -43,3 +43,13 @@ assert.deepEqual(requiredForSeal(['a', 'b', 'c'], periods, 2, '2026-10-18'), ['a
 assert.deepEqual(requiredForSeal(['a', 'b', 'c'], periods, 2, '2026-10-14'), ['a', 'b', 'c']);
 
 console.log('Kaikki viikkotestit menivät läpi.');
+
+import { partHps, partStates, weaknessesOf } from './trio.ts';
+assert.deepEqual(partHps(5000, 3), [1666, 1666, 1668]);
+// 2 000 vahinkoa 5 000 HP:n kolmikkoon: ensimmäinen kaatunut, toinen osin
+assert.deepEqual(partStates(5000, 3000, 3, false).map((p) => [p.left, p.dead]), [[0, true], [1332, false], [1668, false]]);
+// HP 0 mutta sinetti kesken: viimeinen ei vielä kaadu
+assert.deepEqual(partStates(5000, 0, 3, false).map((p) => p.dead), [true, true, false]);
+assert.deepEqual(partStates(5000, 0, 3, true).map((p) => p.dead), [true, true, true]);
+assert.deepEqual(weaknessesOf({ parts: [{ name: 'a', weakness: 'Voimailu' }, { name: 'b', weakness: 'Voimailu' }, { name: 'c', weakness: 'Muu' }] }), ['Voimailu', 'Muu']);
+console.log('Kolmikkotestit menivät läpi.');

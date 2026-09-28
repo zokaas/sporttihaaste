@@ -141,7 +141,8 @@ export type WeekRecap = {
 
 /** Päättyneen viikon yhteenveto: mitä kaatui, mitä jäi, potti, viikon sankari ja lupaukset. */
 export function weekRecap(b: Battle, w: number): WeekRecap | null {
-  if (!b.ledgerInput || w < 1 || w >= b.week) return null;
+  // Kauden jälkeen myös viimeinen viikko on valmis.
+  if (!b.ledgerInput || w < 1 || w > 11 || (w >= b.week && seasonWeek(b.today) <= 11)) return null;
   const before = w > 1 ? computeLedger(b.ledgerInput, w - 1) : null;
   const after = computeLedger(b.ledgerInput, w);
   const nameOf = (week: number) => b.monsters.get(week)?.name ?? (week === 11 ? 'Loppupomo' : `Viikon ${week} monsteri`);

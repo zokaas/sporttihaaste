@@ -24,7 +24,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at').order('created_at'),
     // Kauden aikana taistelu haetaan samaan aikaan profiilin kanssa.
-    week >= 1 && week <= 11 ? loadBattle(supabase, today()) : Promise.resolve(null),
+    week >= 1 ? loadBattle(supabase, today()) : Promise.resolve(null),
   ]);
   if (!me?.hero_name || !me?.pledge_locked_at) redirect('/ilmoittaudu');
   const locked = (heroes ?? []).filter((h) => h.pledge_locked_at);
@@ -34,6 +34,27 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   const battle = maybeBattle ?? (inSeason ? await loadBattle(supabase, today()) : null);
   // Paljastusilmoitus tarkistetaan vain viikon kahtena ensimmäisenä päivänä, ei jokaisella latauksella.
   if (battle && battle.today <= addDays(weekRange(battle.week).start, 1)) await announceReveal(supabase, battle).catch(() => {});
+
+  // Kauden jälkeen: lopputulos ja linkit, ei enää lyöntinappia
+  if (battle && week === 12) {
+    const kills = battle.ledger?.killed ?? [];
+    const bossDown = kills.some((k) => k.week === 11);
+    return (
+      <>
+        <Nav current="/" />
+        <BossShadow>
+          <span className="pill" style={{ background: 'var(--blood)', alignSelf: 'flex-start' }}>Kausi päättyi 20.12.</span>
+          <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>{bossDown ? 'Loppupomo kaatui!' : 'Loppupomo selvisi'}</h2>
+          <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>
+            Kaadoitte {kills.filter((k) => k.week <= 10).length}/10 viikon monsteria{bossDown ? ' ja loppupomon' : ''}. Kiitos taistelusta, sankarit.
+          </p>
+        </BossShadow>
+        <Link className="btn" href="/raportti/11">Viimeisen viikon raportti</Link>
+        <Link className="btn btn-ghost" href="/bestiaario">Bestiaario</Link>
+        <Link className="btn btn-ghost" href="/sankarit">Sankarit</Link>
+      </>
+    );
+  }
 
   if (battle) {
     return (

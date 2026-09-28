@@ -34,7 +34,7 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
     category: sport.category,
     groupSize,
     celebration,
-    weakness: (monster?.weakness as Category | null) ?? null,
+    weakness: monster.weaknesses,
     participants: ids.size,
   });
   // Loppupomon viimeinen isku: kaikki ilmoittautuneet samassa treenissä (ei kiinteästi kymmenen).

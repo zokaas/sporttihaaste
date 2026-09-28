@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Countdown from '@/components/Countdown';
 
+export type StagePart = { name: string; image: string | null; hp: number; left: number; dead: boolean };
+
 export type SealHero = { id: string; initial: string; avatar: string | null; hit: boolean; excused: boolean; name: string };
 
 type Props = {
@@ -33,6 +35,8 @@ type Props = {
   /** Loppupomo: punainen taivas; potti iskee paljastuksen yhteydessä. */
   boss?: boolean;
   potStrike?: number;
+  /** Monsterikolmikko: osat kaatuvat järjestyksessä, etummainen näytetään isona. */
+  parts?: StagePart[] | null;
 };
 
 const fmt = (n: number) => n.toLocaleString('fi-FI');
@@ -60,7 +64,24 @@ export default function MonsterStage(p: Props) {
   const [flying, setFlying] = useState<{ n: number; label: string | null; crit: boolean } | null>(null);
   const [hit, setHit] = useState(false);
   const [revealing, setRevealing] = useState(false);
+  const [partFall, setPartFall] = useState<string | null>(null);
   const timers = useRef<number[]>([]);
+  const parts = p.parts?.length ? p.parts : null;
+  const front = parts ? parts.find((x) => !x.dead) ?? parts[parts.length - 1] : null;
+  const deadParts = parts ? parts.filter((x) => x.dead).length : 0;
+
+  // Kolmikon osan kaatuminen: lyhyt banneri, kun kaatuneiden määrä kasvaa edellisestä käynnistä
+  useEffect(() => {
+    if (!p.effects || !parts) return;
+    const key = `mj_parts_${p.week}`;
+    const before = Number(read(key) ?? deadParts);
+    write(key, String(deadParts));
+    if (deadParts > before && deadParts < parts.length) {
+      setPartFall(parts[deadParts - 1].name);
+      const t = window.setTimeout(() => setPartFall(null), 2800);
+      return () => clearTimeout(t);
+    }
+  }, [p.effects, p.week, deadParts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!p.effects) return;
@@ -115,14 +136,17 @@ export default function MonsterStage(p: Props) {
   const className = `stage state-${state}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
   const sealDone = p.seal ? p.seal.filter((s) => !s.excused).every((s) => s.hit) : false;
 
+  const image = front ? front.image ?? p.image : p.image;
+  const title = front && !p.dead ? front.name : p.title;
+
   const content = (
     <>
       <div className="stage-art" aria-hidden="true" style={{ ['--dam' as string]: String(damPct / 100) }}>
         {p.boss ? <div className="stage-sky" /> : null}
-        {p.image ? (
+        {image ? (
           <>
-            <img className="stage-backdrop" src={p.image} alt="" />
-            <img className="stage-img" src={p.image} alt="" />
+            <img className="stage-backdrop" src={image} alt="" />
+            <img className="stage-img" src={image} alt="" />
           </>
         ) : (
           <svg className="stage-img stage-shadow" viewBox="0 0 390 300" preserveAspectRatio="xMidYMax meet">
@@ -151,10 +175,21 @@ export default function MonsterStage(p: Props) {
 
       <div className="stage-info">
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
-        <h2 className="display stage-title">{p.title}</h2>
+        {parts ? (
+          <div className="stage-parts" aria-label={`Kolmikko: ${deadParts}/${parts.length} kaatunut`}>
+            {parts.map((x) => (
+              <span key={x.name} className={`stage-part${x.dead ? ' dead' : ''}${x === front && !p.dead ? ' front' : ''}`} title={`${x.name}${x.dead ? ' – kaatunut' : ''}`}>
+                {x.image ? <img src={x.image} alt="" /> : <b>{x.name.slice(0, 1)}</b>}
+              </span>
+            ))}
+            <span className="stage-parts-label">Kolmikko {deadParts}/{parts.length}</span>
+          </div>
+        ) : null}
+        <h2 className="display stage-title">{title}</h2>
         {p.weakness ? <span className="pill">Heikkous: {p.weakness} +50 %</span> : null}
-        <div className="stage-hp" role="meter" aria-label="Monsterin HP" aria-valuemin={0} aria-valuemax={p.maxHp} aria-valuenow={p.hp}>
+        <div className={`stage-hp${parts ? ' segmented' : ''}`} role="meter" aria-label="Monsterin HP" aria-valuemin={0} aria-valuemax={p.maxHp} aria-valuenow={p.hp}>
           <span style={{ width: `${pct}%` }} />
+          {parts ? parts.slice(0, -1).reduce<{ at: number; marks: number[] }>((acc, x) => { acc.at += x.hp; acc.marks.push(acc.at); return acc; }, { at: 0, marks: [] }).marks.map((at) => <i key={at} style={{ left: `${100 - (at / p.maxHp) * 100}%` }} />) : null}
         </div>
         {p.padded > 0 ? (
           <div className="stage-dam" role="meter" aria-label="Padottu vahinko" aria-valuenow={p.padded}>
@@ -177,6 +212,13 @@ export default function MonsterStage(p: Props) {
         ) : null}
         {p.boss ? <span className="small" style={{ color: '#f0c9a8' }}>Viimeinen isku vaatii kaikki sankarit samaan treeniin.</span> : null}
       </div>
+
+      {partFall ? (
+        <div className="stage-reveal part-fall" aria-live="polite">
+          <span>Kolmikosta kaatui</span>
+          <strong className="display">{partFall}</strong>
+        </div>
+      ) : null}
 
       {revealing ? (
         <div className="stage-reveal" aria-hidden="true">

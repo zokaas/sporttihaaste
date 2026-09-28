@@ -12,6 +12,7 @@ import LiveRefresh from '@/components/LiveRefresh';
 import RecapPrompt from '@/components/RecapPrompt';
 import RecapCard from '@/components/RecapCard';
 import QuickStep from '@/components/QuickStep';
+import { stageParts, weaknessesOf } from '@/lib/trio';
 
 type BattleData = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -85,7 +86,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           week={target.week}
           title={nameOf(target.week)}
           image={monsterImageUrl(monsters.get(target.week)?.image_path)}
-          weakness={monsters.get(target.week)?.weakness ?? null}
+          weakness={weaknessesOf(monsters.get(target.week)).join(', ') || null}
+          parts={stageParts(monsters.get(target.week), target.hp, false, monsterImageUrl)}
           hp={target.padded ? 0 : target.hp}
           maxHp={monsters.get(target.week)?.hp ?? 1}
           padded={target.padded}

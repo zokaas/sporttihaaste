@@ -5,6 +5,7 @@ import { requireHero } from '@/lib/page';
 import { monsterImageUrl } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
 import { formatDay, weekRange } from '@/lib/season';
+import { weaknessesOf } from '@/lib/trio';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,7 +52,8 @@ export default async function Bestiaario() {
                   <div className="who">{future ? '???' : <Link href={`/monsteri/${w}`}>{m?.name ?? `Viikon ${w} monsteri`}</Link>}</div>
                   <div className="facts">
                     Viikko {w} · {formatDay(start)}
-                    {m?.weakness && !future ? ` · heikkous ${m.weakness}` : ''}
+                    {m?.parts?.length && !future ? ' · kolmikko' : ''}
+                    {weaknessesOf(m).length && !future ? ` · heikkous ${weaknessesOf(m).join(', ')}` : ''}
                   </div>
                   <div className="facts">
                     {k ? <span className="ok">Kaatui {formatDay(killedDay(k))}{blows[w] ? `, viimeinen isku: ${name(blows[w])}` : ''}</span>

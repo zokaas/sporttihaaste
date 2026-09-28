@@ -9,7 +9,7 @@ type Props = {
   days: string[];
   sports: { name: string; value: number; category: Category }[];
   companions: { id: string; name: string; avatar: string | null }[];
-  weakness: Category | null;
+  weakness: Category[];
   celebrations: Record<string, string[]>;
 };
 
@@ -68,7 +68,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
         <select className="input" value={sportName} onChange={(e) => setSportName(e.target.value)}>
           <option value="">Valitse laji</option>
           {CATEGORIES.map((c) => (
-            <optgroup key={c} label={c === weakness ? `${c} (viikon heikkous)` : c}>
+            <optgroup key={c} label={weakness.includes(c) ? `${c} (viikon heikkous)` : c}>
               {sports.filter((s) => s.category === c).map((s) => (
                 <option key={s.name} value={s.name}>{s.name}{s.value !== 100 ? ` (${s.value}/h)` : ''}</option>
               ))}
