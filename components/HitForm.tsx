@@ -10,6 +10,8 @@ type Props = {
   days: string[];
   sports: { name: string; value: number; category: Category }[];
   companions: { id: string; name: string; avatar: string | null }[];
+  /** Päivän terveet sankarit (koko porukka -bonus). */
+  healthyByDay: Record<string, number>;
   weakness: Category[];
   celebrations: Record<string, string[]>;
 };
@@ -22,7 +24,7 @@ function duration(min: number) {
   return [h ? `${h} h` : '', m ? `${m} min` : ''].filter(Boolean).join(' ');
 }
 
-export default function HitForm({ days, sports, companions, weakness, celebrations }: Props) {
+export default function HitForm({ days, sports, companions, weakness, celebrations, healthyByDay }: Props) {
   const router = useRouter();
   const [day, setDay] = useState(days[days.length - 1]);
   const [sportName, setSportName] = useState('');
@@ -35,7 +37,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
   const sport = sports.find((s) => s.name === sportName);
   const celebrating = celebrations[day] ?? [];
   const preview = sport
-    ? hitDamage({ minutes, sportValue: sport.value, category: sport.category, groupSize: 1 + withIds.length, celebration: celebrating.length > 0, weakness, participants: companions.length + 1 })
+    ? hitDamage({ minutes, sportValue: sport.value, category: sport.category, groupSize: 1 + withIds.length, celebration: celebrating.length > 0, weakness, participants: healthyByDay[day] ?? companions.length + 1 })
     : null;
 
   const toggle = (id: string) => setWithIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
@@ -93,7 +95,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
             <span>Treenasitko porukassa?</span>
             <span className="muted small">{withIds.length ? `${withIds.length + 1} henkeä` : 'Yksin'} ▾</span>
           </summary>
-          <div style={{ margin: '8px 0' }}><Hint id="companions">Valitse seuralaiset. Vähintään 3 yhdessä: +50 %, koko porukka: +100 %.</Hint></div>
+          <div style={{ margin: '8px 0' }}><Hint id="companions">Valitse seuralaiset. Vähintään 3 yhdessä: +50 %, koko porukka (kaikki sinä päivänä terveet): +100 %.</Hint></div>
           <div className="chips">
             {companions.map((c) => (
               <button key={c.id} type="button" className="chip" aria-pressed={withIds.includes(c.id)} onClick={() => toggle(c.id)}>

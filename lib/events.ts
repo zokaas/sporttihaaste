@@ -34,12 +34,12 @@ export async function afterHit(supabase: SupabaseClient) {
   }
 }
 
-/** Askelkuittauksen jälkeen: tuliko päivästä partiopäivä. */
+/** Askelkuittauksen jälkeen: tuliko päivästä megamarssi. */
 export async function afterStep(supabase: SupabaseClient, day: string) {
   if (testDay()) return;
   const b = await loadBattle(supabase, today());
   if (!b.hpLocked || !b.patrols.some((p) => p.day === day)) return;
-  await sendOnce(supabase, `patrol-${day}`, { title: '⭐ Partiopäivä!', body: 'Kaikki terveet kuittasivat askeleensa. +250 voimaa monsterille.' });
+  await sendOnce(supabase, `patrol-${day}`, { title: '⭐ Megamarssi!', body: 'Kaikki terveet kuittasivat askeleensa. +250 voimaa monsterille.' });
 }
 
 /** Viikon monsterin paljastus: ensimmäinen sovelluksen avaus uudella viikolla lähettää ilmoituksen kaikille. */

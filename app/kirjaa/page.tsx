@@ -9,6 +9,7 @@ import { monsterOfWeek } from '@/lib/battle';
 import HitForm from '@/components/HitForm';
 import DeleteHitButton from '@/components/DeleteHitButton';
 import Hint from '@/components/Hint';
+import { isSickOn, type SickPeriod } from '@/lib/weekly';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,10 +34,11 @@ export default async function Kirjaa() {
 
   const week = seasonWeek(now);
   const { start, end } = weekRange(week);
-  const [{ data: heroes }, monster, { data: myHits }] = await Promise.all([
+  const [{ data: heroes }, monster, { data: myHits }, { data: sick }] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, birthday, name_day').order('hero_name'),
     monsterOfWeek(supabase, week),
     supabase.from('hits').select('*').eq('user_id', user.id).gte('trained_on', start).lte('trained_on', end).order('trained_on', { ascending: false }).order('created_at', { ascending: false }),
+    supabase.from('sick_periods').select('user_id, starts_on, ends_on'),
   ]);
   const participants = (heroes ?? []).filter((h) => h.pledge_locked_at);
   const celebrations: Record<string, string[]> = {};
@@ -45,6 +47,9 @@ export default async function Kirjaa() {
     celebrations[d] = participants.filter((h) => h.birthday === md || h.name_day === md).map((h) => h.hero_name ?? '');
   }
   const names = new Map(participants.map((h) => [h.id, h.hero_name ?? '']));
+  // Koko porukka -bonukseen tarvitaan päivän terveet sankarit.
+  const healthyByDay: Record<string, number> = {};
+  for (const d of days) healthyByDay[d] = participants.filter((h) => !isSickOn((sick ?? []) as SickPeriod[], h.id, d)).length;
 
   return (
     <>
@@ -56,6 +61,7 @@ export default async function Kirjaa() {
         companions={participants.filter((h) => h.id !== user.id).map((h) => ({ id: h.id, name: h.hero_name ?? '', avatar: avatarUrl(h.avatar_path) }))}
         weakness={monster.weaknesses}
         celebrations={celebrations}
+        healthyByDay={healthyByDay}
       />
 
       <section className="card">

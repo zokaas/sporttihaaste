@@ -33,23 +33,40 @@ export async function toggleStep(day: string, on: boolean): Promise<Result> {
   return done(error);
 }
 
-/** Merkitsee sairastumisen (tästä päivästä tai valitusta kuluvan viikon päivästä) tai paranemisen (viimeinen sairaspäivä = eilen). */
-export async function setSick(sick: boolean, from?: string): Promise<Result> {
+/**
+ * Merkitsee kuluvan viikon päivän sairaaksi tai terveeksi. Tälle päivälle voi valita, jatkuuko sairaus
+ * (avoin jakso, joka päättyy vasta "Olen taas terve" -merkinnällä). Terveeksi merkitty päivä pilkkoo
+ * olemassa olevan jakson kahteen osaan tarvittaessa.
+ */
+export async function toggleSickDay(day: string, sick: boolean, continuing = false): Promise<Result> {
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   const now = today();
-  const { data: open } = await supabase.from('sick_periods').select('id, starts_on').eq('user_id', user.id).is('ends_on', null).maybeSingle();
+  if (!loggableDays(now).includes(day)) return { ok: false, error: 'Sairaspäivän voi merkitä vain kuluvalle viikolle, ei tulevaisuuteen.' };
+  const { data } = await supabase.from('sick_periods').select('id, starts_on, ends_on').eq('user_id', user.id);
+  const covering = (data ?? []).filter((x) => x.starts_on <= day && (x.ends_on === null || x.ends_on >= day));
+
   if (sick) {
-    if (open) return { ok: true };
-    const start = from && loggableDays(now).includes(from) ? from : now;
-    return done((await supabase.from('sick_periods').insert({ user_id: user.id, starts_on: start })).error);
+    if (covering.length) return done(null);
+    const open = continuing && day === now;
+    return done((await supabase.from('sick_periods').insert({ user_id: user.id, starts_on: day, ends_on: open ? null : day })).error);
   }
-  if (!open) return { ok: true };
-  // Tänään alkanut sairaus perutaan kokonaan, muuten viimeinen sairaspäivä oli eilen.
-  const { error } = open.starts_on >= now
-    ? await supabase.from('sick_periods').delete().eq('id', open.id)
-    : await supabase.from('sick_periods').update({ ends_on: addDays(now, -1) }).eq('id', open.id);
-  return done(error);
+
+  for (const x of covering) {
+    // Jakson loppuosa päivän jälkeen säilyy (avoin jakso jatkuu vain, jos päivä ei ole tämä päivä).
+    const restEnd: string | null = x.ends_on === null ? null : x.ends_on;
+    const restStart = addDays(day, 1);
+    const keepRest = restStart <= now && (restEnd === null || restEnd >= restStart);
+    const { error } = x.starts_on === day
+      ? await supabase.from('sick_periods').delete().eq('id', x.id)
+      : await supabase.from('sick_periods').update({ ends_on: addDays(day, -1) }).eq('id', x.id);
+    if (error) return done(error);
+    if (keepRest) {
+      const { error: e2 } = await supabase.from('sick_periods').insert({ user_id: user.id, starts_on: restStart, ends_on: restEnd });
+      if (e2) return done(e2);
+    }
+  }
+  return done(null);
 }
 
 /** Muuttaa lupauksen seuraavasta viikosta alkaen. Kerran viikossa; saman viikon aikana voi vielä korjata. */
@@ -78,7 +95,7 @@ export async function nudgeMissing(): Promise<Result & { sent?: number }> {
   const sent = await sendPush(supabase, {
     title: '⏳ Sinetti odottaa sinua',
     body: target.padded
-      ? `${sender} muistuttaa: ${monster} on jo sinettirajalla, ${target.padded} voimaa odottaa padottuna. Tarvitaan vain sinun iskusi!`
+      ? `${sender} muistuttaa: ${monster} on jo sinettirajalla. Tarvitaan vain sinun iskusi, niin se kaatuu!`
       : `${sender} muistuttaa: ${monster} kaatuu vasta, kun jokainen on lyönyt. Sinun iskusi puuttuu.`,
   }, missing);
   return { ok: true, sent };

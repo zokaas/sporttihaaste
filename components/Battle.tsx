@@ -48,7 +48,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const heroById = new Map(heroes.map((h) => [h.id, h]));
   const nameOf = (w: number) => monsters.get(w)?.name ?? (w === BOSS_WEEK ? 'Loppupomo' : `Viikon ${w} monsteri`);
   const blows = finalBlows(data);
-  const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Partio' : null }));
+  const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Megamarssi' : null }));
   const missing = target ? required.filter((id) => !target.hitters.includes(id)) : [];
   const view = target ? sealView(target, required) : null;
   const seal: SealHero[] = participants.map((id) => {
@@ -62,7 +62,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const overdue = ledger.alive.filter((f) => f.week < week).length;
   const nextReveal = week < BOSS_WEEK ? formatDay(weekRange(week + 1).start) : null;
 
-  // Taisteluloki: viikon iskut ja partiopäivät uusimmasta alkaen; saman päivän askeleet yhtenä rivinä
+  // Taisteluloki: viikon iskut ja megamarssit uusimmasta alkaen; saman päivän askeleet yhtenä rivinä
   const stepDays = new Map<string, { names: string[]; at: string }>();
   for (const st of data.steps.filter((x) => seasonWeek(x.day) === week)) {
     const cur = stepDays.get(st.day) ?? { names: [], at: st.created_at };
@@ -73,7 +73,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const log = [
     ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, who: heroById.get(h.user_id)?.hero_name ?? '', text: `${h.sport} ${h.minutes} min${h.companions.length ? ` · ${h.companions.length + 1} hengen porukka` : ''}`, dmg: h.damage, crit: h.bonus_pct >= 100 })),
     ...[...stepDays].map(([day, v]) => ({ at: v.at, who: `👣 Askeleet ${formatDay(day)}`, text: v.names.join(', '), dmg: v.names.length * 50, crit: false })),
-    ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, who: '⭐ Partiopäivä', text: `Koko porukka ${formatDay(p.day)}`, dmg: 250, crit: false })),
+    ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, who: '⭐ Megamarssi', text: `Koko porukka ${formatDay(p.day)}`, dmg: 250, crit: false })),
   ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 8);
 
   return (
@@ -141,7 +141,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         <section className={`card${view?.dam ? ' threat' : ''}`}>
           {view?.dam ? (
             <p style={{ margin: 0 }}>
-              <strong style={{ color: 'var(--gold)' }}>{fmt(view.dam)} voimaa padottuna!</strong> {nameOf(target.week)} on sinettirajalla ({fmt(view.hp)} HP = 10 HP jokaista puuttuvaa kohden) ja kaatuu heti, kun sinetti täyttyy. Muuten pato menetetään su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59.
+              <strong style={{ color: 'var(--gold)' }}>{nameOf(target.week)} on sinettirajalla!</strong> Sille jää {fmt(view.hp)} HP (10 HP jokaista puuttuvaa kohden), ja se kaatuu heti, kun puuttuvat lyövät. Jos sinetti jää su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59 vajaaksi, monsteri jää rästiin.
             </p>
           ) : (
             <Hint id="seal" title={<strong>Sinetti {required.length - missing.length}/{required.length}</strong>}>Monsteri kaatuu vasta, kun jokainen terve sankari on lyönyt sitä treenillä. Askeleet eivät täytä sinettiä.</Hint>
@@ -159,7 +159,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       {backlog.length ? (
         <section className="card">
           <Hint id="backlog" className="muted small" title={<h2 className="display">Rästit</h2>}>Vanhin rästi ottaa iskut ensin, ja sen jälkeen ylijäämä siirtyy seuraavaan.</Hint>
-          {backlog.map((f) => <p key={f.week} style={{ margin: 0 }}>{nameOf(f.week)}: {(() => { const v = sealView(f, required); return v.dam ? `${fmt(v.hp)} HP (sinettiraja), ${fmt(v.dam)} padottuna` : `${fmt(v.hp)} HP`; })()}</p>)}
+          {backlog.map((f) => <p key={f.week} style={{ margin: 0 }}>{nameOf(f.week)}: {(() => { const v = sealView(f, required); return v.dam ? `${fmt(v.hp)} HP, sinettirajalla` : `${fmt(v.hp)} HP`; })()}</p>)}
         </section>
       ) : null}
 

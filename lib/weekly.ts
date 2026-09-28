@@ -1,4 +1,4 @@
-// Viikkokohtaiset säännöt: sairaus, askeleet, partiopäivät ja lupaukset. Puhtaita funktioita.
+// Viikkokohtaiset säännöt: sairaus, askeleet, megamarssit ja lupaukset. Puhtaita funktioita.
 import { addDays, weekRange } from './season.ts';
 
 export type SickPeriod = { user_id: string; starts_on: string; ends_on: string | null };
@@ -39,7 +39,7 @@ export function pledgeForWeek(base: number, changes: { from_week: number; hours:
 }
 
 /**
- * Partiopäivät: päivät, joina jokainen sinä päivänä terve osallistuja on kuitannut askeleensa.
+ * Megamarssit: päivät, joina jokainen sinä päivänä terve osallistuja on kuitannut askeleensa.
  * Palauttaa päivän ja hetken, jolloin viimeinen kuittaus tuli (määrää järjestyksen kirjanpidossa).
  */
 export function patrolDays(

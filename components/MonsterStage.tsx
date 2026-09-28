@@ -193,12 +193,6 @@ export default function MonsterStage(p: Props) {
           <span style={{ width: `${pct}%` }} />
           {parts ? parts.slice(0, -1).reduce<{ at: number; marks: number[] }>((acc, x) => { acc.at += x.hp; acc.marks.push(acc.at); return acc; }, { at: 0, marks: [] }).marks.map((at) => <i key={at} style={{ left: `${100 - (at / p.maxHp) * 100}%` }} />) : null}
         </div>
-        {p.padded > 0 ? (
-          <div className="stage-dam" role="meter" aria-label="Padottu voima" aria-valuenow={p.padded}>
-            <span style={{ width: `${damPct}%` }} />
-            <em>🛡️ {fmt(p.padded)} padottuna</em>
-          </div>
-        ) : null}
         <div className="stage-hptext">
           <span>{fmt(Math.max(0, p.hp))} / {fmt(p.maxHp)} HP</span>
           <span className="stage-state">{state === 'dead' ? 'Kaatunut' : state === 'shielded' ? 'Sinetti kesken' : state === 'dying' ? 'Horjuu!' : state === 'hurt' ? 'Haavoittunut' : ''}</span>
