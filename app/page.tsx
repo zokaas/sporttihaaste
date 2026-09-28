@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import PushToggle from '@/components/PushToggle';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl } from '@/lib/supabase/client';
@@ -47,6 +48,11 @@ export default async function Home() {
           })}
         </div>
         <p className="muted" style={{ margin: 0 }}>Monsterien HP lasketaan kaikkien lupauksista, kun ilmoittautuminen sulkeutuu ke 30.9.</p>
+      </section>
+
+      <section className="card">
+        <h2 className="display">Ilmoitukset</h2>
+        <PushToggle />
       </section>
 
       <Link className="btn btn-ghost" href="/ilmoittaudu">Muokkaa ilmoittautumista</Link>

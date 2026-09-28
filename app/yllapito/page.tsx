@@ -29,19 +29,39 @@ async function lockSeason() {
 async function sendTestPush() {
   'use server';
   const supabase = await requireAdmin();
-  webpush.setVapidDetails(process.env.VAPID_SUBJECT!, process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
-  const { data: subs } = await supabase.from('push_subscriptions').select('*');
-  await Promise.allSettled(
-    (subs ?? []).map((s) =>
-      webpush.sendNotification(
-        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-        JSON.stringify({ title: 'Monsterijahti', body: 'Testi-ilmoitus toimii. Nähdään torstaina!', url: '/' }),
+  let message: string;
+  try {
+    webpush.setVapidDetails(process.env.VAPID_SUBJECT!, process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
+    const [{ data: subs }, { data: heroes }] = await Promise.all([
+      supabase.from('push_subscriptions').select('*'),
+      supabase.from('profiles').select('id, hero_name'),
+    ]);
+    const names = new Map((heroes ?? []).map((h) => [h.id, h.hero_name ?? 'nimetön']));
+    const list = subs ?? [];
+    const results = await Promise.allSettled(
+      list.map((s) =>
+        webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          JSON.stringify({ title: 'Monsterijahti', body: 'Testi-ilmoitus toimii. Nähdään torstaina!', url: '/' }),
+        ),
       ),
-    ),
-  );
+    );
+    const failed = results.flatMap((r, i) => {
+      if (r.status === 'fulfilled') return [];
+      const code = (r.reason as { statusCode?: number })?.statusCode;
+      const why = code === 404 || code === 410 ? 'tilaus vanhentunut, laita ilmoitukset uudelleen päälle' : code === 403 ? 'VAPID-avaimet eivät täsmää' : String(code ?? (r.reason as Error)?.message ?? r.reason);
+      return [`${names.get(list[i].user_id)}: ${why}`];
+    });
+    message = list.length === 0
+      ? 'Yhtään tilausta ei ole tallennettu. Laita ilmoitukset päälle etusivulta.'
+      : `Lähetetty ${list.length - failed.length}/${list.length} laitteeseen.${failed.length ? ` Epäonnistui: ${failed.join('; ')}.` : ''}`;
+  } catch (e) {
+    message = `Lähetys epäonnistui: ${(e instanceof Error ? e.message : String(e)).replace(/\.$/, '')}. Tarkista VAPID-muuttujat Vercelissä.`;
+  }
+  redirect(`/yllapito?push=${encodeURIComponent(message)}`);
 }
 
-export default async function Yllapito() {
+export default async function Yllapito({ searchParams }: { searchParams: { push?: string } }) {
   const supabase = await requireAdmin();
   const [{ data: heroes }, { data: subs }, { data: season }, { data: monsters }] = await Promise.all([
     supabase.from('profiles').select('*').order('created_at'),
@@ -60,31 +80,27 @@ export default async function Yllapito() {
 
       <section className="card">
         <h2 className="display">Ilmoittautuneet {locked.length}/10</h2>
-        <div className="scroll">
-          <table className="admin">
-            <thead><tr><th>Sankari</th><th>Lupaus</th><th>Nimip.</th><th>Synttärit</th><th>Ilmoit.</th></tr></thead>
-            <tbody>
-              {(heroes ?? []).map((h) => {
-                const src = avatarUrl(h.avatar_path);
-                return (
-                  <tr key={h.id}>
-                    <td>
-                      <div className="row" style={{ alignItems: 'center' }}>
-                        {src ? <img className="avatar" src={src} alt="" width={32} height={32} /> : <div className="avatar" style={{ width: 32, height: 32 }}>?</div>}
-                        {h.hero_name ?? <span className="muted">Kesken</span>}
-                      </div>
-                    </td>
-                    <td>{h.pledge_locked_at ? `${String(h.pledge_hours).replace('.', ',')} h` : <span className="muted">ei lukittu</span>}</td>
-                    <td>{dm(h.name_day)}</td>
-                    <td>{dm(h.birthday)}{h.birthday && h.birth_year ? h.birth_year : ''}</td>
-                    <td>{withPush.has(h.id) ? 'päällä' : <span className="error">ei</span>}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        <form action={sendTestPush}><button className="btn btn-ghost" type="submit">Lähetä testi-ilmoitus kaikille</button></form>
+        <ul className="people">
+          {(heroes ?? []).map((h) => {
+            const src = avatarUrl(h.avatar_path);
+            return (
+              <li key={h.id}>
+                {src ? <img className="avatar" src={src} alt="" width={40} height={40} /> : <div className="avatar" style={{ width: 40, height: 40 }}>?</div>}
+                <div className="grow" style={{ minWidth: 0 }}>
+                  <div className="who">{h.hero_name ?? <span className="muted">Nimi puuttuu</span>}</div>
+                  <div className="facts">
+                    {h.pledge_locked_at ? `Lupaus ${String(h.pledge_hours).replace('.', ',')} h` : 'Lupaus lukitsematta'}
+                    {' · '}Synt. {dm(h.birthday)}{h.birthday && h.birth_year ? h.birth_year : ''}
+                    {' · '}Nimip. {dm(h.name_day)}
+                  </div>
+                  <div className="facts">Ilmoitukset: {withPush.has(h.id) ? <span className="ok">päällä</span> : <span className="error">pois</span>}</div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        <form action={sendTestPush}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Lähetä testi-ilmoitus kaikille</button></form>
+        {searchParams.push ? <p className="note" role="status" style={{ margin: 0 }}>{searchParams.push}</p> : null}
       </section>
 
       <section className="card">
