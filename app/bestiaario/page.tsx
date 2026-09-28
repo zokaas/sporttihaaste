@@ -39,7 +39,7 @@ export default async function Bestiaario() {
         <span className="small" style={{ color: '#c9c1b4' }}>
           {bossRevealed
             ? `${boss?.hp ? `${fmt(boss.hp)} HP. ` : ''}Potti ${fmt(Math.min(b.ledger?.pot ?? 0, b.ledger?.potCap ?? 0))} / ${fmt(b.ledger?.potCap ?? 0)} vähennettiin sen HP:sta. Se kaatuu kuten muutkin: HP nollaan ja sinetti täyteen.`
-            : `${bossStirring(b.week)} Potti ${fmt(b.ledger?.pot ?? 0)} odottaa sen heräämistä.`}
+            : `${bossStirring(b.week)} Olette säästäneet sitä vastaan ${fmt(b.ledger?.pot ?? 0)} voimaa. Kaikki säästetty iskee heti, kun se herää.`}
         </span>
       </BossShadow>
 
@@ -82,7 +82,7 @@ export default async function Bestiaario() {
                   <div className="facts">
                     {k ? <span className="ok">Kaatui {formatDay(killedDay(k))}{blows[w] ? `, viimeinen isku: ${name(blows[w])}` : ''}</span>
                       : f ? <span style={{ color: 'var(--blood-text)' }}>{w < b.week ? 'Rästissä' : 'Taistelussa'}: {(() => { const v = sealView(f, b.required); return v.dam ? `${fmt(v.hp)} HP, sinetti kesken` : `${fmt(v.hp)} / ${fmt(m?.hp ?? 0)} HP`; })()}</span>
-                      : future ? 'Paljastuu viikon alkaessa' : ''}
+                        : future ? 'Paljastuu viikon alkaessa' : ''}
                   </div>
                 </div>
               </li>
