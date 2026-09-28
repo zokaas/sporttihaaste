@@ -145,7 +145,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
           <form action={resetTestData}>
             <ConfirmButton message="Poistetaanko kaikkien iskut, askeleet, sairaudet ja lupausmuutokset?" className="btn btn-ghost" style={{ width: '100%', color: 'var(--blood-text)' }}>Tyhjennä testidata</ConfirmButton>
           </form>
-          <p className="muted small" style={{ margin: 0 }}>Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet ja lupausmuutokset. Tunnukset ja ilmoittautumiset säilyvät. Toimii vain ennen kauden alkua 1.10. Muista tyhjentää ennen kautta!</p>
+          <p className="muted small" style={{ margin: 0 }}>Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet, lupausmuutokset ja viestit. Tunnukset ja ilmoittautumiset säilyvät. Toimii vain ennen kauden alkua 1.10. Muista tyhjentää ennen kautta!</p>
           {searchParams.testi ? <p className={`note${searchParams.testi.startsWith('Tyhjennys epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.testi}</p> : null}
           {searchParams.nollaa ? <ClearLocalState /> : null}
         </section>

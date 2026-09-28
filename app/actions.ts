@@ -86,3 +86,33 @@ export async function nudgeMissing(): Promise<Result & { sent?: number }> {
   }, missing);
   return { ok: true, sent };
 }
+
+/** Viesti porukalle: push kaikille muille ja näkyy Viestit-sivulla. Tietokanta rajaa yhteen päivässä (ylläpito rajatta). */
+export async function sendMessage(text: string): Promise<Result & { sent?: number }> {
+  const { supabase, user } = await me();
+  if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
+  const body = text.trim().replace(/\s+\n/g, '\n');
+  if (!body) return { ok: false, error: 'Kirjoita viesti.' };
+  if (body.length > 200) return { ok: false, error: 'Viesti on liian pitkä (enintään 200 merkkiä).' };
+  const { error } = await supabase.from('messages').insert({ sender: user.id, body });
+  if (error) return { ok: false, error: error.message.includes('messages') ? 'Viestejä ei voi vielä lähettää. Ylläpitäjän pitää ajaa migraatio 011_viestit.sql.' : error.message };
+
+  const [{ data: sender }, { data: heroes }] = await Promise.all([
+    supabase.from('profiles').select('hero_name').eq('id', user.id).single(),
+    supabase.from('profiles').select('id').not('pledge_locked_at', 'is', null),
+  ]);
+  const others = (heroes ?? []).map((h) => h.id).filter((id) => id !== user.id);
+  const sent = await sendPush(supabase, { title: `📣 ${sender?.hero_name ?? 'Sankari'}`, body, url: '/viestit' }, others);
+  revalidatePath('/viestit');
+  return { ok: true, sent };
+}
+
+/** Ylläpitäjä voi poistaa viestin. */
+export async function deleteMessage(id: number): Promise<Result> {
+  const { supabase, user } = await me();
+  if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
+  const { error } = await supabase.from('messages').delete().eq('id', id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/viestit');
+  return { ok: true };
+}

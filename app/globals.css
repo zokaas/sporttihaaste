@@ -118,10 +118,18 @@ textarea.input { font: 400 16px var(--font-body), sans-serif; resize: vertical; 
 .test-banner a { color: inherit; }
 
 /* Navigaatio */
-.nav { display: flex; gap: 4px; background: var(--track); border-radius: 14px; padding: 4px; }
-.nav a { flex: 1; min-width: 0; min-height: 40px; padding: 0 4px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 500; }
-.nav a[aria-current='page'] { background: var(--ember-fill); color: var(--light); font-weight: 600; }
-.nav a.help { flex: 0 0 36px; font-weight: 700; font-size: 16px; }
+.topbar { display: flex; align-items: center; gap: 8px; margin-bottom: -6px; }
+.topbar-title { flex: 1; font-size: 22px; color: var(--light); letter-spacing: 0.02em; }
+.topbar-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--track); color: var(--light); text-decoration: none; font-weight: 700; font-size: 17px; }
+.topbar-icon[aria-current='page'] { background: var(--ember-fill); }
+.app:has(.tabbar) { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+.tabbar { position: fixed; z-index: 50; left: 50%; bottom: 0; transform: translateX(-50%); width: 100%; max-width: 480px; display: grid; grid-template-columns: repeat(5, 1fr); align-items: end; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: rgba(20, 16, 14, 0.94); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-top: 1px solid var(--line); }
+.tabbar a { min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 12px; color: var(--muted); text-decoration: none; font-size: 11px; font-weight: 500; }
+.tabbar a span { font-size: 20px; line-height: 1; filter: grayscale(0.6); opacity: 0.8; }
+.tabbar a[aria-current='page'] { color: var(--light); font-weight: 600; }
+.tabbar a[aria-current='page'] span { filter: none; opacity: 1; }
+.tabbar a.tabbar-strike { width: 66px; height: 66px; min-height: 0; margin: -26px auto 0; border-radius: 50%; color: var(--light); font-size: 12px; font-weight: 700; background: linear-gradient(180deg, #c9521f, var(--ember-fill)); box-shadow: 0 6px 22px rgba(158, 58, 22, 0.6), 0 0 0 4px rgba(20, 16, 14, 0.94); }
+.tabbar a.tabbar-strike span { font-size: 24px; filter: none; opacity: 1; }
 
 /* Listat ja välilehdet */
 a.rowlink { color: inherit; text-decoration: none; }
@@ -290,3 +298,5 @@ details.companions { border: 1px solid var(--line); border-radius: 12px; padding
 details.companions summary { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; font-size: 14px; font-weight: 600; list-style: none; }
 details.companions summary::-webkit-details-marker { display: none; }
 details.companions[open] { padding-bottom: 12px; }
+.linklike { background: none; border: 0; padding: 0; color: var(--ember); cursor: pointer; font: inherit; text-decoration: underline; }
+.message-body { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
