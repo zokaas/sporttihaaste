@@ -2,6 +2,7 @@ import Link from 'next/link';
 import UnreadDot from '@/components/UnreadDot';
 import InstallHint from '@/components/InstallHint';
 import NightVisit from '@/components/NightVisit';
+import StrikeMenu from '@/components/StrikeMenu';
 import { navVisibility } from '@/lib/nav';
 
 const LEFT = [
@@ -41,10 +42,7 @@ export default async function Nav({ current }: { current: string }) {
       <nav className="tabbar" aria-label="Päävalikko" style={{ gridTemplateColumns: `repeat(${LEFT.length + right.length + (show.strike ? 1 : 0)}, 1fr)` }}>
         {LEFT.map(tab)}
         {show.strike ? (
-          <Link href="/kirjaa" className="tabbar-strike" aria-label="Lyö – kirjaa treeni">
-            <span aria-hidden="true">⚔️</span>
-            Lyö
-          </Link>
+          <StrikeMenu day={show.stepDay} stepped={show.stepped} />
         ) : null}
         {right.map(tab)}
       </nav>
