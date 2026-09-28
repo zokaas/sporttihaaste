@@ -7,9 +7,8 @@ Tämä versio sisältää kirjautumisen, ilmoittautumisen (sankarinimi ja kuva, 
 ### 1. Supabase
 1. Luo ilmainen projekti osoitteessa supabase.com. Valitse alueeksi esimerkiksi Stockholm.
 2. Avaa **SQL Editor**, liitä koko `supabase/schema.sql` ja aja se.
-3. **Authentication → URL Configuration:** aseta *Site URL* sovelluksen osoitteeksi (esim. `https://monsterijahti.vercel.app`) ja lisää *Redirect URLs* -listaan `https://monsterijahti.vercel.app/auth/callback`.
-4. **Authentication → Email Templates → Magic Link:** voit suomentaa viestin, esim. otsikoksi "Kirjaudu Monsterijahtiin".
-5. Kopioi **Project Settings → API** -sivulta *Project URL* ja *anon public key*.
+3. **Authentication → Sign In / Providers → Email:** kytke **Confirm email** pois päältä. Kirjautuminen tapahtuu käyttäjänimellä ja salasanalla, eikä sovellus lähetä sähköposteja.
+4. Kopioi **Project Settings → API** -sivulta *Project URL* ja *anon public key*.
 
 ### 2. Push-ilmoitusten avaimet
 Aja omalla koneella:
@@ -27,12 +26,12 @@ Talleta *Public Key* ja *Private Key*.
 Kirjaudu sovellukseen kerran, ja aja sitten Supabasen SQL-editorissa:
 ```sql
 update public.profiles set is_admin = true
-where id = (select id from auth.users where email = 'sinun@sahkoposti.fi');
+where id = (select id from auth.users where email = 'kayttajanimesi@monsterijahti.app');
 ```
 Etusivulle ilmestyy **Ylläpito**-painike.
 
 ### 5. Kutsu porukka
-Jaa sovelluksen osoite WhatsAppiin. Jokainen kirjautuu omalla sähköpostillaan ja käy ilmoittautumisen läpi ke 30.9. mennessä. Ylläpitonäkymästä näet, kuka on valmis ja kenellä ilmoitukset ovat päällä. **Lähetä testi-ilmoitus** kertoo, toimivatko ilmoitukset.
+Jaa sovelluksen osoite WhatsAppiin. Jokainen luo itselleen käyttäjänimen ja salasanan ja käy ilmoittautumisen läpi ke 30.9. mennessä. Ylläpitonäkymästä näet, kuka on valmis ja kenellä ilmoitukset ovat päällä. **Lähetä testi-ilmoitus** kertoo, toimivatko ilmoitukset.
 
 ### 6. Lukitse tavoite ke 30.9. illalla
 Paina ylläpidossa **Lukitse tavoite**. Monsterien HP lasketaan kaikkien lupauksista samalla kaavalla kuin säännöissä:
@@ -44,6 +43,12 @@ Paina ylläpidossa **Lukitse tavoite**. Monsterien HP lasketaan kaikkien lupauks
 Jos joku ilmoittautuu myöhässä, paina **Laske ja lukitse uudelleen**.
 
 ## Hyvä tietää
+- Käyttäjänimet näkyvät Supabasessa (Authentication → Users) muodossa `nimi@monsterijahti.app`.
+- Unohtunut salasana: ylläpitäjä asettaa uuden SQL-editorissa:
+  ```sql
+  update auth.users set encrypted_password = extensions.crypt('uusisalasana', extensions.gen_salt('bf'))
+  where email = 'nimi@monsterijahti.app';
+  ```
 - Nimi, kuva, juhlapäivät ja lupaus lukittuvat tietokannassa automaattisesti ke 30.9. klo 23.59. Ylläpitäjä voi yhä korjata niitä.
 - Monsterien nimet, kuvaukset, heikkoudet ja kuvat eivät näy muille ennen paljastusta. Ne luetaan näkymästä `monsters_public`.
 - iPhonessa ilmoitukset toimivat vain, kun sovellus on lisätty Koti-valikkoon ja avattu sieltä (iOS 16.4 tai uudempi).
