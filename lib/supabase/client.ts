@@ -6,18 +6,19 @@ export function createClient() {
 
 /**
  * Kuvat kulkevat Nextin kuvaoptimoinnin kautta: puhelin saa pienennetyn WebP/AVIF-kuvan
- * alkuperäisen (usein monen megatavun) tiedoston sijaan. Leveyden pitää olla Nextin sallituissa kooissa.
+ * alkuperäisen (usein monen megatavun) tiedoston sijaan. Leveys riittää tarkkaan
+ * puhelinnäyttöön (3× tiheys) ja laatu pidetään korkeana, jotta kuvat pysyvät terävinä. Leveyden pitää olla Nextin sallituissa kooissa.
  */
-function optimized(url: string, width: number) {
-  return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=75`;
+function optimized(url: string, width: number, quality: number) {
+  return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=${quality}`;
 }
 
 export function avatarUrl(path: string | null | undefined) {
   if (!path) return null;
-  return optimized(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${path}`, 128);
+  return optimized(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${path}`, 256, 85);
 }
 
 export function monsterImageUrl(path: string | null | undefined) {
   if (!path) return null;
-  return optimized(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/monsters/${path}`, 828);
+  return optimized(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/monsters/${path}`, 1200, 90);
 }
