@@ -35,10 +35,11 @@ export function hoursInWeek(hits: Hit[], userId: string, week: number) {
 
 /** Lataa kauden tilanteen ja laskee sen kirjauksista. Kuluva viikko on vielä auki. */
 export async function loadBattle(supabase: SupabaseClient, today: string) {
-  const [{ data: heroes }, { data: monsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }] = await Promise.all([
+  const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at'),
-    // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot.
+    // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot. Haetaan rinnakkain.
     supabase.from('monsters').select('week, hp, name, description, weakness, image_path').order('week'),
+    supabase.from('monsters_public').select('*').order('week'),
     supabase.from('hits').select('id, user_id, trained_on, sport, minutes, damage, bonus_pct, all_together, companions, created_at'),
     supabase.from('step_days').select('user_id, day, created_at'),
     supabase.from('sick_periods').select('user_id, starts_on, ends_on'),
@@ -46,9 +47,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   ]);
   const heroList = (heroes ?? []) as Hero[];
   let monsterList = (monsters ?? []) as PublicMonster[];
-  if (monsterList.length === 0) {
-    monsterList = ((await supabase.from('monsters_public').select('*').order('week')).data ?? []) as PublicMonster[];
-  }
+  if (monsterList.length === 0) monsterList = (publicMonsters ?? []) as PublicMonster[];
   const hitList = (hits ?? []) as Hit[];
   const stepList = (steps ?? []) as Step[];
   const periods = (sick ?? []) as SickPeriod[];

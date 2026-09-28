@@ -10,7 +10,13 @@ export async function sendPush(supabase: SupabaseClient, payload: PushPayload, u
   if (userIds && userIds.length === 0) return 0;
   webpush.setVapidDetails(process.env.VAPID_SUBJECT, process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
   const { data } = await supabase.rpc('push_targets', { ids: userIds });
-  const targets = (data ?? []) as { endpoint: string; p256dh: string; auth: string }[];
+  let targets = (data ?? []) as { endpoint: string; p256dh: string; auth: string }[];
+  if (targets.length === 0) {
+    // Palvelinavaimella (ajastettu muistutus) ei ole käyttäjää, joten funktio ei palauta mitään: luetaan taulu suoraan.
+    let q = supabase.from('push_subscriptions').select('endpoint, p256dh, auth');
+    if (userIds) q = q.in('user_id', userIds);
+    targets = ((await q).data ?? []) as typeof targets;
+  }
   const results = await Promise.allSettled(
     targets.map((t) => webpush.sendNotification({ endpoint: t.endpoint, keys: { p256dh: t.p256dh, auth: t.auth } }, JSON.stringify({ url: '/', ...payload }))),
   );

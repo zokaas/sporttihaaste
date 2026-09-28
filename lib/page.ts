@@ -9,8 +9,11 @@ export async function requireHero() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/kirjaudu');
-  const { data: me } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+  // Profiili ja kauden tilanne haetaan rinnakkain, jotta sivu ei odota kahta peräkkäistä kierrosta.
+  const [{ data: me }, battle] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    loadBattle(supabase, today()),
+  ]);
   if (!me?.hero_name || !me?.pledge_locked_at) redirect('/ilmoittaudu');
-  const battle = await loadBattle(supabase, today());
   return { supabase, user, me, battle };
 }

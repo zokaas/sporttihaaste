@@ -6,10 +6,9 @@ import { avatarUrl } from '@/lib/supabase/client';
 import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
-import { addDays, seasonWeek, weekRange } from '@/lib/season';
+import { seasonWeek, weekRange } from '@/lib/season';
 import { today, testOffsetMs } from '@/lib/today';
 import { announceReveal } from '@/lib/events';
-import MyWeek from '@/components/MyWeek';
 import Nav from '@/components/Nav';
 import TodayCard from '@/components/TodayCard';
 
@@ -20,38 +19,47 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/kirjaudu');
 
-  const { data: me } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+  const week = seasonWeek(today());
+  const [{ data: me }, { data: heroes }, maybeBattle] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at').order('created_at'),
+    // Kauden aikana taistelu haetaan samaan aikaan profiilin kanssa.
+    week >= 1 && week <= 11 ? loadBattle(supabase, today()) : Promise.resolve(null),
+  ]);
   if (!me?.hero_name || !me?.pledge_locked_at) redirect('/ilmoittaudu');
-
-  const { data: heroes } = await supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at').order('created_at');
   const locked = (heroes ?? []).filter((h) => h.pledge_locked_at);
   const img = avatarUrl(me.avatar_path);
-  const week = seasonWeek(today());
   // Ylläpitäjä voi katsoa taistelunäkymää ennen kauden alkua osoitteella /?esikatselu=1.
   const inSeason = (week >= 1 && week <= 11) || (me.is_admin && searchParams.esikatselu === '1');
-  const battle = inSeason ? await loadBattle(supabase, today()) : null;
-  if (battle) await announceReveal(supabase, battle).catch(() => {});
+  const battle = maybeBattle ?? (inSeason ? await loadBattle(supabase, today()) : null);
+  // Paljastusilmoitus tarkistetaan vain viikon ensimmäisenä päivänä, ei jokaisella latauksella.
+  if (battle && battle.today === weekRange(battle.week).start) await announceReveal(supabase, battle).catch(() => {});
 
+  if (battle) {
+    return (
+      <>
+        <Nav current="/" />
+        <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1'} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
+        <TodayCard b={battle} />
+      </>
+    );
+  }
+
+  // Ennen kautta: varjo, ilmoittautuneet ja ilmoitukset
   return (
     <>
       <Nav current="/" />
-      {battle ? <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1'} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} /> : null}
       <div className="row" style={{ alignItems: 'center' }}>
-        {img ? <Link href={`/sankari/${user.id}`}><img className="avatar" src={img} alt="Oma profiili" width={56} height={56} /></Link> : null}
+        {img ? <img className="avatar" src={img} alt="" width={56} height={56} /> : null}
         <div className="grow">
           <h1 className="display" style={{ fontSize: 28, overflowWrap: 'anywhere' }}>{me.hero_name}</h1>
           <p className="muted" style={{ margin: 0 }}>Lupaus {String(me.pledge_hours).replace('.', ',')} h viikossa</p>
         </div>
       </div>
-
-      {battle ? <TodayCard b={battle} /> : null}
-      {battle ? <MyWeek {...myWeekProps(battle, user.id)} /> : null}
-      {battle ? null : (
-        <BossShadow>
-          <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>Se odottaa</h2>
-          <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kausi alkaa torstaina 1.10. Ensimmäinen vastus on Willa Rykman. Loppupomo herää 14.12.</p>
-        </BossShadow>
-      )}
+      <BossShadow>
+        <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>Se odottaa</h2>
+        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kausi alkaa torstaina 1.10. Ensimmäinen vastus on Willa Rykman. Loppupomo herää 14.12.</p>
+      </BossShadow>
 
       <section className="card">
         <h2 className="display">Sankarit {locked.length}/10</h2>
@@ -66,7 +74,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
             );
           })}
         </div>
-        {battle ? null : <p className="muted" style={{ margin: 0 }}>Monsterien HP lasketaan kaikkien lupauksista, kun ilmoittautuminen sulkeutuu ke 30.9.</p>}
+        <p className="muted" style={{ margin: 0 }}>Monsterien HP lasketaan kaikkien lupauksista, kun ilmoittautuminen sulkeutuu ke 30.9.</p>
       </section>
 
       <section className="card">
@@ -74,39 +82,8 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
         <PushToggle />
       </section>
 
-      {battle ? null : <Link className="btn btn-ghost" href="/ilmoittaudu">Muokkaa ilmoittautumista</Link>}
+      <Link className="btn btn-ghost" href="/ilmoittaudu">Muokkaa ilmoittautumista</Link>
       {me.is_admin ? <Link className="btn btn-ghost" href="/yllapito">Ylläpito</Link> : null}
     </>
   );
-}
-
-function myWeekProps(b: NonNullable<Awaited<ReturnType<typeof loadBattle>>>, userId: string) {
-  const { start, end } = weekRange(b.week);
-  const days: { day: string; stepped: boolean; future: boolean; patrol: boolean }[] = [];
-  for (let d = start; d <= end; d = addDays(d, 1)) {
-    days.push({
-      day: d,
-      stepped: b.steps.some((s) => s.user_id === userId && s.day === d),
-      future: d > b.today,
-      patrol: b.patrols.some((p) => p.day === d),
-    });
-  }
-  const status = b.pledgeStatus(userId, b.week);
-  const myHits = b.hits.filter((h) => h.user_id === userId && seasonWeek(h.trained_on) === b.week);
-  const stepDamage = days.filter((d) => d.stepped).length * 50;
-  const next = b.changes.find((c) => c.user_id === userId && c.from_week === b.week + 1);
-  return {
-    week: b.week,
-    days,
-    target: status.target,
-    hours: status.hours,
-    sickDays: status.sickDays,
-    sick: b.sickNow.includes(userId),
-    weekDamage: myHits.reduce((a, h) => a + h.damage, 0) + stepDamage,
-    stepDamage,
-    togetherCount: b.hits.filter((h) => seasonWeek(h.trained_on) === b.week && h.companions.length >= 2 && (h.user_id === userId || h.companions.includes(userId))).length,
-    pledge: b.pledgeOf(userId, b.week),
-    nextPledge: next ? Number(next.hours) : null,
-    canChangePledge: b.week < 11 && seasonWeek(b.today) >= 1,
-  };
 }
