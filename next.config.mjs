@@ -7,7 +7,8 @@ const nextConfig = {
   images: { remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co' }] },
   // Välilehtien välillä selain käyttää enintään 30 s vanhaa sivua, joten siirtymät ovat heti valmiita.
   // Omat kirjaukset päivittävät sivun heti (revalidatePath / router.refresh).
-  experimental: { staleTimes: { dynamic: 30 } },
+  // Etukäteen haetut välilehdet (alapalkin prefetch) kelpaavat 60 s; omat kirjaukset ja reaaliaikapäivitykset tyhjentävät välimuistin.
+  experimental: { staleTimes: { dynamic: 30, static: 60 } },
 };
 
 export default function config(phase) {

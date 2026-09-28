@@ -7,6 +7,7 @@ import { afterStep } from '@/lib/events';
 import { loadBattle } from '@/lib/battle';
 import { sendPush } from '@/lib/push';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
+import { strikeSummary, type StrikeSummary } from '@/lib/strike';
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -23,7 +24,7 @@ function done(error: { message: string } | null): Result {
 }
 
 /** Kuittaa tai peruu askelpäivän (+50). */
-export async function toggleStep(day: string, on: boolean): Promise<Result> {
+export async function toggleStep(day: string, on: boolean, withStrike = false): Promise<Result & { strike?: StrikeSummary }> {
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   if (!loggableDays(today()).includes(day)) return { ok: false, error: 'Päivää ei voi enää kuitata.' };
@@ -35,7 +36,10 @@ export async function toggleStep(day: string, on: boolean): Promise<Result> {
     ? await supabase.from('step_days').upsert({ user_id: user.id, day })
     : await supabase.from('step_days').delete().eq('user_id', user.id).eq('day', day);
   if (!error && on) await afterStep(supabase, day).catch(() => {});
-  return done(error);
+  const res = done(error);
+  // Lyö-valikko näyttää iskuikkunan: monsterin tilanne askelten jälkeen.
+  if (res.ok && on && withStrike) return { ...res, strike: await strikeSummary(supabase, today()).catch(() => null) };
+  return res;
 }
 
 /**

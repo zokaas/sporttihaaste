@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toggleStep } from '@/app/actions';
-import { STEP_GOAL } from '@/lib/rules';
+import { STEP_DAY_DAMAGE, STEP_GOAL } from '@/lib/rules';
+import { showStrike } from '@/components/StrikeToastHost';
 
 /** Alapalkin Lyö: kysyy, kirjataanko treeni vai kuitataanko tämän päivän askeleet. */
 export default function StrikeMenu({ day, stepped }: { day: string | null; stepped: boolean }) {
@@ -25,12 +26,12 @@ export default function StrikeMenu({ day, stepped }: { day: string | null; stepp
     if (!day) return;
     setBusy(true);
     setMsg(null);
-    const res = await toggleStep(day, true);
+    const res = await toggleStep(day, true, true);
     setBusy(false);
     if (!res.ok) return setMsg({ ok: false, text: res.error });
-    // Taistelunäkymään: monsteri ottaa askelten voiman vastaan animaation kera.
+    // Sivu pysyy paikallaan: monsteri ottaa askeleet vastaan pienessä iskuikkunassa ruudun yläreunassa.
     setOpen(false);
-    router.push('/?askel=1');
+    if (res.strike) showStrike({ strike: res.strike, damage: STEP_DAY_DAMAGE, label: '👣 Askeleet!' });
     router.refresh();
   }
 

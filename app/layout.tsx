@@ -4,6 +4,7 @@ import './globals.css';
 import { testDay } from '@/lib/today';
 import { formatDay } from '@/lib/season';
 import ScrollMemory from '@/components/ScrollMemory';
+import StrikeToastHost from '@/components/StrikeToastHost';
 
 const display = Grenze_Gotisch({ subsets: ['latin', 'latin-ext'], weight: ['500', '700'], variable: '--font-display' });
 const body = IBM_Plex_Sans({ subsets: ['latin', 'latin-ext'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {testDay() ? <div className="test-banner">Testitila: {formatDay(testDay()!)} · <a href="/yllapito">lopeta</a></div> : null}
         <main className="app">{children}</main>
         <ScrollMemory />
+        <StrikeToastHost />
         <script
           dangerouslySetInnerHTML={{
             __html: "if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}",
