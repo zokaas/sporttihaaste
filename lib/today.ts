@@ -22,3 +22,10 @@ export function testDay() {
   const t = today();
   return t !== helsinkiToday() && !process.env.MJ_TODAY ? t : null;
 }
+
+/** Testitilan siirtymä millisekunteina (0, kun testitila ei ole päällä). */
+export function testOffsetMs() {
+  const t = testDay();
+  if (!t) return 0;
+  return Date.parse(`${t}T12:00:00Z`) - Date.parse(`${helsinkiToday()}T12:00:00Z`);
+}

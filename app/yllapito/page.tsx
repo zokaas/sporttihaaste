@@ -7,6 +7,9 @@ import webpush from 'web-push';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl } from '@/lib/supabase/client';
 import { seasonHp } from '@/lib/rules';
+import { loadBattle } from '@/lib/battle';
+import { weekRecap } from '@/lib/stats';
+import { today } from '@/lib/today';
 import ConfirmButton from '@/components/ConfirmButton';
 import MonsterEditor, { type Monster } from '@/components/MonsterEditor';
 
@@ -90,6 +93,8 @@ async function resetTestData() {
 
 export default async function Yllapito({ searchParams }: { searchParams: { push?: string; testi?: string } }) {
   const supabase = await requireAdmin();
+  const battle = await loadBattle(supabase, today());
+  const lastRecap = battle.week >= 2 ? weekRecap(battle, battle.week - 1) : null;
   const [{ data: heroes }, { data: subs }, { data: season }, { data: monsters }] = await Promise.all([
     supabase.from('profiles').select('*').order('created_at'),
     supabase.from('push_subscriptions').select('user_id'),
@@ -104,6 +109,13 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
   return (
     <>
       <h1 className="display">Ylläpito</h1>
+      {lastRecap ? (
+        <section className={`card${lastRecap.bonusShare > 25 ? ' threat' : ''}`}>
+          <h2 className="display">Viikko {lastRecap.week}</h2>
+          <p style={{ margin: 0 }}>Bonusten osuus vahingosta: <strong>{lastRecap.bonusShare} %</strong>{lastRecap.bonusShare > 25 ? ' ⚠️ yli 25 %. Monsterit kaatuvat bonuksilla helpommin kuin HP:t olettavat.' : ' (tavoite alle 25 %)'}</p>
+          <a href={`/raportti/${lastRecap.week}`}>Viikon raportti ja jako WhatsAppiin →</a>
+        </section>
+      ) : null}
 
       {helsinkiToday() < SEASON_START ? (
         <section className="card">

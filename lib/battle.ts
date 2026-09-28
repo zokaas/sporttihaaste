@@ -22,7 +22,7 @@ export type PublicMonster = {
   image_path: string | null;
 };
 
-type Hit = { user_id: string; trained_on: string; sport: string; minutes: number; damage: number; all_together: boolean; companions: string[]; created_at: string };
+type Hit = { id: number; user_id: string; trained_on: string; sport: string; minutes: number; damage: number; bonus_pct: number; all_together: boolean; companions: string[]; created_at: string };
 type Step = { user_id: string; day: string; created_at: string };
 type PledgeChange = { user_id: string; from_week: number; hours: number };
 
@@ -39,7 +39,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at'),
     // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot.
     supabase.from('monsters').select('week, hp, name, description, weakness, image_path').order('week'),
-    supabase.from('hits').select('user_id, trained_on, sport, minutes, damage, all_together, companions, created_at'),
+    supabase.from('hits').select('id, user_id, trained_on, sport, minutes, damage, bonus_pct, all_together, companions, created_at'),
     supabase.from('step_days').select('user_id, day, created_at'),
     supabase.from('sick_periods').select('user_id, starts_on, ends_on'),
     supabase.from('pledge_changes').select('user_id, from_week, hours'),
@@ -75,7 +75,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const base = { week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList };
 
   const hpLocked = monsterList.length === 11 && monsterList.every((m) => m.hp != null);
-  if (!hpLocked) return { ...base, hpLocked, required: participants, ledger: null };
+  if (!hpLocked) return { ...base, hpLocked, required: participants, ledger: null, events: [] as LedgerEvent[], ledgerInput: null };
 
   const events: LedgerEvent[] = [
     ...hitList.map((h) => ({ week: seasonWeek(h.trained_on), at: Date.parse(h.created_at), userId: h.user_id, damage: h.damage, isTraining: true, allTogether: h.all_together })),
@@ -88,12 +88,9 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     requiredByWeek[w] = requiredForSeal(participants, periods, w, today);
     if (w < week) pledgeBonusesByWeek[w] = participants.filter((u) => pledgeStatus(u, w).kept).length;
   }
-  const ledger = computeLedger(
-    { monsterHp: monsterList.filter((m) => m.week <= 10).map((m) => m.hp!), bossHp: byWeek.get(11)!.hp!, events, requiredByWeek, pledgeBonusesByWeek },
-    week,
-    true,
-  );
-  return { ...base, hpLocked, required: requiredByWeek[week], ledger, events };
+  const ledgerInput = { monsterHp: monsterList.filter((m) => m.week <= 10).map((m) => m.hp!), bossHp: byWeek.get(11)!.hp!, events, requiredByWeek, pledgeBonusesByWeek };
+  const ledger = computeLedger(ledgerInput, week, true);
+  return { ...base, hpLocked, required: requiredByWeek[week], ledger, events, ledgerInput };
 }
 
 /** Viikon monsterin nimi ja heikkous. Ylläpitäjä lukee taulusta (toimii testitilassa ennen paljastusta). */

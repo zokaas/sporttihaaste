@@ -53,3 +53,13 @@ export function formatDay(iso: string) {
 /** KK-PP, jota juhlapäivät käyttävät. */
 export const monthDay = (iso: string) => iso.slice(5, 10);
 
+
+/** Hetki (ms) annettuna päivänä ja kellonaikana Suomen aikaa. Huomioi kesäajan (+03) ja talviajan (+02). */
+export function helsinkiMs(iso: string, time = '23:59:59') {
+  for (const offset of ['+03:00', '+02:00']) {
+    const ms = Date.parse(`${iso}T${time}${offset}`);
+    const f = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Helsinki', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date(ms));
+    if (f.replace(' ', 'T') === `${iso}T${time}`) return ms;
+  }
+  return Date.parse(`${iso}T${time}+02:00`);
+}

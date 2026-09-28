@@ -1,7 +1,7 @@
 import type { loadBattle } from './battle';
 import { hoursInWeek } from './battle';
-import { STEP_DAY_DAMAGE } from './rules';
-import { addDays, monthDay, seasonWeek } from './season';
+import { STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, computeLedger } from './rules';
+import { addDays, formatDay, monthDay, seasonWeek, weekRange } from './season';
 
 export type Battle = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -120,3 +120,77 @@ export function upcomingCelebrations(b: Battle, days = 14) {
   return list;
 }
 
+
+export type WeekRecap = {
+  week: number;
+  killed: string[];
+  survived: { name: string; hp: number }[];
+  damage: number;
+  bonusShare: number;
+  potGain: number;
+  pot: number;
+  lostToSeal: number;
+  mvp: { name: string; damage: number } | null;
+  pledgesKept: number;
+  participants: number;
+  patrolDays: number;
+  stepDays: number;
+  jointTrainings: number;
+  celebrationsNext: { day: string; name: string; kind: string }[];
+};
+
+/** Päättyneen viikon yhteenveto: mitä kaatui, mitä jäi, potti, viikon sankari ja lupaukset. */
+export function weekRecap(b: Battle, w: number): WeekRecap | null {
+  if (!b.ledgerInput || w < 1 || w >= b.week) return null;
+  const before = w > 1 ? computeLedger(b.ledgerInput, w - 1) : null;
+  const after = computeLedger(b.ledgerInput, w);
+  const nameOf = (week: number) => b.monsters.get(week)?.name ?? (week === 11 ? 'Loppupomo' : `Viikon ${week} monsteri`);
+  const killedBefore = new Set((before?.killed ?? []).map((k) => k.week));
+
+  const hits = b.hits.filter((h) => seasonWeek(h.trained_on) === w);
+  const steps = b.steps.filter((s) => seasonWeek(s.day) === w);
+  const patrols = b.patrols.filter((p) => seasonWeek(p.day) === w);
+  const hitDamage = hits.reduce((a, h) => a + h.damage, 0);
+  const bonusDamage = hits.reduce((a, h) => a + (h.damage - Math.round(h.damage / (1 + (h.bonus_pct ?? 0) / 100))), 0);
+  const damage = hitDamage + steps.length * STEP_DAY_DAMAGE + patrols.length * PATROL_DAY_DAMAGE;
+
+  const totals = new Map<string, number>();
+  for (const h of hits) totals.set(h.user_id, (totals.get(h.user_id) ?? 0) + h.damage);
+  for (const s of steps) totals.set(s.user_id, (totals.get(s.user_id) ?? 0) + STEP_DAY_DAMAGE);
+  const top = [...totals].sort((a, c) => c[1] - a[1])[0];
+
+  const weekEnd = weekRange(w).end;
+  return {
+    week: w,
+    killed: after.killed.filter((k) => !killedBefore.has(k.week)).map((k) => nameOf(k.week)),
+    survived: after.alive.map((f) => ({ name: nameOf(f.week), hp: f.hp })),
+    damage,
+    bonusShare: damage ? Math.round((bonusDamage / damage) * 100) : 0,
+    potGain: after.pot - (before?.pot ?? 0),
+    pot: after.pot,
+    lostToSeal: after.lostToSeal - (before?.lostToSeal ?? 0),
+    mvp: top ? { name: b.heroes.find((h) => h.id === top[0])?.hero_name ?? '', damage: top[1] } : null,
+    pledgesKept: b.ledgerInput.pledgeBonusesByWeek[w] ?? 0,
+    participants: b.participants.length,
+    patrolDays: patrols.length,
+    stepDays: steps.length,
+    jointTrainings: hits.filter((h) => h.companions.length >= 2).length,
+    celebrationsNext: upcomingCelebrations({ ...b, today: addDays(weekEnd, 1) } as Battle, 7),
+  };
+}
+
+/** Raportti tekstinä WhatsAppiin. */
+export function recapText(r: WeekRecap) {
+  const fmt = (n: number) => n.toLocaleString('fi-FI');
+  const lines = [`⚔️ MONSTERIJAHTI – viikko ${r.week}`, ''];
+  if (r.killed.length) lines.push(`💀 Kaatui: ${r.killed.join(', ')}`);
+  for (const s of r.survived) lines.push(`😈 Jäi henkiin: ${s.name} (${fmt(s.hp)} HP rästiin)`);
+  lines.push(`💥 Vahinkoa yhteensä ${fmt(r.damage)} (bonusten osuus ${r.bonusShare} %)`);
+  if (r.lostToSeal) lines.push(`🛡️ Sinetti jäi vajaaksi: ${fmt(r.lostToSeal)} padottua vahinkoa menetettiin`);
+  lines.push(`💰 Potti +${fmt(r.potGain)} → ${fmt(r.pot)}`);
+  if (r.mvp) lines.push(`🏆 Viikon sankari: ${r.mvp.name} (${fmt(r.mvp.damage)})`);
+  lines.push(`🤝 Lupauksen piti ${r.pledgesKept}/${r.participants}`);
+  lines.push(`👣 Askelpäiviä ${r.stepDays}, partiopäiviä ${r.patrolDays} · yhteistreenejä ${r.jointTrainings}`);
+  if (r.celebrationsNext.length) lines.push(`🎉 Tulossa: ${r.celebrationsNext.map((c) => `${formatDay(c.day)} ${c.name}`).join(', ')}`);
+  return lines.join('\n');
+}

@@ -5,9 +5,10 @@ import { SPORTS, PARTICIPANTS, hitDamage, type Category } from '@/lib/rules';
 import { loggableDays, monthDay, seasonWeek } from '@/lib/season';
 import { today } from '@/lib/today';
 import { monsterOfWeek } from '@/lib/battle';
+import { afterHit } from '@/lib/events';
 
 export type HitInput = { day: string; sport: string; minutes: number; companions: string[] };
-type Result = { ok: true; damage: number } | { ok: false; error: string };
+type Result = { ok: true; damage: number; pct?: number } | { ok: false; error: string };
 
 /** Laskee iskun samoilla säännöillä kuin esikatselu. Käytetään sekä esikatselussa että tallennuksessa. */
 async function computeHit(input: HitInput, userId: string) {
@@ -55,9 +56,10 @@ export async function logHit(input: HitInput): Promise<Result> {
     all_together: hit.allTogether,
   });
   if (error) return { ok: false, error: error.message };
+  await afterHit(supabase).catch(() => {});
   revalidatePath('/');
   revalidatePath('/kirjaa');
-  return { ok: true, damage: hit.result.damage };
+  return { ok: true, damage: hit.result.damage, pct: hit.result.pct };
 }
 
 export async function deleteHit(id: number): Promise<Result> {

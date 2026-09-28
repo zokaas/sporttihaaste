@@ -7,14 +7,15 @@ import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
 import { addDays, seasonWeek, weekRange } from '@/lib/season';
-import { today } from '@/lib/today';
+import { today, testOffsetMs } from '@/lib/today';
+import { announceReveal } from '@/lib/events';
 import MyWeek from '@/components/MyWeek';
 import Nav from '@/components/Nav';
 import TodayCard from '@/components/TodayCard';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string } }) {
+export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string; krit?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/kirjaudu');
@@ -29,11 +30,12 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   // Ylläpitäjä voi katsoa taistelunäkymää ennen kauden alkua osoitteella /?esikatselu=1.
   const inSeason = (week >= 1 && week <= 11) || (me.is_admin && searchParams.esikatselu === '1');
   const battle = inSeason ? await loadBattle(supabase, today()) : null;
+  if (battle) await announceReveal(supabase, battle).catch(() => {});
 
   return (
     <>
       <Nav current="/" />
-      {battle ? <Battle data={battle} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} /> : null}
+      {battle ? <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1'} offsetMs={testOffsetMs()} /> : null}
       <div className="row" style={{ alignItems: 'center' }}>
         {img ? <Link href={`/sankari/${user.id}`}><img className="avatar" src={img} alt="Oma profiili" width={56} height={56} /></Link> : null}
         <div className="grow">
