@@ -31,9 +31,9 @@ function ago(iso: string) {
   return `${Math.round(h / 24)} pv sitten`;
 }
 
-type Props = { data: BattleData; userId: string; ownHit?: number | null; crit?: boolean; offsetMs?: number; isAdmin?: boolean };
+type Props = { data: BattleData; userId: string; ownHit?: number | null; ownStep?: boolean; crit?: boolean; offsetMs?: number; isAdmin?: boolean };
 
-export default function Battle({ data, userId, ownHit = null, crit = false, offsetMs = 0, isAdmin = false }: Props) {
+export default function Battle({ data, userId, ownHit = null, ownStep = false, crit = false, offsetMs = 0, isAdmin = false }: Props) {
   const { week, ledger, monsters, heroes, participants, required } = data;
 
   if (!ledger) {
@@ -118,6 +118,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           revealed={Boolean(monsters.get(target.week)?.name)}
           href={`/monsteri/${target.week}`}
           ownHit={ownHit}
+          ownLabel={ownStep ? '👣 Askeleet!' : undefined}
           crit={crit}
           effects
           seal={seal}

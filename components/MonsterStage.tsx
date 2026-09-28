@@ -21,6 +21,8 @@ type Props = {
   href?: string;
   /** Oma juuri kirjattu isku (?isku=…), näytetään lentävänä lukuna. */
   ownHit: number | null;
+  /** Oman iskun otsikko (oletus "Osumasi!", esim. askelkuittauksella "👣 Askeleet!"). */
+  ownLabel?: string;
   /** Oma isku oli kriittinen (bonuksia vähintään +100 %). */
   crit?: boolean;
   /** Paljastus ja osuma-animaatiot (vain etusivun nykyiselle monsterille). */
@@ -135,8 +137,10 @@ export default function MonsterStage(p: Props) {
     // E: HP-palkki laskee edellisestä käynnistä nykyiseen, ja vahinko lentää kuvan päälle
     const drop = last > p.hp ? last - p.hp : 0;
     const damage = p.ownHit ?? drop;
+    // Juuri kirjattu isku tai askeleet: näytä monsteri ylhäältä, jotta animaatio näkyy.
+    if (p.ownHit != null) window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
     if (damage > 0 && !reduced) {
-      strike(damage, p.ownHit != null ? (p.crit ? 'KRIITTINEN!' : 'Osumasi!') : null, Boolean(p.crit && p.ownHit != null), Math.min(p.maxHp, p.hp + damage));
+      strike(damage, p.ownHit != null ? (p.crit ? 'KRIITTINEN!' : p.ownLabel ?? 'Osumasi!') : null, Boolean(p.crit && p.ownHit != null), Math.min(p.maxHp, p.hp + damage));
       if (p.ownHit != null && 'vibrate' in navigator) navigator.vibrate(p.crit ? [80, 40, 80, 40, 160] : [60, 40, 120]);
     }
     if (p.ownHit != null) window.history.replaceState(null, '', window.location.pathname);

@@ -11,13 +11,14 @@ import { loadBattle } from '@/lib/battle';
 import { addDays, seasonWeek, weekRange, AFTER_SEASON, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import { today, testOffsetMs } from '@/lib/today';
 import { currentUser } from '@/lib/auth';
+import { STEP_DAY_DAMAGE } from '@/lib/rules';
 import { announceReveal } from '@/lib/events';
 import Nav from '@/components/Nav';
 import Hint from '@/components/Hint';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string; krit?: string; finaali?: string } }) {
+export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string; krit?: string; askel?: string; finaali?: string } }) {
   const supabase = createClient();
   const user = await currentUser();
   if (!user) redirect('/kirjaudu');
@@ -55,7 +56,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
     return (
       <>
         <Nav current="/" />
-        <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1'} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
+        <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : searchParams.askel ? STEP_DAY_DAMAGE : null} ownStep={Boolean(searchParams.askel) && !(Number(searchParams.isku) > 0)} crit={searchParams.krit === '1'} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
       </>
     );
   }
