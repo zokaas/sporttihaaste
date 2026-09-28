@@ -42,7 +42,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   }
 
   const target = ledger.alive[0];
-  const backlog = ledger.alive.slice(1);
+  // Rästit: vanhempien viikkojen elossa olevat, paitsi se, jota lyödään juuri nyt
+  const backlog = ledger.alive.slice(1).filter((f) => f.week < week);
   const heroById = new Map(heroes.map((h) => [h.id, h]));
   const nameOf = (w: number) => monsters.get(w)?.name ?? (w === BOSS_WEEK ? 'Loppupomo' : `Viikon ${w} monsteri`);
   const blows = finalBlows(data);
@@ -102,6 +103,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           effects
           seal={seal}
           endMs={endMs}
+          currentWeek={week}
           offsetMs={offsetMs}
           boss={target.week === BOSS_WEEK}
           potStrike={potBeforeBoss}
@@ -126,7 +128,6 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         </section>
       ) : null}
 
-      <Link className="btn btn-strike" href="/kirjaa">⚔️ Lyö – kirjaa treeni</Link>
       {seasonWeek(data.today) >= 1 && seasonWeek(data.today) <= BOSS_WEEK ? (
         <QuickStep day={data.today} stepped={data.steps.some((s) => s.user_id === userId && s.day === data.today)} />
       ) : null}

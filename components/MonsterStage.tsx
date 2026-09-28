@@ -31,6 +31,8 @@ type Props = {
   seal?: SealHero[];
   /** Viikon loppu (ms) ja testitilan siirtymä. */
   endMs?: number;
+  /** Kuluva viikko, jos näyttämöllä on rästi (yläpalkin otsikko). */
+  currentWeek?: number;
   offsetMs?: number;
   /** Loppupomo: punainen taivas; potti iskee paljastuksen yhteydessä. */
   boss?: boolean;
@@ -165,7 +167,7 @@ export default function MonsterStage(p: Props) {
         {state === 'shielded' ? <div className="stage-shield" /> : null}
       </div>
 
-      {p.endMs ? <div className="stage-top"><span className="stage-week">{p.boss ? 'Loppupomo' : `Viikko ${p.week}`}</span><Countdown endMs={p.endMs} offsetMs={p.offsetMs} /></div> : null}
+      {p.endMs ? <div className="stage-top"><span className="stage-week">{p.boss ? 'Loppupomo' : `Viikko ${p.currentWeek ?? p.week}`}</span><Countdown endMs={p.endMs} offsetMs={p.offsetMs} /></div> : null}
 
       {flying ? (
         <div className={`stage-damage${flying.label ? ' own' : ''}${flying.crit ? ' crit' : ''}`} aria-live="polite">

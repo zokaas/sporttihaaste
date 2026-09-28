@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import UnreadDot from '@/components/UnreadDot';
+import { navVisibility } from '@/lib/nav';
 
 const LEFT = [
   { href: '/', label: 'Taistelu', icon: '👹' },
@@ -11,7 +12,9 @@ const RIGHT = [
 ];
 
 /** Yläpalkki (viestit ja säännöt) ja peukalon ulottuvilla oleva alapalkki, jonka keskellä on Lyö. */
-export default function Nav({ current }: { current: string }) {
+export default async function Nav({ current }: { current: string }) {
+  const show = await navVisibility();
+  const right = RIGHT.filter((l) => l.href !== '/bestiaario' || show.bestiary);
   const tab = (l: (typeof LEFT)[number]) => (
     <Link key={l.href} href={l.href} aria-current={current === l.href ? 'page' : undefined}>
       <span aria-hidden="true">{l.icon}</span>
@@ -25,13 +28,15 @@ export default function Nav({ current }: { current: string }) {
         <Link href="/viestit" className="topbar-icon" aria-label="Viestit" aria-current={current === '/viestit' ? 'page' : undefined}>📣<UnreadDot seenNow={current === '/viestit'} /></Link>
         <Link href="/saannot" className="topbar-icon" aria-label="Säännöt" aria-current={current === '/saannot' ? 'page' : undefined}>?</Link>
       </header>
-      <nav className="tabbar" aria-label="Päävalikko">
+      <nav className="tabbar" aria-label="Päävalikko" style={{ gridTemplateColumns: `repeat(${LEFT.length + right.length + (show.strike ? 1 : 0)}, 1fr)` }}>
         {LEFT.map(tab)}
-        <Link href="/kirjaa" className="tabbar-strike" aria-label="Lyö – kirjaa treeni">
-          <span aria-hidden="true">⚔️</span>
-          Lyö
-        </Link>
-        {RIGHT.map(tab)}
+        {show.strike ? (
+          <Link href="/kirjaa" className="tabbar-strike" aria-label="Lyö – kirjaa treeni">
+            <span aria-hidden="true">⚔️</span>
+            Lyö
+          </Link>
+        ) : null}
+        {right.map(tab)}
       </nav>
     </>
   );

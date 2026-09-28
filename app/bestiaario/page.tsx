@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { navVisibility } from '@/lib/nav';
 import Nav from '@/components/Nav';
 import BossShadow from '@/components/BossShadow';
 import { requireHero } from '@/lib/page';
@@ -13,7 +15,8 @@ const fmt = (n: number) => n.toLocaleString('fi-FI');
 const killedDay = (ms: number) => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Helsinki' }).format(new Date(ms));
 
 export default async function Bestiaario() {
-  const { battle: b } = await requireHero();
+  const [{ battle: b }, show] = await Promise.all([requireHero(), navVisibility()]);
+  if (!show.bestiary) redirect('/');
   const blows = finalBlows(b);
   const name = (id: string) => b.heroes.find((h) => h.id === id)?.hero_name ?? 'Partio';
   const killed = new Map((b.ledger?.killed ?? []).map((k) => [k.week, k.killedAt]));
