@@ -194,7 +194,7 @@ export default function MonsterStage(p: Props) {
           {parts ? parts.slice(0, -1).reduce<{ at: number; marks: number[] }>((acc, x) => { acc.at += x.hp; acc.marks.push(acc.at); return acc; }, { at: 0, marks: [] }).marks.map((at) => <i key={at} style={{ left: `${100 - (at / p.maxHp) * 100}%` }} />) : null}
         </div>
         {p.padded > 0 ? (
-          <div className="stage-dam" role="meter" aria-label="Padottu vahinko" aria-valuenow={p.padded}>
+          <div className="stage-dam" role="meter" aria-label="Padottu voima" aria-valuenow={p.padded}>
             <span style={{ width: `${damPct}%` }} />
             <em>🛡️ {fmt(p.padded)} padottuna</em>
           </div>

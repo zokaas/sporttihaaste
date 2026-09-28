@@ -61,10 +61,7 @@ export default async function Mina() {
         </section>
       ) : null}
 
-      <section className="card">
-        <h2 className="display">Ilmoitukset</h2>
-        <PushToggle />
-      </section>
+      <PushToggle card />
 
       {!inSeason ? <Link className="btn btn-ghost" href="/ilmoittaudu">Muokkaa ilmoittautumista</Link> : null}
       {me.is_admin ? <Link className="btn btn-ghost" href="/yllapito">Ylläpito</Link> : null}

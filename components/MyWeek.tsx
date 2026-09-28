@@ -12,6 +12,9 @@ type Props = {
   hours: number;
   sickDays: number;
   sick: boolean;
+  sickSince: string | null;
+  fullTarget: number;
+  inSeal: boolean;
   weekDamage: number;
   stepDamage: number;
   togetherCount: number;
@@ -24,6 +27,7 @@ export default function MyWeek(p: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [sickPick, setSickPick] = useState<string | null>(null);
 
   async function run(fn: () => Promise<{ ok: boolean; error?: string }>) {
     setBusy(true);
@@ -55,7 +59,6 @@ export default function MyWeek(p: Props) {
         <div className="hpbar"><span style={{ width: `${pct}%`, background: kept ? 'var(--moss-text)' : 'var(--ember)' }} /></div>
         <span className="muted small">
           {kept ? 'Lupaus pidetty! +100 pottiin, kun viikko lukittuu.' : p.target === 0 ? 'Ei lupausta tällä viikolla sairauden vuoksi.' : `Vielä ${h(p.target - p.hours)}. Pidetty lupaus tuo +100 pottiin.`}
-          {p.sickDays ? ` Tavoitteesta on vähennetty ${p.sickDays} sairaspäivää.` : ''}
         </span>
       </div>
 
@@ -84,16 +87,42 @@ export default function MyWeek(p: Props) {
       </div>
 
       <p className="muted small" style={{ margin: 0 }}>
-        Vahinkosi tällä viikolla <strong style={{ color: 'var(--text)' }}>{p.weekDamage.toLocaleString('fi-FI')}</strong> (askeleista {p.stepDamage}) · yhteistreenejä {p.togetherCount}
+        Voimasi tällä viikolla <strong style={{ color: 'var(--text)' }}>{p.weekDamage.toLocaleString('fi-FI')}</strong> (askeleista {p.stepDamage}) · yhteistreenejä {p.togetherCount}
       </p>
 
-      {p.sick ? <p className="note" style={{ margin: 0 }}>Olet merkinnyt itsesi kipeäksi. Lupauksesi pienenee sairaspäivien verran, eikä sinua tarvita sinettiin tällä viikolla.</p> : null}
-      <div className="row" style={{ flexWrap: 'wrap', gap: 16 }}>
-        <button type="button" className="linklike small" disabled={busy} onClick={() => run(() => setSick(!p.sick))}>
-          {p.sick ? '💪 Olen taas terve' : '🤒 Olen kipeä'}
-        </button>
-      </div>
-
+      {p.sick ? (
+        <div className="sick-box">
+          <strong>🤒 Kipeänä {p.sickSince ? `${formatDay(p.sickSince)} alkaen` : ''}</strong>
+          <ul>
+            <li>Lupaus tällä viikolla: {h(p.fullTarget)} → <strong>{h(p.target)}</strong></li>
+            <li>Et ole mukana tämän viikon sinetissä.</li>
+            <li>Partiopäivään riittävät terveet sankarit.</li>
+          </ul>
+          <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => run(() => setSick(false))}>💪 Olen taas terve</button>
+          <span className="muted small">{p.sickSince && p.sickSince >= (today ?? '') ? 'Tänään tehty merkintä perutaan kokonaan.' : 'Viimeiseksi sairaspäiväksi merkitään eilinen.'}</span>
+        </div>
+      ) : sickPick !== null ? (
+        <div className="sick-box">
+          <strong>🤒 Mistä päivästä alkaen olet kipeä?</strong>
+          <div className="chips">
+            {p.days.filter((d) => !d.future).reverse().map((d) => (
+              <button key={d.day} type="button" className="chip" aria-pressed={sickPick === d.day} onClick={() => setSickPick(d.day)}>{d.day === today ? 'Tänään' : formatDay(d.day)}</button>
+            ))}
+          </div>
+          <span className="muted small">Viikon lupaus pienenee sairaspäivien verran, etkä ole mukana tämän viikon sinetissä.</span>
+          <div className="row">
+            <button type="button" className="btn grow" disabled={busy || !sickPick} onClick={() => run(() => setSick(true, sickPick!)).then(() => setSickPick(null))}>Merkitse kipeäksi</button>
+            <button type="button" className="btn btn-ghost" onClick={() => setSickPick(null)}>Peru</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {p.sickDays ? <p className="note" style={{ margin: 0 }}>Olit tällä viikolla kipeänä {p.sickDays} pv: lupaus {h(p.fullTarget)} → {h(p.target)}{p.inSeal ? '' : ', etkä ole mukana tämän viikon sinetissä'}.</p> : null}
+          <div className="row" style={{ flexWrap: 'wrap', gap: 16 }}>
+            <button type="button" className="linklike small" disabled={busy} onClick={() => setSickPick(today ?? '')}>🤒 Olen kipeä</button>
+          </div>
+        </>
+      )}
 
       {error ? <p className="error" role="alert" style={{ margin: 0 }}>{error}</p> : null}
     </section>

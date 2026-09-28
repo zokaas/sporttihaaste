@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import type { loadBattle } from '@/lib/battle';
-import { computeLedger } from '@/lib/rules';
+import { computeLedger, sealView } from '@/lib/rules';
 import { finalBlows, weekRecap } from '@/lib/stats';
 import { formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
@@ -50,6 +50,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const blows = finalBlows(data);
   const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Partio' : null }));
   const missing = target ? required.filter((id) => !target.hitters.includes(id)) : [];
+  const view = target ? sealView(target, required) : null;
   const seal: SealHero[] = participants.map((id) => {
     const h = heroById.get(id);
     return { id, name: h?.hero_name ?? '', initial: (h?.hero_name ?? '?').slice(0, 1), avatar: avatarUrl(h?.avatar_path), hit: Boolean(target?.hitters.includes(id)), excused: !required.includes(id) };
@@ -92,10 +93,10 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           title={nameOf(target.week)}
           image={monsterImageUrl(monsters.get(target.week)?.image_path)}
           weakness={weaknessesOf(monsters.get(target.week)).join(', ') || null}
-          parts={stageParts(monsters.get(target.week), target.hp, false, monsterImageUrl)}
-          hp={target.padded ? 0 : target.hp}
+          parts={stageParts(monsters.get(target.week), view!.hp, false, monsterImageUrl)}
+          hp={view!.hp}
           maxHp={monsters.get(target.week)?.hp ?? 1}
-          padded={target.padded}
+          padded={view!.dam}
           backlog={target.week < week}
           revealed={Boolean(monsters.get(target.week)?.name)}
           href={`/monsteri/${target.week}`}
@@ -137,10 +138,10 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       ) : null}
 
       {target && missing.length ? (
-        <section className={`card${target.padded ? ' threat' : ''}`}>
-          {target.padded ? (
+        <section className={`card${view?.dam ? ' threat' : ''}`}>
+          {view?.dam ? (
             <p style={{ margin: 0 }}>
-              <strong style={{ color: 'var(--gold)' }}>{fmt(target.padded)} vahinkoa padottuna!</strong> {nameOf(target.week)} kaatuu heti, kun sinetti täyttyy. Muuten pato menetetään su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59.
+              <strong style={{ color: 'var(--gold)' }}>{fmt(view.dam)} voimaa padottuna!</strong> {nameOf(target.week)} on sinettirajalla ({fmt(view.hp)} HP = 10 HP jokaista puuttuvaa kohden) ja kaatuu heti, kun sinetti täyttyy. Muuten pato menetetään su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59.
             </p>
           ) : (
             <Hint id="seal" title={<strong>Sinetti {required.length - missing.length}/{required.length}</strong>}>Monsteri kaatuu vasta, kun jokainen terve sankari on lyönyt sitä treenillä. Askeleet eivät täytä sinettiä.</Hint>
@@ -158,7 +159,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       {backlog.length ? (
         <section className="card">
           <Hint id="backlog" className="muted small" title={<h2 className="display">Rästit</h2>}>Vanhin rästi ottaa iskut ensin, ja sen jälkeen ylijäämä siirtyy seuraavaan.</Hint>
-          {backlog.map((f) => <p key={f.week} style={{ margin: 0 }}>{nameOf(f.week)}: {f.padded ? `HP 0, ${fmt(f.padded)} padottuna` : `${fmt(f.hp)} HP`}</p>)}
+          {backlog.map((f) => <p key={f.week} style={{ margin: 0 }}>{nameOf(f.week)}: {(() => { const v = sealView(f, required); return v.dam ? `${fmt(v.hp)} HP (sinettiraja), ${fmt(v.dam)} padottuna` : `${fmt(v.hp)} HP`; })()}</p>)}
         </section>
       ) : null}
 

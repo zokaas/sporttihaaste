@@ -74,7 +74,7 @@ export function heroStats(b: Battle, avatarUrl: (p: string | null) => string | n
     const streak = longestStreak(steps);
 
     const achievements: Achievement[] = [];
-    for (const [w, id] of Object.entries(winners)) if (id === h.id) achievements.push({ icon: '🏆', title: 'Viikon sankari', detail: `Eniten vahinkoa viikolla ${w}` });
+    for (const [w, id] of Object.entries(winners)) if (id === h.id) achievements.push({ icon: '🏆', title: 'Viikon sankari', detail: `Eniten voimaa viikolla ${w}` });
     for (const [w, id] of Object.entries(blows)) {
       if (id !== h.id) continue;
       const m = b.monsters.get(Number(w));
@@ -186,8 +186,8 @@ export function recapText(r: WeekRecap) {
   const lines = [`⚔️ MONSTERIJAHTI – viikko ${r.week}`, ''];
   if (r.killed.length) lines.push(`💀 Kaatui: ${r.killed.join(', ')}`);
   for (const s of r.survived) lines.push(`😈 Jäi henkiin: ${s.name} (${fmt(s.hp)} HP rästiin)`);
-  lines.push(`💥 Vahinkoa yhteensä ${fmt(r.damage)} (bonusten osuus ${r.bonusShare} %)`);
-  if (r.lostToSeal) lines.push(`🛡️ Sinetti jäi vajaaksi: ${fmt(r.lostToSeal)} padottua vahinkoa menetettiin`);
+  lines.push(`💥 Voimaa yhteensä ${fmt(r.damage)} (bonusten osuus ${r.bonusShare} %)`);
+  if (r.lostToSeal) lines.push(`🛡️ Sinetti jäi vajaaksi: ${fmt(r.lostToSeal)} padottua voimaa menetettiin`);
   lines.push(`💰 Potti +${fmt(r.potGain)} → ${fmt(r.pot)}`);
   if (r.mvp) lines.push(`🏆 Viikon sankari: ${r.mvp.name} (${fmt(r.mvp.damage)})`);
   lines.push(`🤝 Lupauksen piti ${r.pledgesKept}/${r.participants}`);

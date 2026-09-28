@@ -346,3 +346,7 @@ details.companions[open] { padding-bottom: 12px; }
 .step-dot.done { border: 2px solid var(--moss-text); color: var(--light); background: var(--moss); }
 .step-dot.done img { opacity: 1; filter: none; }
 .step-dot.sick { opacity: 0.35; }
+.sick-box { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 14px; background: var(--track); border: 1px dashed var(--line); }
+.sick-box ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.install-hint { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 16px; background: var(--moss); color: var(--light); }
+.install-hint p { color: #d9e8e2; margin-top: 2px; }

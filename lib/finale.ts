@@ -55,7 +55,7 @@ export function seasonFinale(b: Battle, userId: string, avatarUrl: (p: string | 
   }
 
   const defs: { icon: string; title: string; detail: string; unit: string; value: (id: string) => number }[] = [
-    { icon: '🏆', title: 'MVP', detail: 'Eniten vahinkoa koko kaudella', unit: 'vahinkoa', value: (id) => byId.get(id)?.damage ?? 0 },
+    { icon: '🏆', title: 'MVP', detail: 'Eniten voimaa koko kaudella', unit: 'voimaa', value: (id) => byId.get(id)?.damage ?? 0 },
     { icon: '⚔️', title: 'Viimeisten iskujen mestari', detail: 'Eniten monsterien viimeisiä iskuja', unit: 'viimeistä iskua', value: (id) => blowCount.get(id) ?? 0 },
     { icon: '🤝', title: 'Lupauksen pitäjä', detail: 'Eniten pidettyjä viikkolupauksia', unit: `/ ${closed} lupausta`, value: (id) => kept.get(id) ?? 0 },
     { icon: '👣', title: 'Askelkuningas', detail: 'Eniten 10 000 askeleen päiviä', unit: 'askelpäivää', value: (id) => byId.get(id)?.stepDays ?? 0 },
@@ -72,7 +72,7 @@ export function seasonFinale(b: Battle, userId: string, avatarUrl: (p: string | 
   // Kauden luvut
   const streakBest = top(heroes, (id) => byId.get(id)?.longestStreak ?? 0);
   const numbers = [
-    { label: 'Vahinkoa yhteensä', value: fmt(stats.reduce((a, s) => a + s.damage, 0) + b.patrols.length * 250) },
+    { label: 'Voimaa yhteensä', value: fmt(stats.reduce((a, s) => a + s.damage, 0) + b.patrols.length * 250) },
     { label: 'Treenitunteja', value: fmt(Math.round(stats.reduce((a, s) => a + s.hours, 0))) },
     { label: 'Iskuja', value: fmt(b.hits.length) },
     { label: 'Askelpäiviä', value: fmt(b.steps.length) },

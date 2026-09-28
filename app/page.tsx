@@ -93,10 +93,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
         <Hint id="hp-lock" className="muted">Monsterien HP lasketaan kaikkien lupauksista, kun ilmoittautuminen sulkeutuu ke 30.9.</Hint>
       </section>
 
-      <section className="card">
-        <h2 className="display">Ilmoitukset</h2>
-        <PushToggle />
-      </section>
+      <PushToggle card />
 
       <Link className="btn btn-ghost" href="/ilmoittaudu">Muokkaa ilmoittautumista</Link>
       {me.is_admin ? <Link className="btn btn-ghost" href="/yllapito">Ylläpito</Link> : null}

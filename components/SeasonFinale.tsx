@@ -124,12 +124,12 @@ export default function SeasonFinale({ f }: { f: Finale }) {
         <section className="card">
           <h2 className="display">Sinun kautesi</h2>
           <div className="finale-numbers">
-            <div className="stat"><span className="muted small">Vahinko</span><strong>{fmt(f.own.damage)}</strong><span className="muted small">sija {f.own.rank}/{f.own.of}</span></div>
+            <div className="stat"><span className="muted small">Voima</span><strong>{fmt(f.own.damage)}</strong><span className="muted small">sija {f.own.rank}/{f.own.of}</span></div>
             <div className="stat"><span className="muted small">Treenitunnit</span><strong>{fmt(Math.round(f.own.hours))}</strong></div>
             <div className="stat"><span className="muted small">Lupaukset</span><strong>{f.own.kept}/{f.own.closed}</strong></div>
             <div className="stat"><span className="muted small">Askelpäivät</span><strong>{f.own.stepDays}</strong></div>
           </div>
-          {f.own.bestHit ? <p style={{ margin: 0 }}>Paras iskusi: {f.own.bestHit.sport} {f.own.bestHit.minutes} min, <strong>{fmt(f.own.bestHit.damage)}</strong> vahinkoa.</p> : null}
+          {f.own.bestHit ? <p style={{ margin: 0 }}>Paras iskusi: {f.own.bestHit.sport} {f.own.bestHit.minutes} min, <strong>{fmt(f.own.bestHit.damage)}</strong> voimaa.</p> : null}
           {allShown && f.own.awards.length ? <p style={{ margin: 0 }}>Kunniamerkkisi: <strong>{f.own.awards.join(', ')}</strong></p> : null}
         </section>
       ) : null}

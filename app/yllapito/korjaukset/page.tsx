@@ -66,7 +66,7 @@ export default async function Korjaukset({ searchParams }: { searchParams: { vko
 
       <section className="card">
         <h2 className="display">Kirjaa sankarin puolesta</h2>
-        <p className="muted small" style={{ margin: 0 }}>Mille tahansa kauden päivälle, myös lukitulle viikolle. Vahinko ja bonukset lasketaan säännöistä.</p>
+        <p className="muted small" style={{ margin: 0 }}>Mille tahansa kauden päivälle, myös lukitulle viikolle. Voima ja bonukset lasketaan säännöistä.</p>
         <AdminHitForm heroes={heroList} sports={SPORTS.map((s) => s.name)} min={SEASON_START} max={maxDay} />
       </section>
 
