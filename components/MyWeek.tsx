@@ -64,13 +64,13 @@ export default function MyWeek(p: Props) {
       <div className="myweek-block">
         <Hint
           id="pledge-hours"
-          title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Lupaustunnit</span><strong className={kept ? 'ok' : ''} style={{ fontSize: 22 }}>{h(p.hours)} / {h(p.target)}{kept ? ' ✓' : ''}</strong></div>}
+          title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Lupaustunnit</span><strong className={kept ? 'ok' : ''} style={{ fontSize: 22 }}>{p.target > 0 ? <>{h(p.hours)} / {h(p.target)}{kept ? ' ✓' : ''}</> : h(p.hours)}</strong></div>}
         >
           Lupaustunnit lasketaan lajin arvolla: tunti useimpia lajeja = 1 h, tunti uintia = 2 h, tunti joogaa, liikkuvuutta tai golfia = 0,5 h. Bonukset eivät kasvata lupaustunteja.
         </Hint>
-        <div className="hpbar"><span style={{ width: `${pct}%`, background: kept ? 'var(--moss-text)' : 'var(--ember)' }} /></div>
+        {p.target > 0 ? <div className="hpbar"><span style={{ width: `${pct}%`, background: kept ? 'var(--moss-text)' : 'var(--ember)' }} /></div> : null}
         <span className="muted small">
-          {kept ? 'Lupaus pidetty! +100 pottiin, kun viikko lukittuu.' : p.target === 0 ? 'Ei lupausta tällä viikolla sairauden vuoksi.' : `Vielä ${h(p.target - p.hours)}. Pidetty lupaus tuo +100 pottiin.`}
+          {kept ? 'Lupaus pidetty! +100 pottiin, kun viikko lukittuu.' : p.target === 0 ? 'Tällä viikolla ei ole lupaustavoitetta sairauden vuoksi. Kirjatut treenit tuovat silti voimaa monsteria vastaan.' : `Vielä ${h(p.target - p.hours)}. Pidetty lupaus tuo +100 pottiin.`}
         </span>
         {shortWeek ? <span className="muted small">Lyhyt viikko ({p.days.length} pv): tavoite on {p.days.length}/7 lupauksestasi ({h(p.pledge)}).</span> : null}
         {p.sickDays ? <span className="small" style={{ color: 'var(--gold)' }}>🤒 {p.sickDays} sairaspäivää: tavoite {h(p.fullTarget)} → {h(p.target)}{p.inSeal ? '' : ' · ei sinettivelvollisuutta tällä viikolla'}</span> : null}
