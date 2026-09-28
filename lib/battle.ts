@@ -72,7 +72,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
 
   const patrols = patrolDays(stepList, participants, periods);
   const sickNow = participants.filter((u) => isSickOn(periods, u, today));
-  const base = { week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, sickNow, pledgeOf, pledgeStatus, changes: changeList };
+  const base = { week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList };
 
   const hpLocked = monsterList.length === 11 && monsterList.every((m) => m.hp != null);
   if (!hpLocked) return { ...base, hpLocked, required: participants, ledger: null };
@@ -93,7 +93,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     week,
     true,
   );
-  return { ...base, hpLocked, required: requiredByWeek[week], ledger };
+  return { ...base, hpLocked, required: requiredByWeek[week], ledger, events };
 }
 
 /** Viikon monsterin nimi ja heikkous. Ylläpitäjä lukee taulusta (toimii testitilassa ennen paljastusta). */
