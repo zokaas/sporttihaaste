@@ -76,7 +76,7 @@ export default function MyWeek(p: Props) {
 
       <div className="myweek-block">
         <Hint id="steps" title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Askeleet ja sairaspäivät</span><strong>{stepCount} / {p.days.length} pv</strong></div>}>
-          Ylärivi: napauta päivää, kun olet kävellyt 10 000 askelta (+50). Jos kaikki terveet kuittaavat saman päivän, siitä tulee partiopäivä ⭐ +250. Alarivi 🤒: merkitse päivät, joina olit kipeä. Sairaspäivä pienentää viikon lupausta 1/7:lla, ja yksikin sairaspäivä vapauttaa sinut sen viikon sinetistä.
+          Ylärivi: napauta päivää, kun olet kävellyt 10 000 askelta (+50). Jos kaikki terveet kuittaavat saman päivän, siitä tulee megamarssi ⭐ +250. Alarivi 🤒: merkitse päivät, joina olit kipeä. Sairaspäivä pienentää viikon lupausta 1/7:lla, ja yksikin sairaspäivä vapauttaa sinut sen viikon sinetistä.
         </Hint>
         <div className="weekstrip" style={{ gridTemplateColumns: `repeat(${p.days.length}, 1fr)` }}>
           {p.days.map((d) => {
@@ -88,7 +88,7 @@ export default function MyWeek(p: Props) {
                 type="button"
                 className={`daycell ${state}`}
                 aria-pressed={d.stepped}
-                aria-label={`${formatDay(d.day)}: ${d.sick ? 'sairaspäivä' : d.stepped ? 'askeleet kuitattu' : d.future ? 'tulossa' : 'ei kuitattu'}${d.patrol ? ', partiopäivä' : ''}`}
+                aria-label={`${formatDay(d.day)}: ${d.sick ? 'sairaspäivä' : d.stepped ? 'askeleet kuitattu' : d.future ? 'tulossa' : 'ei kuitattu'}${d.patrol ? ', megamarssi' : ''}`}
                 disabled={d.future || d.sick || busy}
                 onClick={() => run(() => toggleStep(d.day, !d.stepped))}
               >

@@ -76,7 +76,7 @@ export function seasonFinale(b: Battle, userId: string, avatarUrl: (p: string | 
     { label: 'Treenitunteja', value: fmt(Math.round(stats.reduce((a, s) => a + s.hours, 0))) },
     { label: 'Iskuja', value: fmt(b.hits.length) },
     { label: 'Askelpäiviä', value: fmt(b.steps.length) },
-    { label: 'Partiopäiviä', value: fmt(b.patrols.length) },
+    { label: 'Megamarsseja', value: fmt(b.patrols.length) },
     { label: 'Yhteistreenejä', value: fmt(b.hits.filter((h) => h.companions.length >= 2).length) },
     { label: 'Lupauksia pidetty', value: `${[...kept.values()].reduce((a, n) => a + n, 0)}/${closed * heroes.length}` },
     { label: 'Pisin askelputki', value: streakBest.best ? `${streakBest.best} pv` : '–', note: streakBest.winners.map((w) => w.name).join(', ') },

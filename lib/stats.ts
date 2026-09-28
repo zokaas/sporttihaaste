@@ -191,7 +191,7 @@ export function recapText(r: WeekRecap) {
   lines.push(`💰 Potti +${fmt(r.potGain)} → ${fmt(r.pot)}`);
   if (r.mvp) lines.push(`🏆 Viikon sankari: ${r.mvp.name} (${fmt(r.mvp.damage)})`);
   lines.push(`🤝 Lupauksen piti ${r.pledgesKept}/${r.participants}`);
-  lines.push(`👣 Askelpäiviä ${r.stepDays}, partiopäiviä ${r.patrolDays} · yhteistreenejä ${r.jointTrainings}`);
+  lines.push(`👣 Askelpäiviä ${r.stepDays}, megamarsseja ${r.patrolDays} · yhteistreenejä ${r.jointTrainings}`);
   if (r.celebrationsNext.length) lines.push(`🎉 Tulossa: ${r.celebrationsNext.map((c) => `${formatDay(c.day)} ${c.name}`).join(', ')}`);
   return lines.join('\n');
 }

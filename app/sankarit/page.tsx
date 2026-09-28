@@ -76,7 +76,7 @@ export default async function Sankarit({ searchParams }: { searchParams: { tab?:
             </>
           ) : null}
           <div className="stat-row">
-            <div className="stat"><span className="muted small">Partiopäivät</span><strong>{b.patrols.filter((p) => seasonWeek(p.day) === b.week).length}</strong></div>
+            <div className="stat"><span className="muted small">Megamarssit</span><strong>{b.patrols.filter((p) => seasonWeek(p.day) === b.week).length}</strong></div>
             <div className="stat"><span className="muted small">Yhteistreenit</span><strong>{joint}</strong></div>
           </div>
         </section>

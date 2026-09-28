@@ -17,7 +17,7 @@ export default function RecapCard({ r }: { r: WeekRecap }) {
       {r.lostToSeal ? <p className="note threat" style={{ margin: 0 }}>🛡️ Sinetti jäi vajaaksi: {fmt(r.lostToSeal)} voimaa sinettirajan yli menetettiin.</p> : null}
       {r.mvp ? <p style={{ margin: 0 }}>🏆 Viikon sankari: <strong>{r.mvp.name}</strong> ({fmt(r.mvp.damage)})</p> : null}
       <p style={{ margin: 0 }}>🤝 Lupauksen piti {r.pledgesKept}/{r.participants}</p>
-      <p style={{ margin: 0 }}>👣 Askelpäiviä {r.stepDays}, partiopäiviä {r.patrolDays} · yhteistreenejä {r.jointTrainings}</p>
+      <p style={{ margin: 0 }}>👣 Askelpäiviä {r.stepDays}, megamarsseja {r.patrolDays} · yhteistreenejä {r.jointTrainings}</p>
       {r.celebrationsNext.length ? <p style={{ margin: 0 }}>🎉 Tulossa: {r.celebrationsNext.map((c) => `${formatDay(c.day)} ${c.name}`).join(', ')}</p> : null}
     </div>
   );

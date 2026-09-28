@@ -5,7 +5,7 @@ import { isSickOn } from '@/lib/weekly';
 import { weaknessesOf } from '@/lib/trio';
 import { avatarUrl } from '@/lib/supabase/client';
 
-/** Tänään: viikon heikkous, päivän juhlapäivä (tai seuraava) ja päivän partiotilanne. */
+/** Tänään: viikon heikkous, päivän juhlapäivä (tai seuraava) ja päivän megamarssitilanne. */
 export default function TodayCard({ b }: { b: Battle }) {
   const weakness = weaknessesOf(b.monsters.get(b.week)).join(', ');
   const celebrations = upcomingCelebrations(b, 60);
@@ -31,7 +31,7 @@ export default function TodayCard({ b }: { b: Battle }) {
       ) : null}
       <div className="row" style={{ alignItems: 'center' }}>
         <span aria-hidden="true">{patrol ? '⭐' : '👣'}</span>
-        {patrol ? <strong className="ok">Partiopäivä! Kaikki terveet kuittasivat askeleet (+250).</strong> : <span>Askeleet <strong>{stepped.size}/{healthy.length}</strong></span>}
+        {patrol ? <strong className="ok">Megamarssi! Kaikki terveet kuittasivat askeleet (+250).</strong> : <span>Askeleet <strong>{stepped.size}/{healthy.length}</strong></span>}
       </div>
       {!patrol ? (
         <div className="step-dots" aria-label={`Kuitanneet: ${people.filter((p) => p.done).map((p) => p.name).join(', ') || 'ei vielä kukaan'}`}>

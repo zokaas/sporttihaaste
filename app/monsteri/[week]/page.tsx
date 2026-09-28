@@ -26,7 +26,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
   const view = fighter ? sealView(fighter, b.required) : null;
   const killed = b.ledger?.killed.find((k) => k.week === week);
   const blow = finalBlows(b)[week];
-  const heroName = (id: string) => b.heroes.find((h) => h.id === id)?.hero_name ?? 'Partio';
+  const heroName = (id: string) => b.heroes.find((h) => h.id === id)?.hero_name ?? 'Megamarssi';
   const { start, end } = weekRange(week);
   const weak = weaknessesOf(m).join(', ');
   const parts = stageParts(m, killed ? 0 : view?.hp ?? m?.hp ?? 0, Boolean(killed), monsterImageUrl);

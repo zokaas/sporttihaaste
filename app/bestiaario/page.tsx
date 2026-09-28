@@ -19,7 +19,7 @@ export default async function Bestiaario() {
   const [{ battle: b }, show] = await Promise.all([requireHero(), navVisibility()]);
   if (!show.bestiary) redirect('/');
   const blows = finalBlows(b);
-  const name = (id: string) => b.heroes.find((h) => h.id === id)?.hero_name ?? 'Partio';
+  const name = (id: string) => b.heroes.find((h) => h.id === id)?.hero_name ?? 'Megamarssi';
   const killed = new Map((b.ledger?.killed ?? []).map((k) => [k.week, k.killedAt]));
   const alive = new Map((b.ledger?.alive ?? []).map((f) => [f.week, f]));
   const boss = b.monsters.get(BOSS_WEEK);

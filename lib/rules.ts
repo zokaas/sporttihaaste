@@ -36,7 +36,7 @@ export const STEP_DAY_DAMAGE = 50;
 export const PATROL_DAY_DAMAGE = 250;
 export const PLEDGE_BONUS = 100;
 export const BONUS_CAP_PCT = 200;
-export const STEPS_WEEKLY_ESTIMATE = 2750; // 10 × 5 pv × 50 + 1 partiopäivä
+export const STEPS_WEEKLY_ESTIMATE = 2750; // 10 × 5 pv × 50 + 1 megamarssi
 
 // ---------- Yksittäinen isku ----------
 
@@ -103,7 +103,7 @@ export interface LedgerEvent {
   at: number; // kirjaushetki (ms), määrää järjestyksen
   userId: string;
   damage: number;
-  isTraining: boolean; // askeleet ja partiopäivät eivät täytä sinettiä
+  isTraining: boolean; // askeleet ja megamarssit eivät täytä sinettiä
   allTogether?: boolean; // koko porukka yhdessä (vain tilastoihin)
 }
 
