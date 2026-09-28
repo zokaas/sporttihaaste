@@ -60,7 +60,7 @@ export async function logHit(input: HitInput): Promise<Result> {
   });
   if (error) return { ok: false, error: error.message };
   await afterHit(supabase).catch(() => {});
-  revalidatePath('/');
+  revalidatePath('/', 'layout');
   revalidatePath('/kirjaa');
   return { ok: true, damage: hit.result.damage, pct: hit.result.pct };
 }
@@ -71,7 +71,7 @@ export async function deleteHit(id: number): Promise<Result> {
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   const { error } = await supabase.from('hits').delete().eq('id', id).eq('user_id', user.id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/');
+  revalidatePath('/', 'layout');
   revalidatePath('/kirjaa');
   return { ok: true, damage: 0 };
 }

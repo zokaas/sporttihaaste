@@ -13,11 +13,12 @@ import { weekRecap } from '@/lib/stats';
 import { today } from '@/lib/today';
 import { fridayReminders } from '@/lib/reminders';
 import ConfirmButton from '@/components/ConfirmButton';
+import ClearLocalState from '@/components/ClearLocalState';
 import MonsterEditor, { type Monster } from '@/components/MonsterEditor';
 
 export const dynamic = 'force-dynamic';
 
-const fmt = (n: number) => n.toLocaleString('fi-FI');
+const fmt = (n: number | null | undefined) => (n ?? 0).toLocaleString('fi-FI');
 const dm = (v: string | null) => (v ? `${Number(v.split('-')[1])}.${Number(v.split('-')[0])}.` : '–');
 
 async function requireAdmin() {
@@ -32,8 +33,9 @@ async function requireAdmin() {
 async function lockSeason() {
   'use server';
   const supabase = await requireAdmin();
-  await supabase.rpc('lock_season');
-  revalidatePath('/yllapito');
+  const { error } = await supabase.rpc('lock_season');
+  revalidatePath('/', 'layout');
+  redirect(`/yllapito?tavoite=${encodeURIComponent(error ? `Lukitus epäonnistui: ${error.message}. Onko migraatio 008_lukitus.sql ajettu?` : 'Tavoite lukittu. Monsterien HP:t on laskettu.')}`);
 }
 
 async function sendTestPush() {
@@ -90,7 +92,8 @@ async function resetTestData() {
   'use server';
   const supabase = await requireAdmin();
   const { error } = await supabase.rpc('reset_test_data');
-  redirect(`/yllapito?testi=${encodeURIComponent(error ? `Tyhjennys epäonnistui: ${error.message}` : 'Testidata tyhjennetty.')}`);
+  revalidatePath('/', 'layout');
+  redirect(`/yllapito?testi=${encodeURIComponent(error ? `Tyhjennys epäonnistui: ${error.message}. Onko migraatio 004 ajettu?` : 'Testidata tyhjennetty.')}${error ? '' : '&nollaa=1'}`);
 }
 
 async function testFridayReminder() {
@@ -101,7 +104,7 @@ async function testFridayReminder() {
   redirect(`/yllapito?push=${encodeURIComponent(res.skipped ?? `Perjantain muistutus lähetetty itsellesi (${res.sent} laitteeseen).`)}`);
 }
 
-export default async function Yllapito({ searchParams }: { searchParams: { push?: string; testi?: string } }) {
+export default async function Yllapito({ searchParams }: { searchParams: { push?: string; testi?: string; tavoite?: string; nollaa?: string } }) {
   const supabase = await requireAdmin();
   const battle = await loadBattle(supabase, today());
   const lastRecap = battle.week >= 2 ? weekRecap(battle, battle.week - 1) : null;
@@ -143,7 +146,8 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
             <ConfirmButton message="Poistetaanko kaikkien iskut, askeleet, sairaudet ja lupausmuutokset?" className="btn btn-ghost" style={{ width: '100%', color: 'var(--blood-text)' }}>Tyhjennä testidata</ConfirmButton>
           </form>
           <p className="muted small" style={{ margin: 0 }}>Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet ja lupausmuutokset. Tunnukset ja ilmoittautumiset säilyvät. Toimii vain ennen kauden alkua 1.10. Muista tyhjentää ennen kautta!</p>
-          {searchParams.testi ? <p className="note" role="status" style={{ margin: 0 }}>{searchParams.testi}</p> : null}
+          {searchParams.testi ? <p className={`note${searchParams.testi.startsWith('Tyhjennys epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.testi}</p> : null}
+          {searchParams.nollaa ? <ClearLocalState /> : null}
         </section>
       ) : null}
 
@@ -199,6 +203,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
         </div>
         <p className="muted" style={{ margin: 0 }}>Pottikatto on puolet loppupomon HP:sta. Lukitse tavoite, kun kaikki ovat ilmoittautuneet. Lukituksen voi tehdä uudelleen, jos joku ilmoittautuu myöhässä.</p>
         <form action={lockSeason}><button className="btn" type="submit">{season?.hp_locked_at ? 'Laske ja lukitse uudelleen' : 'Lukitse tavoite'}</button></form>
+        {searchParams.tavoite ? <p className={`note${searchParams.tavoite.startsWith('Lukitus epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.tavoite}</p> : null}
       </section>
 
       <section className="card">
