@@ -61,6 +61,11 @@ export default function MyWeek(p: Props) {
         <span className="muted small">Viikko {p.week}</span>
       </div>
 
+      <div className="week-power">
+        <strong>⚔️ {p.weekDamage.toLocaleString('fi-FI')} voimaa</strong>
+        <span className="muted small">askeleista {p.stepDamage} · yhteistreenejä {p.togetherCount}</span>
+      </div>
+
       <div className="myweek-block">
         <Hint
           id="pledge-hours"
@@ -145,10 +150,6 @@ export default function MyWeek(p: Props) {
           </>
         ) : null}
       </details>
-
-      <p className="muted small" style={{ margin: 0 }}>
-        Voimasi tällä viikolla <strong style={{ color: 'var(--text)' }}>{p.weekDamage.toLocaleString('fi-FI')}</strong> (askeleista {p.stepDamage}) · yhteistreenejä {p.togetherCount}
-      </p>
 
       {error ? <p className="error" role="alert" style={{ margin: 0 }}>{error}</p> : null}
     </section>

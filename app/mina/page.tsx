@@ -22,12 +22,10 @@ export default async function Mina() {
   return (
     <>
       <Nav current="/mina" />
-      <Link href={`/sankari/${user.id}`} className="rowlink row" style={{ alignItems: 'center' }}>
-        {img ? <img className="avatar" src={img} alt="" width={64} height={64} /> : <div className="avatar" style={{ width: 64, height: 64 }}>{(me.hero_name ?? '?').slice(0, 1)}</div>}
-        <div className="grow" style={{ minWidth: 0 }}>
-          <h1 className="display" style={{ fontSize: 28, overflowWrap: 'anywhere' }}>{me.hero_name}</h1>
-          <span className="muted">Oma profiili ja saavutukset →</span>
-        </div>
+      <Link href={`/sankari/${user.id}`} className="rowlink row profile-line">
+        {img ? <img className="avatar" src={img} alt="" width={36} height={36} /> : <div className="avatar" style={{ width: 36, height: 36 }}>{(me.hero_name ?? '?').slice(0, 1)}</div>}
+        <strong className="grow" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{me.hero_name}</strong>
+        <span className="muted small">Profiili →</span>
       </Link>
 
       {inSeason ? <MyWeek {...myWeekProps(b, user.id)} /> : (

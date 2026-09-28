@@ -67,7 +67,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const endMs = helsinkiMs(weekRange(week).end);
   const potBeforeBoss = week === BOSS_WEEK && data.ledgerInput ? Math.min(computeLedger(data.ledgerInput, MONSTER_WEEKS).pot, ledger.potCap) : 0;
   const recap = week >= 2 ? weekRecap(data, week - 1) : null;
-  const potFull = ledger.pot >= ledger.potCap && ledger.potCap > 0;
+  // Loppupomon HP (ja siitä johdettu pottikatto) pysyy salassa, kunnes se herää.
+  const potFull = week === BOSS_WEEK && ledger.pot >= ledger.potCap && ledger.potCap > 0;
   const overdue = ledger.alive.filter((f) => f.week < week).length;
   const nextReveal = week < BOSS_WEEK ? formatDay(weekRange(week + 1).start) : null;
   // Ennakkoarvoitus: perjantaista alkaen varjo ja vihje seuraavasta monsterista.
@@ -185,7 +186,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       ) : null}
 
       <div className="stat-row" style={{ gridTemplateColumns: '1fr' }}>
-        <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{potFull ? `💰 ${fmt(ledger.potCap)}` : fmt(ledger.pot)}</strong><span className="muted small">{potFull ? 'täynnä' : `katto ${fmt(ledger.potCap)}`}</span></div>
+        <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{potFull ? `💰 ${fmt(ledger.potCap)}` : fmt(ledger.pot)}</strong><span className="muted small">{potFull ? 'täynnä' : week === BOSS_WEEK ? `katto ${fmt(ledger.potCap)}` : 'kasvaa loppupomoa vastaan'}</span></div>
       </div>
 
       <section className="card">

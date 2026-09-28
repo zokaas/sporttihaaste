@@ -388,3 +388,9 @@ details.companions[open] { padding-bottom: 12px; }
 .swatch { display: inline-block; }
 .swatch.bar { width: 10px; height: 10px; border-radius: 2px; background: var(--ember); }
 .swatch.line { width: 14px; height: 2px; border-radius: 1px; background: var(--light); }
+
+/* Minun viikkoni: viikon voima otsikon alla, profiili yhdellä rivillä */
+.week-power { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.week-power strong { font-size: 22px; }
+.profile-line { align-items: center; gap: 10px; }
+.profile-line .avatar { width: 36px; height: 36px; font-size: 16px; }
