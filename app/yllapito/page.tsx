@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { TEST_DAY_COOKIE, testDay } from '@/lib/today';
@@ -10,6 +11,7 @@ import { seasonHp } from '@/lib/rules';
 import { loadBattle } from '@/lib/battle';
 import { weekRecap } from '@/lib/stats';
 import { today } from '@/lib/today';
+import { fridayReminders } from '@/lib/reminders';
 import ConfirmButton from '@/components/ConfirmButton';
 import MonsterEditor, { type Monster } from '@/components/MonsterEditor';
 
@@ -91,6 +93,14 @@ async function resetTestData() {
   redirect(`/yllapito?testi=${encodeURIComponent(error ? `Tyhjennys epäonnistui: ${error.message}` : 'Testidata tyhjennetty.')}`);
 }
 
+async function testFridayReminder() {
+  'use server';
+  const supabase = await requireAdmin();
+  const { data: { user } } = await supabase.auth.getUser();
+  const res = await fridayReminders(supabase, today(), user!.id);
+  redirect(`/yllapito?push=${encodeURIComponent(res.skipped ?? `Perjantain muistutus lähetetty itsellesi (${res.sent} laitteeseen).`)}`);
+}
+
 export default async function Yllapito({ searchParams }: { searchParams: { push?: string; testi?: string } }) {
   const supabase = await requireAdmin();
   const battle = await loadBattle(supabase, today());
@@ -109,6 +119,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
   return (
     <>
       <h1 className="display">Ylläpito</h1>
+      <Link className="btn btn-ghost" href="/yllapito/korjaukset">🛠️ Korjaukset: iskut, sairaudet ja varmuuskopio</Link>
       {lastRecap ? (
         <section className={`card${lastRecap.bonusShare > 25 ? ' threat' : ''}`}>
           <h2 className="display">Viikko {lastRecap.week}</h2>
@@ -158,6 +169,8 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
           })}
         </ul>
         <form action={sendTestPush}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Lähetä testi-ilmoitus kaikille</button></form>
+        <form action={testFridayReminder}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Kokeile perjantain muistutusta (vain itsellesi)</button></form>
+        <p className="muted small" style={{ margin: 0 }}>Perjantain muistutus lähtee automaattisesti pe klo 9 (talviaikana klo 8) niille, joilta puuttuu lupauksen tunteja, isku sinettiin tai askelkuittauksia.</p>
         {searchParams.push ? <p className="note" role="status" style={{ margin: 0 }}>{searchParams.push}</p> : null}
       </section>
 

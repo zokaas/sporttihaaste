@@ -1,0 +1,12 @@
+{
+  "framework": "nextjs",
+  "regions": [
+    "arn1"
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/perjantai",
+      "schedule": "0 6 * * 5"
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 const LINKS = [
   { href: '/', label: 'Taistelu' },
+  { href: '/mina', label: 'Minä' },
   { href: '/sankarit', label: 'Sankarit' },
   { href: '/bestiaario', label: 'Bestiaario' },
 ];

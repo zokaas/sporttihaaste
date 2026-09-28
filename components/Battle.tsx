@@ -11,6 +11,7 @@ import NudgeButton from '@/components/NudgeButton';
 import LiveRefresh from '@/components/LiveRefresh';
 import RecapPrompt from '@/components/RecapPrompt';
 import RecapCard from '@/components/RecapCard';
+import QuickStep from '@/components/QuickStep';
 
 type BattleData = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -106,6 +107,9 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       )}
 
       <Link className="btn btn-strike" href="/kirjaa">⚔️ Lyö – kirjaa treeni</Link>
+      {seasonWeek(data.today) >= 1 && seasonWeek(data.today) <= 11 ? (
+        <QuickStep day={data.today} stepped={data.steps.some((s) => s.user_id === userId && s.day === data.today)} />
+      ) : null}
 
       {target && missing.length ? (
         <section className={`card${target.padded ? ' threat' : ''}`}>

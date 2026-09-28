@@ -11,11 +11,12 @@ export type HitInput = { day: string; sport: string; minutes: number; companions
 type Result = { ok: true; damage: number; pct?: number } | { ok: false; error: string };
 
 /** Laskee iskun samoilla säännöillä kuin esikatselu. Käytetään sekä esikatselussa että tallennuksessa. */
-async function computeHit(input: HitInput, userId: string) {
+async function computeHit(input: HitInput, userId: string, anyDay = false) {
   const supabase = createClient();
   const sport = SPORTS.find((s) => s.name === input.sport);
   if (!sport) return { error: 'Valitse laji.' } as const;
-  if (!loggableDays(today()).includes(input.day)) return { error: 'Päivälle ei voi enää kirjata. Valitse kuluvan viikon päivä.' } as const;
+  const w = seasonWeek(input.day);
+  if (anyDay ? w < 1 || w > 11 || input.day > today() : !loggableDays(today()).includes(input.day)) return { error: 'Päivälle ei voi enää kirjata. Valitse kuluvan viikon päivä.' } as const;
   if (!Number.isInteger(input.minutes) || input.minutes < 15 || input.minutes > 600) return { error: 'Keston pitää olla 15 min – 10 h.' } as const;
 
   const [{ data: heroes }, monster] = await Promise.all([
@@ -71,4 +72,29 @@ export async function deleteHit(id: number): Promise<Result> {
   revalidatePath('/');
   revalidatePath('/kirjaa');
   return { ok: true, damage: 0 };
+}
+
+/** Ylläpitäjä kirjaa iskun sankarin puolesta mille tahansa kauden päivälle (korjaukset). */
+export async function adminLogHit(input: HitInput & { userId: string }): Promise<Result> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
+  const { data: me } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single();
+  if (!me?.is_admin) return { ok: false, error: 'Vain ylläpitäjä.' };
+  const hit = await computeHit(input, input.userId, true);
+  if ('error' in hit) return { ok: false, error: hit.error! };
+  const { error } = await supabase.from('hits').insert({
+    user_id: input.userId,
+    trained_on: input.day,
+    sport: input.sport,
+    minutes: input.minutes,
+    companions: hit.companions,
+    base: hit.result.base,
+    bonus_pct: hit.result.pct,
+    damage: hit.result.damage,
+    all_together: hit.allTogether,
+  });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/', 'layout');
+  return { ok: true, damage: hit.result.damage, pct: hit.result.pct };
 }
