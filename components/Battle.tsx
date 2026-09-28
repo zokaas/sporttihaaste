@@ -134,6 +134,20 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         </section>
       )}
 
+      {teaser ? (
+        <section className="card teaser">
+          <svg className="teaser-shadow" viewBox="0 0 390 300" aria-hidden="true">
+            <path d="M70 300 C80 215 125 170 158 156 C140 120 126 76 104 30 C146 60 166 100 176 138 C186 134 204 134 214 138 C224 100 244 60 286 30 C264 76 250 120 232 156 C265 170 310 215 320 300 Z" fill="#050303" />
+            <ellipse cx="180" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
+            <ellipse cx="210" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
+          </svg>
+          <div style={{ minWidth: 0 }}>
+            <span className="stage-week">{week + 1 === BOSS_WEEK ? 'Loppupomo' : `Viikko ${week + 1}`} · paljastuu {nextReveal}</span>
+            <p className="teaser-text">“{teaser}”</p>
+          </div>
+        </section>
+      ) : null}
+
       {target && !missing.length && required.length ? (
         <section className="card">
           <p style={{ margin: 0 }}><strong className="ok">✓ Sinetti täynnä.</strong> Kaikki terveet sankarit ovat lyöneet. {nameOf(target.week)} kaatuu heti, kun sen HP loppuu.</p>
@@ -170,22 +184,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         </section>
       ) : null}
 
-      {teaser ? (
-        <section className="card teaser">
-          <svg className="teaser-shadow" viewBox="0 0 390 300" aria-hidden="true">
-            <path d="M70 300 C80 215 125 170 158 156 C140 120 126 76 104 30 C146 60 166 100 176 138 C186 134 204 134 214 138 C224 100 244 60 286 30 C264 76 250 120 232 156 C265 170 310 215 320 300 Z" fill="#050303" />
-            <ellipse cx="180" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
-            <ellipse cx="210" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
-          </svg>
-          <div style={{ minWidth: 0 }}>
-            <span className="stage-week">{week + 1 === BOSS_WEEK ? 'Loppupomo' : `Viikko ${week + 1}`} · paljastuu {nextReveal}</span>
-            <p className="teaser-text">“{teaser}”</p>
-          </div>
-        </section>
-      ) : null}
-
-      <div className="stat-row">
-        <Link href="/bestiaario" className="stat rowlink"><span className="muted small">Kaatuneet</span><strong>{ledger.killed.filter((k) => k.week <= MONSTER_WEEKS).length}/{MONSTER_WEEKS}</strong></Link>
+      <div className="stat-row" style={{ gridTemplateColumns: '1fr' }}>
         <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{potFull ? `💰 ${fmt(ledger.potCap)}` : fmt(ledger.pot)}</strong><span className="muted small">{potFull ? 'täynnä' : `katto ${fmt(ledger.potCap)}`}</span></div>
       </div>
 
