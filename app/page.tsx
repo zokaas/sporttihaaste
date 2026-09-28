@@ -6,8 +6,11 @@ import { avatarUrl } from '@/lib/supabase/client';
 import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
-import { addDays, seasonWeek, today, weekRange } from '@/lib/season';
+import { addDays, seasonWeek, weekRange } from '@/lib/season';
+import { today } from '@/lib/today';
 import MyWeek from '@/components/MyWeek';
+import Nav from '@/components/Nav';
+import TodayCard from '@/components/TodayCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,8 +32,9 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
 
   return (
     <>
+      <Nav current="/" />
       <div className="row" style={{ alignItems: 'center' }}>
-        {img ? <img className="avatar" src={img} alt="" width={56} height={56} /> : null}
+        {img ? <Link href={`/sankari/${user.id}`}><img className="avatar" src={img} alt="Oma profiili" width={56} height={56} /></Link> : null}
         <div className="grow">
           <h1 className="display" style={{ fontSize: 28, overflowWrap: 'anywhere' }}>{me.hero_name}</h1>
           <p className="muted" style={{ margin: 0 }}>Lupaus {String(me.pledge_hours).replace('.', ',')} h viikossa</p>
@@ -38,6 +42,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
       </div>
 
       {battle ? <Battle data={battle} /> : null}
+      {battle ? <TodayCard b={battle} /> : null}
       {battle ? <MyWeek {...myWeekProps(battle, user.id)} /> : null}
       {battle ? null : (
         <BossShadow>
@@ -52,10 +57,10 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
           {(heroes ?? []).map((h) => {
             const src = avatarUrl(h.avatar_path);
             return (
-              <div key={h.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: h.pledge_locked_at ? 1 : 0.45 }}>
+              <Link key={h.id} href={h.pledge_locked_at ? `/sankari/${h.id}` : '#'} className="rowlink" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: h.pledge_locked_at ? 1 : 0.45 }}>
                 {src ? <img className="avatar" src={src} alt="" width={48} height={48} /> : <div className="avatar" style={{ width: 48, height: 48 }}>?</div>}
                 <span className="small" style={{ textAlign: 'center', overflowWrap: 'anywhere', lineHeight: 1.25 }}>{h.hero_name ?? 'Kesken'}</span>
-              </div>
+              </Link>
             );
           })}
         </div>

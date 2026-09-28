@@ -37,21 +37,26 @@ export function hoursInWeek(hits: Hit[], userId: string, week: number) {
 export async function loadBattle(supabase: SupabaseClient, today: string) {
   const [{ data: heroes }, { data: monsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at'),
-    supabase.from('monsters_public').select('*').order('week'),
+    // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot.
+    supabase.from('monsters').select('week, hp, name, description, weakness, image_path').order('week'),
     supabase.from('hits').select('user_id, trained_on, sport, minutes, damage, all_together, companions, created_at'),
     supabase.from('step_days').select('user_id, day, created_at'),
     supabase.from('sick_periods').select('user_id, starts_on, ends_on'),
     supabase.from('pledge_changes').select('user_id, from_week, hours'),
   ]);
   const heroList = (heroes ?? []) as Hero[];
-  const monsterList = (monsters ?? []) as PublicMonster[];
+  let monsterList = (monsters ?? []) as PublicMonster[];
+  if (monsterList.length === 0) {
+    monsterList = ((await supabase.from('monsters_public').select('*').order('week')).data ?? []) as PublicMonster[];
+  }
   const hitList = (hits ?? []) as Hit[];
   const stepList = (steps ?? []) as Step[];
   const periods = (sick ?? []) as SickPeriod[];
   const changeList = (changes ?? []) as PledgeChange[];
   const participants = heroList.filter((h) => h.pledge_locked_at).map((h) => h.id);
   const week = Math.min(11, Math.max(1, seasonWeek(today)));
-  const byWeek = new Map(monsterList.map((m) => [m.week, m]));
+  // Tulevat monsterit pysyvät salassa myös ylläpitäjältä (testitilassa "tänään" voi olla ennen paljastusta).
+  const byWeek = new Map(monsterList.map((m) => [m.week, m.week > week ? { ...m, name: null, description: null, weakness: null, image_path: null } : m]));
 
   const pledgeOf = (userId: string, w: number) =>
     pledgeForWeek(Number(heroList.find((h) => h.id === userId)?.pledge_hours ?? 0), changeList.filter((c) => c.user_id === userId), w);
@@ -67,7 +72,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
 
   const patrols = patrolDays(stepList, participants, periods);
   const sickNow = participants.filter((u) => isSickOn(periods, u, today));
-  const base = { week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, sickNow, pledgeOf, pledgeStatus, changes: changeList };
+  const base = { week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList };
 
   const hpLocked = monsterList.length === 11 && monsterList.every((m) => m.hp != null);
   if (!hpLocked) return { ...base, hpLocked, required: participants, ledger: null };
@@ -88,5 +93,13 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     week,
     true,
   );
-  return { ...base, hpLocked, required: requiredByWeek[week], ledger };
+  return { ...base, hpLocked, required: requiredByWeek[week], ledger, events };
+}
+
+/** Viikon monsterin nimi ja heikkous. Ylläpitäjä lukee taulusta (toimii testitilassa ennen paljastusta). */
+export async function monsterOfWeek(supabase: SupabaseClient, week: number) {
+  const own = await supabase.from('monsters').select('name, weakness').eq('week', week).maybeSingle();
+  if (own.data) return own.data as { name: string | null; weakness: Category | null };
+  const pub = await supabase.from('monsters_public').select('name, weakness').eq('week', week).maybeSingle();
+  return (pub.data ?? { name: null, weakness: null }) as { name: string | null; weakness: Category | null };
 }

@@ -113,3 +113,36 @@ details.monster-row summary { cursor: pointer; min-height: 32px; display: flex; 
 textarea.input { font: 400 16px var(--font-body), sans-serif; resize: vertical; }
 
 .seal .sick { outline: 2px dashed var(--muted); outline-offset: 1px; }
+
+.test-banner { position: sticky; top: 0; z-index: 10; background: var(--gold); color: #1a1208; text-align: center; font-size: 13px; font-weight: 600; padding: 6px 12px; }
+.test-banner a { color: inherit; }
+
+/* Navigaatio */
+.nav { display: flex; gap: 4px; background: var(--track); border-radius: 14px; padding: 4px; }
+.nav a { flex: 1; min-height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; }
+.nav a[aria-current='page'] { background: var(--ember-fill); color: var(--light); font-weight: 600; }
+.nav a.help { flex: 0 0 40px; font-weight: 700; font-size: 16px; }
+
+/* Listat ja välilehdet */
+a.rowlink { color: inherit; text-decoration: none; }
+.rank { width: 24px; text-align: right; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+.badges { display: flex; flex-direction: column; gap: 8px; }
+.badge { display: flex; gap: 10px; align-items: center; background: var(--track); border-radius: 12px; padding: 8px 12px; }
+.badge .icon { font-size: 22px; }
+.compare { display: grid; grid-template-columns: 1fr auto auto; gap: 6px 14px; align-items: baseline; font-size: 14px; }
+.compare .head { color: var(--muted); font-size: 12px; }
+.grid-days { display: grid; gap: 4px; font-size: 12px; }
+.grid-days .cell { text-align: center; border-radius: 6px; padding: 4px 0; background: var(--track); }
+.grid-days .cell.full { background: var(--moss); color: var(--light); font-weight: 600; }
+table.plain { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.plain th, table.plain td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+.faq summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
+.tabs a.tab-link { min-height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--muted); text-decoration: none; font: 500 14px var(--font-body), sans-serif; }
+.tabs a.tab-link[aria-selected='true'] { background: var(--ember-fill); color: var(--light); font-weight: 600; }
+
+/* Osuma, kaatuminen */
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px) rotate(-0.6deg); } 40% { transform: translateX(7px) rotate(0.5deg); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+@keyframes flash { 0% { box-shadow: inset 0 0 0 999px rgba(179, 38, 30, 0.55); } 100% { box-shadow: inset 0 0 0 999px rgba(179, 38, 30, 0); } }
+@keyframes fall { 0% { transform: translateY(-12px) scale(1.05); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+.fx-hit .boss { animation: shake 0.5s ease-in-out 0.2s 1, flash 0.9s ease-out 0.2s 1; }
+.fx-fell { background: var(--blood); color: var(--light); font-weight: 600; border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; animation: fall 0.7s ease-out; }

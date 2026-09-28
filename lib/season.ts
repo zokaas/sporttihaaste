@@ -53,7 +53,3 @@ export function formatDay(iso: string) {
 /** KK-PP, jota juhlapäivät käyttävät. */
 export const monthDay = (iso: string) => iso.slice(5, 10);
 
-/** Palvelimen "tänään". MJ_TODAY on vain paikalliseen testaukseen, älä aseta sitä Vercelissä. */
-export function today() {
-  return process.env.MJ_TODAY ?? helsinkiToday();
-}

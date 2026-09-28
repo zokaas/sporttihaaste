@@ -3,6 +3,7 @@ import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import type { loadBattle } from '@/lib/battle';
 import { formatDay, weekRange } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
+import MonsterFx from '@/components/MonsterFx';
 
 type BattleData = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -27,7 +28,11 @@ export default function Battle({ data }: { data: BattleData }) {
 
   return (
     <>
-      {target ? <MonsterCard data={data} fighter={target} current={week} /> : (
+      {target ? (
+        <MonsterFx week={target.week} hp={target.padded ? 0 : target.hp} killed={ledger.killed.length}>
+          <MonsterCard data={data} fighter={target} current={week} />
+        </MonsterFx>
+      ) : (
         <section className="card">
           <h2 className="display">Viikon monsteri on kaatunut!</h2>
           <p style={{ margin: 0 }}>Kaikki tämän viikon iskut menevät pottiin loppupomoa vastaan.</p>
@@ -48,9 +53,11 @@ export default function Battle({ data }: { data: BattleData }) {
               const excused = !required.includes(id);
               const label = `${h?.hero_name ?? ''}${excused ? ' (kipeä)' : ''}`;
               const cls = `avatar${hit ? '' : ' missing'}${excused ? ' sick' : ''}`;
-              return src
-                ? <img key={id} className={cls} src={src} alt={label} title={label} width={32} height={32} />
-                : <div key={id} className={cls} title={label}>{(h?.hero_name ?? '?').slice(0, 1)}</div>;
+              return (
+                <Link key={id} href={`/sankari/${id}`} aria-label={label}>
+                  {src ? <img className={cls} src={src} alt={label} title={label} width={32} height={32} /> : <div className={cls} title={label}>{(h?.hero_name ?? '?').slice(0, 1)}</div>}
+                </Link>
+              );
             })}
           </div>
           {required.some((id) => !target.hitters.includes(id)) ? (

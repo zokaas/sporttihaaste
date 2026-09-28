@@ -1,0 +1,68 @@
+import Nav from '@/components/Nav';
+import BossShadow from '@/components/BossShadow';
+import { requireHero } from '@/lib/page';
+import { monsterImageUrl } from '@/lib/supabase/client';
+import { finalBlows } from '@/lib/stats';
+import { formatDay, weekRange } from '@/lib/season';
+
+export const dynamic = 'force-dynamic';
+
+const fmt = (n: number) => n.toLocaleString('fi-FI');
+const killedDay = (ms: number) => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Helsinki' }).format(new Date(ms));
+
+export default async function Bestiaario() {
+  const { battle: b } = await requireHero();
+  const blows = finalBlows(b);
+  const name = (id: string) => b.heroes.find((h) => h.id === id)?.hero_name ?? 'Partio';
+  const killed = new Map((b.ledger?.killed ?? []).map((k) => [k.week, k.killedAt]));
+  const alive = new Map((b.ledger?.alive ?? []).map((f) => [f.week, f]));
+  const boss = b.monsters.get(11);
+  const bossRevealed = b.week >= 11 && boss?.name;
+
+  return (
+    <>
+      <Nav current="/bestiaario" />
+      <h1 className="display">Bestiaario</h1>
+
+      <BossShadow>
+        <span className="pill" style={{ background: 'var(--blood)', alignSelf: 'flex-start' }}>Loppupomo · {formatDay(weekRange(11).start)}</span>
+        <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>{bossRevealed ? boss!.name : '???'}</h2>
+        <span className="small" style={{ color: '#c9c1b4' }}>
+          {boss?.hp ? `${fmt(boss.hp)} HP. ` : ''}Potti {fmt(b.ledger?.pot ?? 0)} / {fmt(b.ledger?.potCap ?? 0)} vähennetään sen HP:sta. Viimeinen isku vaatii kaikki kymmenen yhdessä.
+        </span>
+      </BossShadow>
+
+      <section className="card">
+        <ul className="people">
+          {Array.from({ length: 10 }, (_, i) => i + 1).map((w) => {
+            const m = b.monsters.get(w);
+            const img = monsterImageUrl(m?.image_path);
+            const k = killed.get(w);
+            const f = alive.get(w);
+            const future = w > b.week;
+            const { start } = weekRange(w);
+            return (
+              <li key={w} style={future ? { opacity: 0.5 } : undefined}>
+                {img && !future
+                  ? <img className="avatar" src={img} alt="" width={56} height={56} style={k ? { filter: 'grayscale(1)' } : undefined} />
+                  : <div className="avatar" style={{ width: 56, height: 56, fontSize: 22 }}>{future ? '?' : k ? '✝' : '!'}</div>}
+                <div className="grow" style={{ minWidth: 0 }}>
+                  <div className="who">{future ? '???' : m?.name ?? `Viikon ${w} monsteri`}</div>
+                  <div className="facts">
+                    Viikko {w} · {formatDay(start)}
+                    {m?.weakness && !future ? ` · heikkous ${m.weakness}` : ''}
+                  </div>
+                  <div className="facts">
+                    {k ? <span className="ok">Kaatui {formatDay(killedDay(k))}{blows[w] ? `, viimeinen isku: ${name(blows[w])}` : ''}</span>
+                      : f ? <span style={{ color: 'var(--blood-text)' }}>{w < b.week ? 'Rästissä' : 'Taistelussa'}: {f.padded ? `HP 0, sinetti kesken` : `${fmt(f.hp)} / ${fmt(m?.hp ?? 0)} HP`}</span>
+                      : future ? 'Paljastuu viikon alkaessa' : ''}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    </>
+  );
+}

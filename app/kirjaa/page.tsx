@@ -3,7 +3,9 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl } from '@/lib/supabase/client';
 import { SPORTS, type Category } from '@/lib/rules';
-import { formatDay, loggableDays, monthDay, seasonWeek, today, weekRange, SEASON_START } from '@/lib/season';
+import { formatDay, loggableDays, monthDay, seasonWeek, weekRange, SEASON_START } from '@/lib/season';
+import { today } from '@/lib/today';
+import { monsterOfWeek } from '@/lib/battle';
 import HitForm from '@/components/HitForm';
 import DeleteHitButton from '@/components/DeleteHitButton';
 
@@ -30,9 +32,9 @@ export default async function Kirjaa() {
 
   const week = seasonWeek(now);
   const { start, end } = weekRange(week);
-  const [{ data: heroes }, { data: monster }, { data: myHits }] = await Promise.all([
+  const [{ data: heroes }, monster, { data: myHits }] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, birthday, name_day').order('hero_name'),
-    supabase.from('monsters_public').select('name, weakness').eq('week', week).single(),
+    monsterOfWeek(supabase, week),
     supabase.from('hits').select('*').eq('user_id', user.id).gte('trained_on', start).lte('trained_on', end).order('trained_on', { ascending: false }).order('created_at', { ascending: false }),
   ]);
   const participants = (heroes ?? []).filter((h) => h.pledge_locked_at);
