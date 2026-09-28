@@ -23,7 +23,7 @@ export default async function Home() {
       <div className="row" style={{ alignItems: 'center' }}>
         {img ? <img className="avatar" src={img} alt="" width={56} height={56} /> : null}
         <div className="grow">
-          <h1 className="display" style={{ fontSize: 28 }}>{me.hero_name}</h1>
+          <h1 className="display" style={{ fontSize: 28, overflowWrap: 'anywhere' }}>{me.hero_name}</h1>
           <p className="muted" style={{ margin: 0 }}>Lupaus {String(me.pledge_hours).replace('.', ',')} h viikossa</p>
         </div>
       </div>
@@ -35,13 +35,13 @@ export default async function Home() {
 
       <section className="card">
         <h2 className="display">Sankarit {locked.length}/10</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: 12 }}>
           {(heroes ?? []).map((h) => {
             const src = avatarUrl(h.avatar_path);
             return (
               <div key={h.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: h.pledge_locked_at ? 1 : 0.45 }}>
                 {src ? <img className="avatar" src={src} alt="" width={48} height={48} /> : <div className="avatar" style={{ width: 48, height: 48 }}>?</div>}
-                <span className="small" style={{ maxWidth: 64, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.hero_name ?? 'Kesken'}</span>
+                <span className="small" style={{ textAlign: 'center', overflowWrap: 'anywhere', lineHeight: 1.25 }}>{h.hero_name ?? 'Kesken'}</span>
               </div>
             );
           })}

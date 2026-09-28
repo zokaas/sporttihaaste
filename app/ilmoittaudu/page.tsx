@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient, avatarUrl } from '@/lib/supabase/client';
 import { weeklyPace } from '@/lib/rules';
+import DayMonth from '@/components/DayMonth';
 
 type Profile = {
   id: string;
@@ -10,11 +11,10 @@ type Profile = {
   avatar_path: string | null;
   name_day: string | null;
   birthday: string | null;
+  birth_year: number | null;
   pledge_hours: number | null;
   pledge_locked_at: string | null;
 };
-
-const MONTHS = ['tammi', 'helmi', 'maalis', 'huhti', 'touko', 'kesä', 'heinä', 'elo', 'syys', 'loka', 'marras', 'joulu'];
 
 /** Rajaa kuvan keskeltä neliöksi ja pienentää 512 px:iin ennen latausta. */
 async function squareJpeg(file: File): Promise<Blob> {
@@ -32,26 +32,6 @@ function urlBase64ToUint8Array(base64: string) {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
-function DayMonth({ label, value, onChange }: { label: string; value: string | null; onChange: (v: string | null) => void }) {
-  const [m, d] = value ? value.split('-') : ['', ''];
-  const set = (mm: string, dd: string) => onChange(mm && dd ? `${mm}-${dd}` : null);
-  return (
-    <fieldset style={{ border: 0, margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <legend style={{ fontSize: 14, fontWeight: 600, padding: 0, marginBottom: 6 }}>{label}</legend>
-      <div className="row">
-        <select className="input grow" aria-label={`${label}: päivä`} value={d} onChange={(e) => set(m, e.target.value)}>
-          <option value="">Päivä</option>
-          {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0')).map((x) => <option key={x} value={x}>{Number(x)}.</option>)}
-        </select>
-        <select className="input grow" aria-label={`${label}: kuukausi`} value={m} onChange={(e) => set(e.target.value, d)}>
-          <option value="">Kuukausi</option>
-          {MONTHS.map((name, i) => <option key={name} value={String(i + 1).padStart(2, '0')}>{name}kuu</option>)}
-        </select>
-      </div>
-    </fieldset>
-  );
-}
-
 export default function Ilmoittaudu() {
   const supabase = createClient();
   const router = useRouter();
@@ -64,6 +44,8 @@ export default function Ilmoittaudu() {
   const [os, setOs] = useState<'ios' | 'android'>('ios');
   const [push, setPush] = useState<'off' | 'on' | 'denied' | 'unsupported'>('off');
   const [standalone, setStandalone] = useState(false);
+  // Ennen syntymäpäivän kysymistä tunnuksen luonnissa luoduilta tileiltä kysytään se vaiheessa 1.
+  const [needsBirthday, setNeedsBirthday] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -71,6 +53,7 @@ export default function Ilmoittaudu() {
       if (!user) return router.replace('/kirjaudu');
       const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       setP(data as Profile);
+      setNeedsBirthday(!data?.birthday || !data?.birth_year);
       setPreview(avatarUrl(data?.avatar_path));
       const { data: all } = await supabase.from('profiles').select('id, pledge_hours, pledge_locked_at');
       const others = (all ?? []).filter((x) => x.pledge_locked_at && x.id !== user.id);
@@ -132,22 +115,21 @@ export default function Ilmoittaudu() {
     if (step === 1) {
       if (!p!.hero_name || p!.hero_name.trim().length < 2) return setError('Kirjoita sankarinimi (vähintään 2 merkkiä).');
       if (!p!.avatar_path) return setError('Lataa profiilikuva.');
-      if (await save({ hero_name: p!.hero_name.trim() })) setStep(2);
+      if (!p!.birthday || !p!.birth_year) return setError('Valitse syntymäpäiväsi ja -vuotesi.');
+      if (await save({ hero_name: p!.hero_name.trim(), birthday: p!.birthday, birth_year: p!.birth_year })) setStep(2);
     } else if (step === 2) {
-      if (await save({ name_day: p!.name_day, birthday: p!.birthday })) setStep(3);
-    } else if (step === 3) {
-      if (await save({ pledge_hours: pledge, pledge_locked_at: new Date().toISOString() })) setStep(4);
+      if (await save({ pledge_hours: pledge, pledge_locked_at: new Date().toISOString() })) setStep(3);
     } else router.push('/');
   }
 
-  const labels = ['Seuraava', 'Seuraava', 'Lukitse lupaus', 'Valmis'];
+  const labels = ['Seuraava', 'Lukitse lupaus', 'Valmis'];
 
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span className="display" style={{ fontSize: 22 }}>Monsterijahti</span>
-        <span className="muted">Ilmoittautuminen, vaihe {step}/4. Valmiina ke 30.9. mennessä.</span>
-        <div className="steps" aria-hidden="true">{[1, 2, 3, 4].map((i) => <span key={i} className={i <= step ? 'on' : ''} />)}</div>
+        <span className="muted">Ilmoittautuminen, vaihe {step}/3. Valmiina ke 30.9. mennessä.</span>
+        <div className="steps" aria-hidden="true">{[1, 2, 3].map((i) => <span key={i} className={i <= step ? 'on' : ''} />)}</div>
       </div>
 
       {step === 1 && (
@@ -165,21 +147,12 @@ export default function Ilmoittaudu() {
             Sankarinimi
             <input className="input" maxLength={20} placeholder="Keksi itsellesi nimi" value={p.hero_name ?? ''} onChange={(e) => setP({ ...p, hero_name: e.target.value })} />
           </label>
+          {needsBirthday ? <DayMonth label="Syntymäpäivä" value={p.birthday} onChange={(v) => setP({ ...p, birthday: v })} year={p.birth_year} onYearChange={(y) => setP({ ...p, birth_year: y })} /> : null}
           <p className="muted" style={{ margin: 0 }}>Nimi ja kuva näkyvät kaikille. Niitä voi vaihtaa ke 30.9. asti.</p>
         </section>
       )}
 
       {step === 2 && (
-        <section style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <h1 className="display">Milloin juhlitaan?</h1>
-          <p style={{ margin: 0 }}>Nimi- ja syntymäpäivänäsi kaikkien iskut tekevät +50 %.</p>
-          <DayMonth label="Nimipäivä" value={p.name_day} onChange={(v) => setP({ ...p, name_day: v })} />
-          <DayMonth label="Syntymäpäivä" value={p.birthday} onChange={(v) => setP({ ...p, birthday: v })} />
-          <p className="muted" style={{ margin: 0 }}>Jos nimelläsi ei ole nimipäivää, valitse päivä, jota haluat juhlia.</p>
-        </section>
-      )}
-
-      {step === 3 && (
         <section style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <h1 className="display">Mitä lupaat?</h1>
           <p style={{ margin: 0 }}>Montako tuntia viikossa aiot treenata? Lupaa sen verran, mihin oikeasti pystyt. Tulostaulun ykkönen on se, joka pitää lupauksensa useimmin.</p>
@@ -197,7 +170,7 @@ export default function Ilmoittaudu() {
         </section>
       )}
 
-      {step === 4 && (
+      {step === 3 && (
         <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <h1 className="display">Kotinäyttöön ja ilmoitukset päälle</h1>
           <p style={{ margin: 0 }}>Sunnuntaisin klo 18 saat muistutuksen, jos viikolta puuttuu jotain. Ilmoitukset toimivat vain, kun sovellus on puhelimen kotinäytöllä.</p>
