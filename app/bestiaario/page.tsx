@@ -8,6 +8,7 @@ import { monsterImageUrl } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
 import { formatDay, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import { weaknessesOf } from '@/lib/trio';
+import { sealView } from '@/lib/rules';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,7 +61,7 @@ export default async function Bestiaario() {
                   </div>
                   <div className="facts">
                     {k ? <span className="ok">Kaatui {formatDay(killedDay(k))}{blows[w] ? `, viimeinen isku: ${name(blows[w])}` : ''}</span>
-                      : f ? <span style={{ color: 'var(--blood-text)' }}>{w < b.week ? 'Rästissä' : 'Taistelussa'}: {f.padded ? `HP 0, sinetti kesken` : `${fmt(f.hp)} / ${fmt(m?.hp ?? 0)} HP`}</span>
+                      : f ? <span style={{ color: 'var(--blood-text)' }}>{w < b.week ? 'Rästissä' : 'Taistelussa'}: {(() => { const v = sealView(f, b.required); return v.dam ? `${fmt(v.hp)} HP, sinetti kesken` : `${fmt(v.hp)} / ${fmt(m?.hp ?? 0)} HP`; })()}</span>
                       : future ? 'Paljastuu viikon alkaessa' : ''}
                   </div>
                 </div>

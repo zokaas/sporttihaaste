@@ -33,15 +33,16 @@ export async function toggleStep(day: string, on: boolean): Promise<Result> {
   return done(error);
 }
 
-/** Merkitsee sairastumisen tälle päivälle tai paranemisen (viimeinen sairaspäivä = eilen). */
-export async function setSick(sick: boolean): Promise<Result> {
+/** Merkitsee sairastumisen (tästä päivästä tai valitusta kuluvan viikon päivästä) tai paranemisen (viimeinen sairaspäivä = eilen). */
+export async function setSick(sick: boolean, from?: string): Promise<Result> {
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   const now = today();
   const { data: open } = await supabase.from('sick_periods').select('id, starts_on').eq('user_id', user.id).is('ends_on', null).maybeSingle();
   if (sick) {
     if (open) return { ok: true };
-    return done((await supabase.from('sick_periods').insert({ user_id: user.id, starts_on: now })).error);
+    const start = from && loggableDays(now).includes(from) ? from : now;
+    return done((await supabase.from('sick_periods').insert({ user_id: user.id, starts_on: start })).error);
   }
   if (!open) return { ok: true };
   // Tänään alkanut sairaus perutaan kokonaan, muuten viimeinen sairaspäivä oli eilen.

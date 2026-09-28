@@ -90,3 +90,11 @@ for (const sp of SPORTS) {
 }
 
 console.log('Kaikki sääntötestit menivät läpi.');
+
+// Sinettiraja: HP ei näy nollana, kun sinetistä puuttuu sankareita
+import { sealView } from './rules.ts';
+assert.deepEqual(sealView({ hp: 1, padded: 300, hitters: ['a'] }, ['a', 'b', 'c']), { hp: 20, dam: 320, missing: 2, floor: 20 });
+assert.deepEqual(sealView({ hp: 500, padded: 0, hitters: [] }, ['a', 'b']), { hp: 500, dam: 0, missing: 2, floor: 20 });
+assert.deepEqual(sealView({ hp: 15, padded: 0, hitters: [] }, ['a', 'b']), { hp: 20, dam: 5, missing: 2, floor: 20 });
+assert.equal(sealView({ hp: 1, padded: 0, hitters: ['a'] }, ['a', 'b']).hp, 10, 'sunnuntain jälkeen rästi näkyy sinettirajalla');
+console.log('Sinettirajatestit menivät läpi.');

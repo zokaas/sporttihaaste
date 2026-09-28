@@ -14,9 +14,10 @@ const examples = [
 const GLOSSARY: [string, string][] = [
   ['Isku', 'Kirjattu treeni. Jokainen isku tekee monsteriin vahinkoa.'],
   ['Vahinko', 'Iskun voima: kesto tunteina × lajin arvo, ja päälle bonukset.'],
-  ['HP', 'Monsterin elinvoima. Kun se on nollassa ja sinetti on täynnä, monsteri kaatuu.'],
+  ['HP', 'Monsterin elinvoima. Kun se loppuu ja sinetti on täynnä, monsteri kaatuu.'],
+  ['Sinettiraja', 'Niin kauan kuin sinetti on kesken, monsterille jää 10 HP jokaista puuttuvaa sankaria kohden. Se ei siis näy koskaan nollassa ennen kuin kaikki ovat lyöneet.'],
   ['Sinetti', 'Jokaisen terveen sankarin täytyy lyödä viikon monsteria vähintään yhdellä treenillä. Askeleet eivät täytä sinettiä.'],
-  ['Padottu vahinko', 'Vahinko, joka kertyy patoon, kun HP on jo nollassa mutta sinetti on kesken. Pato purkautuu, kun sinetti täyttyy. Jos sinetti jää sunnuntaina vajaaksi, padottu vahinko menetetään.'],
+  ['Padottu vahinko', 'Vahinko, joka kertyy patoon, kun HP on jo sinettirajalla mutta sinetti on kesken. Pato purkautuu, kun sinetti täyttyy. Jos sinetti jää sunnuntaina vajaaksi, padottu vahinko menetetään.'],
   ['Rästi', 'Monsteri, joka jäi viikolla henkiin. Se jatkaa seuraavalla viikolla 1 HP:lla, ja vanhin rästi ottaa iskut ensin.'],
   ['Potti', 'Kaatuneen monsterin yli mennyt vahinko ja lupausbonukset. Potti vähennetään loppupomon HP:sta.'],
   ['Pottikatto', 'Potti voi vähentää loppupomon HP:sta enintään puolet.'],
@@ -35,9 +36,9 @@ const GLOSSARY: [string, string][] = [
 const FAQ: [string, string][] = [
   ['Unohdin kirjata treenin. Ehtiikö vielä?', 'Kyllä, jos treeni oli tällä viikolla. Kuluvan viikon päiville voi kirjata sunnuntaihin klo 23.59 asti. Sen jälkeen viikko lukittuu.'],
   ['Kirjasin väärin. Miten korjaan?', 'Poista isku Kirjaa treeni -sivulla ja kirjaa uudelleen. Sekin onnistuu vain kuluvan viikon aikana.'],
-  ['Sairastuin. Mitä teen?', 'Paina Minä-sivulla Olen kipeä. Lupauksesi pienenee sairaspäivien verran, eikä sinua tarvita sinettiin sillä viikolla. Kun paranet, paina Olen taas terve.'],
+  ['Sairastuin. Mitä teen?', 'Paina Minä-sivulla Olen kipeä ja valitse, mistä päivästä alkaen. Silloin 1) viikon lupaus pienenee sairaspäivien verran, 2) sinua ei tarvita sen viikon sinettiin ja 3) partiopäivään riittävät terveet. Kun paranet, paina Olen taas terve: viimeinen sairaspäivä on eilinen.'],
   ['Mitä askelkuittaus tarkoittaa?', `Kuittaa päivä, jona kävelit vähintään ${STEP_GOAL.toLocaleString('fi-FI')} askelta. Jokainen kuitattu päivä tekee ${STEP_DAY_DAMAGE} vahinkoa, mutta askeleet eivät täytä sinettiä.`],
-  ['Miksi monsteri ei kaadu, vaikka HP on nollassa?', 'Sinetti on kesken: joku terve sankari ei ole vielä lyönyt sitä treenillä. Vahinko padotaan, ja monsteri kaatuu heti, kun sinetti täyttyy.'],
+  ['Miksi monsterin HP jää 10, 20 tai 30:een?', 'Sinetti on kesken: jokainen puuttuva sankari pitää monsterille 10 HP. Ylimenevä vahinko padotaan, ja monsteri kaatuu heti, kun viimeinenkin puuttuva lyö.'],
   ['Mitä rästi tarkoittaa?', 'Monsteri, joka jäi viikolla eloon. Se jatkaa seuraavalla viikolla 1 HP:lla, ja vanhin monsteri ottaa iskut aina ensin.'],
   ['Voinko muuttaa lupaustani?', 'Et. Lupaus lukittuu ke 30.9. ja pysyy samana koko kauden. Jos sairastut, merkitse itsesi kipeäksi Minä-sivulla: viikon tavoite pienenee sairaspäivien verran.'],
   ['Mihin ylimääräinen vahinko menee?', `Kun viikon monsteri on kaatunut, loput iskut menevät pottiin. Potti vähennetään loppupomon HP:sta, mutta enintään puolet siitä.`],
@@ -52,7 +53,7 @@ export default function Saannot() {
       <section className="card">
         <h2 className="display">Lyhyesti</h2>
         <p style={{ margin: 0 }}>Kausi kestää 1.10.–20.12. Ensimmäinen monsteri paljastuu to 1.10., ja sen jälkeen uusi joka maanantai: yhteensä 11 monsteria ja viimeisellä viikolla loppupomo. Seuraavaa pääsee lyömään vasta, kun edellinen on tuhottu. Treenit ovat iskuja: jokainen kirjattu treeni vähentää monsterin HP:ta.</p>
-        <p style={{ margin: 0 }}>Monsteri kaatuu, kun sen HP on nollassa <strong>ja</strong> sinetti on täynnä eli jokainen terve sankari on lyönyt sitä vähintään yhdellä treenillä.</p>
+        <p style={{ margin: 0 }}>Monsteri kaatuu, kun sen HP loppuu <strong>ja</strong> sinetti on täynnä eli jokainen terve sankari on lyönyt sitä vähintään yhdellä treenillä. Siihen asti monsterille jää 10 HP jokaista puuttuvaa sankaria kohden.</p>
         <p style={{ margin: 0 }}>Jos sinetti jää sunnuntaina vajaaksi, padottu vahinko menetetään ja monsteri jää rästiin 1 HP:lla.</p>
       </section>
 

@@ -203,3 +203,20 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
     killed: done.map((f) => ({ week: f.week, killedAt: f.killedAt })),
   };
 }
+
+// ---------- Sinettiraja (näyttö) ----------
+
+/** Monsterin HP ei näy nollana, kun sinetti on kesken: jokainen puuttuva sankari pitää sille 10 HP. */
+export const SEAL_FLOOR_HP = 10;
+
+/**
+ * Näytettävä HP ja pato. Sinetin ollessa kesken HP pysyy vähintään sinettirajassa
+ * (10 HP × puuttuvat), ja rajan alle mennyt vahinko näkyy patona. Kirjanpito ei muutu.
+ */
+export function sealView(f: { hp: number; padded: number; hitters: string[] }, required: string[]) {
+  const missing = required.filter((id) => !f.hitters.includes(id)).length;
+  const trueHp = f.padded > 0 ? -f.padded : f.hp;
+  const floor = SEAL_FLOOR_HP * missing;
+  if (missing === 0) return { hp: Math.max(0, trueHp), dam: Math.max(0, -trueHp), missing, floor };
+  return { hp: Math.max(trueHp, floor), dam: Math.max(0, floor - trueHp), missing, floor };
+}

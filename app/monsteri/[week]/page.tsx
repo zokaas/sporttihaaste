@@ -5,7 +5,7 @@ import MonsterStage from '@/components/MonsterStage';
 import { requireHero } from '@/lib/page';
 import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
-import { STEP_DAY_DAMAGE } from '@/lib/rules';
+import { STEP_DAY_DAMAGE, sealView } from '@/lib/rules';
 import { formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { stageParts, weaknessesOf } from '@/lib/trio';
 import Hint from '@/components/Hint';
@@ -23,12 +23,13 @@ export default async function Monsteri({ params }: { params: { week: string } })
   const m = b.monsters.get(week);
   const title = m?.name ?? (week === BOSS_WEEK ? 'Loppupomo' : `Viikon ${week} monsteri`);
   const fighter = b.ledger?.alive.find((f) => f.week === week);
+  const view = fighter ? sealView(fighter, b.required) : null;
   const killed = b.ledger?.killed.find((k) => k.week === week);
   const blow = finalBlows(b)[week];
   const heroName = (id: string) => b.heroes.find((h) => h.id === id)?.hero_name ?? 'Partio';
   const { start, end } = weekRange(week);
   const weak = weaknessesOf(m).join(', ');
-  const parts = stageParts(m, killed ? 0 : fighter?.hp ?? m?.hp ?? 0, Boolean(killed), monsterImageUrl);
+  const parts = stageParts(m, killed ? 0 : view?.hp ?? m?.hp ?? 0, Boolean(killed), monsterImageUrl);
 
   // Vahinko monsterin viikolla (iskut + askeleet) sankareittain
   const totals = new Map<string, number>();
@@ -46,9 +47,9 @@ export default async function Monsteri({ params }: { params: { week: string } })
         image={monsterImageUrl(m?.image_path)}
         weakness={weak || null}
         parts={parts}
-        hp={killed ? 0 : fighter ? (fighter.padded ? 0 : fighter.hp) : m?.hp ?? 0}
+        hp={killed ? 0 : view ? view.hp : m?.hp ?? 0}
         maxHp={m?.hp ?? 1}
-        padded={fighter?.padded ?? 0}
+        padded={view?.dam ?? 0}
         backlog={week < b.week && !killed}
         revealed={Boolean(m?.name)}
         dead={Boolean(killed)}
@@ -79,8 +80,8 @@ export default async function Monsteri({ params }: { params: { week: string } })
         {weak ? <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">Heikkous</span><span>{weak} (+50 %)</span></div> : null}
         <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">Tila</span>
           <span>{killed?.killedAt ? <span className="ok">Kaatui {helsinki(killed.killedAt, { weekday: 'short', day: 'numeric', month: 'numeric' })}</span>
-            : fighter?.padded ? <span style={{ color: 'var(--gold)' }}>HP 0, {fmt(fighter.padded)} padottuna</span>
-            : fighter ? `${fmt(fighter.hp)} / ${fmt(m?.hp ?? 0)} HP` : '–'}</span>
+            : view?.dam ? <span style={{ color: 'var(--gold)' }}>{fmt(view.hp)} HP sinettirajalla, {fmt(view.dam)} padottuna</span>
+            : view ? `${fmt(view.hp)} / ${fmt(m?.hp ?? 0)} HP` : '–'}</span>
         </div>
         {blow ? <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">Viimeinen isku</span><Link href={`/sankari/${blow}`}>⚔️ {heroName(blow)}</Link></div> : null}
       </section>
