@@ -163,6 +163,7 @@ create policy "oma push" on public.push_subscriptions for all to authenticated u
 create policy "ylläpitäjä näkee pushit" on public.push_subscriptions for select to authenticated using (public.is_admin());
 
 -- ---------- Tavoitteen lukitus (sama kaava kuin lib/rules.ts: seasonHp) ----------
+-- Korjattu versio: migrations/008_lukitus.sql
 create function public.lock_season() returns public.season
 language plpgsql security definer set search_path = public as $$
 declare

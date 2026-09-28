@@ -5,6 +5,8 @@ const required = ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY'];
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: { remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co' }] },
+  // Selain ei näytä välimuistista vanhaa sivua: iskut, askeleet ja ylläpidon muutokset näkyvät heti.
+  experimental: { staleTimes: { dynamic: 0 } },
 };
 
 export default function config(phase) {

@@ -17,7 +17,7 @@ async function me() {
 
 function done(error: { message: string } | null): Result {
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/');
+  revalidatePath('/', 'layout');
   return { ok: true };
 }
 
