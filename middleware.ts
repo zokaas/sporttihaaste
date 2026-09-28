@@ -2,6 +2,16 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  try {
+    return await refreshSession(request);
+  } catch (error) {
+    // Sivut ja API tarkistavat kirjautumisen itse, joten virhe ei saa kaataa koko sivustoa.
+    console.error('middleware: Supabase-istunnon päivitys epäonnistui', error);
+    return NextResponse.next({ request });
+  }
+}
+
+async function refreshSession(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
