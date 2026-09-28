@@ -4,6 +4,7 @@ import webpush from 'web-push';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl } from '@/lib/supabase/client';
 import { seasonHp } from '@/lib/rules';
+import MonsterEditor, { type Monster } from '@/components/MonsterEditor';
 
 export const dynamic = 'force-dynamic';
 
@@ -128,6 +129,12 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
         </div>
         <p className="muted" style={{ margin: 0 }}>Pottikatto on puolet loppupomon HP:sta. Lukitse tavoite, kun kaikki ovat ilmoittautuneet. Lukituksen voi tehdä uudelleen, jos joku ilmoittautuu myöhässä.</p>
         <form action={lockSeason}><button className="btn" type="submit">{season?.hp_locked_at ? 'Laske ja lukitse uudelleen' : 'Lukitse tavoite'}</button></form>
+      </section>
+
+      <section className="card">
+        <h2 className="display">Monsterit</h2>
+        <p className="muted" style={{ margin: 0 }}>Nimi, kuvaus, heikkous ja kuva näkyvät muille vasta monsterin viikon alkaessa (viikko 1: to 1.10., muut maanantaisin klo 00.00).</p>
+        <MonsterEditor monsters={(monsters ?? []) as Monster[]} />
       </section>
     </>
   );

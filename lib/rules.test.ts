@@ -40,6 +40,12 @@ assert.equal(r.killed.length, 0);
 assert.equal(r.alive[0].hp, 1);
 assert.equal(r.lostToSeal, 300);
 
+// 2b) Sama kesken viikon: padottu vahinko näkyy vielä, sinetistä puuttuu c
+r = computeLedger({ ...base, events: [ev(1, 1, 'a', 900), ev(1, 2, 'b', 400)] }, 1, true);
+assert.equal(r.alive[0].padded, 300);
+assert.deepEqual(r.alive[0].hitters.sort(), ['a', 'b']);
+assert.equal(r.lostToSeal, 0);
+
 // 3) Rästi kaadetaan ensin, sitten viikon oma
 r = computeLedger({ ...base, events: [ev(1, 1, 'a', 500), ev(2, 1, 'a', 100), ev(2, 2, 'b', 100), ev(2, 3, 'c', 1500)] }, 2);
 assert.deepEqual(r.killed.map((k) => k.week), [1, 2]);

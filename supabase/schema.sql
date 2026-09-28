@@ -75,12 +75,13 @@ insert into public.monsters (week) select generate_series(1, 11);
 update public.monsters set name = 'Willa Rykman' where week = 1;
 
 -- Muille näkyy nimi, kuvaus ja kuva vasta paljastuksen jälkeen. HP ja viikko näkyvät aina.
+-- Paljastus on automaattinen: revealed_at asetetaan tiedostossa migrations/002_kausi.sql.
 create view public.monsters_public as
 select week, hp,
-  case when revealed_at is not null then name end as name,
-  case when revealed_at is not null then description end as description,
-  case when revealed_at is not null then weakness end as weakness,
-  case when revealed_at is not null then image_path end as image_path,
+  case when revealed_at <= now() then name end as name,
+  case when revealed_at <= now() then description end as description,
+  case when revealed_at <= now() then weakness end as weakness,
+  case when revealed_at <= now() then image_path end as image_path,
   revealed_at
 from public.monsters;
 
@@ -190,3 +191,5 @@ insert into storage.buckets (id, name, public) values ('monsters', 'monsters', t
 create policy "monsterikuvat ylläpitäjälle" on storage.objects for all to authenticated
   using (bucket_id = 'monsters' and public.is_admin())
   with check (bucket_id = 'monsters' and public.is_admin());
+
+-- Kauden viikot, lukitukset ja paljastusajat: aja myös tiedostot kansiosta migrations/ numerojärjestyksessä.
