@@ -74,7 +74,7 @@ export default function Saannot() {
 
       <section className="card">
         <h2 className="display">Loppupomo</h2>
-        <p style={{ margin: 0 }}>Loppupomo herää ma 14.12. Potti vähennetään sen HP:sta (enintään puolet). Viimeinen isku vaatii kaikki kymmenen samaan treeniin.</p>
+        <p style={{ margin: 0 }}>Loppupomo herää ma 14.12. Potti vähennetään sen HP:sta (enintään puolet). Viimeinen isku vaatii kaikki ilmoittautuneet samaan treeniin, ja kaikki täytyy merkitä seuralaisiksi.</p>
       </section>
 
       <section className="card">

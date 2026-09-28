@@ -1,11 +1,14 @@
 // Aja: node --experimental-strip-types lib/rules.test.ts
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { hitDamage, adjustedPledge, seasonHp, computeLedger, pledgeHours } from './rules.ts';
 
 // Vahinko: 1 h salia kolmestaan, heikkous voimailu → 200
 assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', groupSize: 3, celebration: false, weakness: 'Voimailu' }).damage, 200);
 // Kaikki bonukset: katto +200 %
 assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', groupSize: 10, celebration: true, weakness: 'Voimailu' }).damage, 300);
+// Yhdeksän ilmoittautunutta: kaikki yhdeksän yhdessä saa +100 %
+assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Muu', groupSize: 9, celebration: false, weakness: null, participants: 9 }).pct, 100);
 // Uinti 30 min yksin = 100
 assert.equal(hitDamage({ minutes: 30, sportValue: 200, category: 'Kestävyys', groupSize: 1, celebration: false, weakness: null }).damage, 100);
 // Lupaukseen: 1 h uintia = 2 h, 2 h golfia = 1 h
@@ -67,5 +70,14 @@ r = computeLedger({ ...base, events: [...allKilled, ev(11, 1, 'a', 10), ev(11, 2
 assert.equal(r.alive.length, 1, 'pomo ei kaadu ilman yhteistreeniä');
 r = computeLedger({ ...base, events: [...allKilled, ev(11, 1, 'a', 10), ev(11, 2, 'b', 10), ev(11, 3, 'c', 5000, true, true)] }, 11);
 assert.equal(r.alive.length, 0);
+
+// Tietokannan lajilista (migraatio 007, sport_value) vastaa sovelluksen lajeja ja arvoja
+import { SPORTS } from './rules.ts';
+const sql = readFileSync(new URL('../supabase/migrations/007_tarkistukset.sql', import.meta.url), 'utf8');
+const block = (v: number) => sql.split('\n').join(' ').match(new RegExp(`(?:in \\(([^)]*)\\)|= '([^']*)') then ${v}`))!;
+for (const sp of SPORTS) {
+  const m = block(sp.value);
+  assert.ok((m[1] ?? `'${m[2]}'`).includes(`'${sp.name}'`), `${sp.name} puuttuu tietokannan lajilistasta arvolla ${sp.value}`);
+}
 
 console.log('Kaikki sääntötestit menivät läpi.');

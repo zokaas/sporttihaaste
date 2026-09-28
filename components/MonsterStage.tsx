@@ -175,7 +175,7 @@ export default function MonsterStage(p: Props) {
             ))}
           </div>
         ) : null}
-        {p.boss ? <span className="small" style={{ color: '#f0c9a8' }}>Viimeinen isku vaatii kaikki kymmenen samaan treeniin.</span> : null}
+        {p.boss ? <span className="small" style={{ color: '#f0c9a8' }}>Viimeinen isku vaatii kaikki sankarit samaan treeniin.</span> : null}
       </div>
 
       {revealing ? (

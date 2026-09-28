@@ -134,7 +134,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         <section className="card">
           <h2 className="display">Rästit</h2>
           {backlog.map((f) => <p key={f.week} style={{ margin: 0 }}>{nameOf(f.week)}: {f.padded ? `HP 0, ${fmt(f.padded)} padottuna` : `${fmt(f.hp)} HP`}</p>)}
-          <p className="muted small" style={{ margin: 0 }}>Kuluva monsteri ottaa iskut ensin; rästit kaatuvat ylijäämällä.</p>
+          <p className="muted small" style={{ margin: 0 }}>Vanhin rästi ottaa iskut ensin, ja sen jälkeen ylijäämä siirtyy seuraavaan.</p>
         </section>
       ) : null}
 

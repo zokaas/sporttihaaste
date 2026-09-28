@@ -25,7 +25,8 @@ async function refreshSession(request: NextRequest) {
   });
   const { data: { user } } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
-  const open = path.startsWith('/kirjaudu') || path.startsWith('/auth');
+  // Ajastettu muistutus kutsuu ilman kirjautumista; reitti tarkistaa oman salaisuutensa (CRON_SECRET).
+  const open = path.startsWith('/kirjaudu') || path.startsWith('/auth') || path.startsWith('/api/cron/');
   if (!user && !open) {
     const url = request.nextUrl.clone();
     url.pathname = '/kirjaudu';

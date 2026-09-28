@@ -33,7 +33,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
   const sport = sports.find((s) => s.name === sportName);
   const celebrating = celebrations[day] ?? [];
   const preview = sport
-    ? hitDamage({ minutes, sportValue: sport.value, category: sport.category, groupSize: 1 + withIds.length, celebration: celebrating.length > 0, weakness })
+    ? hitDamage({ minutes, sportValue: sport.value, category: sport.category, groupSize: 1 + withIds.length, celebration: celebrating.length > 0, weakness, participants: companions.length + 1 })
     : null;
 
   const toggle = (id: string) => setWithIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));

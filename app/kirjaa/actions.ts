@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { SPORTS, PARTICIPANTS, hitDamage, type Category } from '@/lib/rules';
+import { SPORTS, hitDamage, type Category } from '@/lib/rules';
 import { loggableDays, monthDay, seasonWeek } from '@/lib/season';
 import { today } from '@/lib/today';
 import { monsterOfWeek } from '@/lib/battle';
@@ -35,8 +35,10 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
     groupSize,
     celebration,
     weakness: (monster?.weakness as Category | null) ?? null,
+    participants: ids.size,
   });
-  return { result, companions, allTogether: groupSize >= PARTICIPANTS } as const;
+  // Loppupomon viimeinen isku: kaikki ilmoittautuneet samassa treenissä (ei kiinteästi kymmenen).
+  return { result, companions, allTogether: ids.size >= 2 && groupSize >= ids.size } as const;
 }
 
 export async function logHit(input: HitInput): Promise<Result> {

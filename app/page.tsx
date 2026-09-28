@@ -6,7 +6,7 @@ import { avatarUrl } from '@/lib/supabase/client';
 import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
-import { seasonWeek, weekRange } from '@/lib/season';
+import { addDays, seasonWeek, weekRange } from '@/lib/season';
 import { today, testOffsetMs } from '@/lib/today';
 import { announceReveal } from '@/lib/events';
 import Nav from '@/components/Nav';
@@ -32,8 +32,8 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   // Ylläpitäjä voi katsoa taistelunäkymää ennen kauden alkua osoitteella /?esikatselu=1.
   const inSeason = (week >= 1 && week <= 11) || (me.is_admin && searchParams.esikatselu === '1');
   const battle = maybeBattle ?? (inSeason ? await loadBattle(supabase, today()) : null);
-  // Paljastusilmoitus tarkistetaan vain viikon ensimmäisenä päivänä, ei jokaisella latauksella.
-  if (battle && battle.today === weekRange(battle.week).start) await announceReveal(supabase, battle).catch(() => {});
+  // Paljastusilmoitus tarkistetaan vain viikon kahtena ensimmäisenä päivänä, ei jokaisella latauksella.
+  if (battle && battle.today <= addDays(weekRange(battle.week).start, 1)) await announceReveal(supabase, battle).catch(() => {});
 
   if (battle) {
     return (
