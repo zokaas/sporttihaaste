@@ -77,7 +77,7 @@ export default function Kirjaudu() {
     <>
       <BossShadow>
         <h1 className="display" style={{ fontSize: 40, color: 'var(--light)' }}>Monsterijahti</h1>
-        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kymmenen monsteria, yksi loppupomo ja kymmenen sankaria. Kausi 1.10.–20.12.</p>
+        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Yksitoista monsteria, yksi loppupomo ja kymmenen sankaria. Kausi 1.10.–20.12.</p>
       </BossShadow>
 
       <form className="card" onSubmit={submit}>

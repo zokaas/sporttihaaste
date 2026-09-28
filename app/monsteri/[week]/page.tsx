@@ -6,7 +6,7 @@ import { requireHero } from '@/lib/page';
 import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
 import { STEP_DAY_DAMAGE } from '@/lib/rules';
-import { formatDay, seasonWeek, weekRange } from '@/lib/season';
+import { formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { stageParts, weaknessesOf } from '@/lib/trio';
 
 export const dynamic = 'force-dynamic';
@@ -17,10 +17,10 @@ const helsinki = (ms: number, opts: Intl.DateTimeFormatOptions) => new Intl.Date
 export default async function Monsteri({ params }: { params: { week: string } }) {
   const { battle: b } = await requireHero();
   const week = Number(params.week);
-  if (!Number.isInteger(week) || week < 1 || week > 11 || week > b.week) notFound();
+  if (!Number.isInteger(week) || week < 1 || week > BOSS_WEEK || week > b.week) notFound();
 
   const m = b.monsters.get(week);
-  const title = m?.name ?? (week === 11 ? 'Loppupomo' : `Viikon ${week} monsteri`);
+  const title = m?.name ?? (week === BOSS_WEEK ? 'Loppupomo' : `Viikon ${week} monsteri`);
   const fighter = b.ledger?.alive.find((f) => f.week === week);
   const killed = b.ledger?.killed.find((k) => k.week === week);
   const blow = finalBlows(b)[week];

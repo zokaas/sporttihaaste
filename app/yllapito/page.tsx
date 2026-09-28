@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { TEST_DAY_COOKIE, testDay } from '@/lib/today';
-import { helsinkiToday, formatDay, SEASON_START, SEASON_END } from '@/lib/season';
+import { helsinkiToday, formatDay, SEASON_START, SEASON_END, BOSS_WEEK } from '@/lib/season';
 import { revalidatePath } from 'next/cache';
 import webpush from 'web-push';
 import { createClient } from '@/lib/supabase/server';
@@ -35,7 +35,7 @@ async function lockSeason() {
   const supabase = await requireAdmin();
   const { error } = await supabase.rpc('lock_season');
   revalidatePath('/', 'layout');
-  redirect(`/yllapito?tavoite=${encodeURIComponent(error ? `Lukitus epäonnistui: ${error.message}. Onko migraatio 008_lukitus.sql ajettu?` : 'Tavoite lukittu. Monsterien HP:t on laskettu.')}`);
+  redirect(`/yllapito?tavoite=${encodeURIComponent(error ? `Lukitus epäonnistui: ${error.message}. Onko migraatio 010_kalenteri.sql ajettu?` : 'Tavoite lukittu. Monsterien HP:t on laskettu.')}`);
 }
 
 async function sendTestPush() {
@@ -136,7 +136,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
           <h2 className="display">Testitila</h2>
           <p style={{ margin: 0 }}>Kokeile sovellusta ennen kautta: valitse päivä, niin sovellus toimii sinulle kuin se olisi tänään. Muut näkevät sovelluksen normaalisti.</p>
           <form action={setTestDay} className="row" style={{ alignItems: 'center' }}>
-            <input className="input grow" type="date" name="day" min={SEASON_START} max={SEASON_END} defaultValue={testDay() ?? '2026-10-05'} required />
+            <input className="input grow" type="date" name="day" min={SEASON_START} max={SEASON_END} defaultValue={testDay() ?? '2026-10-07'} required />
             <button className="btn" type="submit">Aseta</button>
           </form>
           {testDay() ? (
@@ -145,7 +145,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
           <form action={resetTestData}>
             <ConfirmButton message="Poistetaanko kaikkien iskut, askeleet, sairaudet ja lupausmuutokset?" className="btn btn-ghost" style={{ width: '100%', color: 'var(--blood-text)' }}>Tyhjennä testidata</ConfirmButton>
           </form>
-          <p className="muted small" style={{ margin: 0 }}>Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet ja lupausmuutokset. Tunnukset ja ilmoittautumiset säilyvät. Toimii vain ennen kauden alkua 1.10. Muista tyhjentää ennen kautta!</p>
+          <p className="muted small" style={{ margin: 0 }}>Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet, lupausmuutokset ja viestit. Tunnukset ja ilmoittautumiset säilyvät. Toimii vain ennen kauden alkua 1.10. Muista tyhjentää ennen kautta!</p>
           {searchParams.testi ? <p className={`note${searchParams.testi.startsWith('Tyhjennys epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.testi}</p> : null}
           {searchParams.nollaa ? <ClearLocalState /> : null}
         </section>
@@ -194,8 +194,8 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
               {(monsters ?? []).map((m) => (
                 <tr key={m.week}>
                   <td>{m.week}</td>
-                  <td>{m.week === 11 ? 'Loppupomo' : m.name ?? <span className="muted">nimeämättä</span>}</td>
-                  <td>{fmt(season?.hp_locked_at ? m.hp : m.week === 11 ? preview.boss : preview.monsters[m.week - 1])}</td>
+                  <td>{m.week === BOSS_WEEK ? 'Loppupomo' : m.name ?? <span className="muted">nimeämättä</span>}</td>
+                  <td>{fmt(season?.hp_locked_at ? m.hp : m.week === BOSS_WEEK ? preview.boss : preview.monsters[m.week - 1])}</td>
                 </tr>
               ))}
             </tbody>

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient, monsterImageUrl } from '@/lib/supabase/client';
+import { BOSS_WEEK } from '@/lib/season';
 
 export type Monster = {
   week: number;
@@ -93,11 +94,11 @@ function MonsterRow({ monster }: { monster: Monster }) {
       <summary>
         <strong>Vko {m.week}</strong> {m.name ?? <span className="muted">nimeämättä</span>}
         {m.parts ? <span className="muted small"> · kolmikko</span> : null}
-        {!m.weakness && !m.parts && m.week !== 11 ? <span className="error small"> · heikkous puuttuu</span> : null}
+        {!m.weakness && !m.parts && m.week !== BOSS_WEEK ? <span className="error small"> · heikkous puuttuu</span> : null}
         {!m.image_path ? <span className="error small"> · kuva puuttuu</span> : null}
       </summary>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 12 }}>
-        {m.week !== 11 ? (
+        {m.week !== BOSS_WEEK ? (
           <label className="row" style={{ alignItems: 'center', gap: 8 }}>
             <input type="checkbox" checked={Boolean(parts)} onChange={(e) => setM({ ...m, parts: e.target.checked ? [emptyPart(), emptyPart(), emptyPart()] : null })} />
             Monsterikolmikko (kolme osaa, HP tasan)

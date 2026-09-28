@@ -2,6 +2,9 @@
 // Kaikki pelitila lasketaan aina uudelleen kirjauksista, joten myöhästyneet
 // kirjaukset ja korjaukset menevät automaattisesti oikein.
 
+import { BOSS_WEEK, MONSTER_WEEKS } from './season.ts';
+export { BOSS_WEEK, MONSTER_WEEKS };
+
 export type Category = 'Kestävyys' | 'Voimailu' | 'Palloilu' | 'Muu';
 
 export const SPORTS: { name: string; value: number; category: Category }[] = [
@@ -33,9 +36,7 @@ export const STEP_DAY_DAMAGE = 50;
 export const PATROL_DAY_DAMAGE = 250;
 export const PLEDGE_BONUS = 100;
 export const BONUS_CAP_PCT = 200;
-export const BONUS_FACTOR = 1.2; // bonusten arvioitu vaikutus viikkovauhtiin
 export const STEPS_WEEKLY_ESTIMATE = 2750; // 10 × 5 pv × 50 + 1 partiopäivä
-export const SEASON_WEEKS = 11.6;
 
 // ---------- Yksittäinen isku ----------
 
@@ -77,16 +78,20 @@ export function adjustedPledge(pledge: number, sickDays: number) {
 
 const round500 = (x: number) => Math.round(x / 500) * 500;
 
+/** Viikkovauhti: täytetyt lupaukset ilman bonuksia + arvioidut askeleet. */
 export function weeklyPace(totalPledgeHours: number) {
-  return totalPledgeHours * 100 * BONUS_FACTOR + STEPS_WEEKLY_ESTIMATE;
+  return totalPledgeHours * 100 + STEPS_WEEKLY_ESTIMATE;
 }
 
-/** HP viikoille 1–10 ja loppupomolle (viikko 11). */
+/**
+ * HP viikoille 1–11 ja loppupomolle (viikko 12). Pelkät lupaukset ja askeleet eivät riitä:
+ * viikko 1 (Willa) on 1,2 × vauhti mutta kestää vain to–su, joten se jatkuu rästinä viikolle 2.
+ * Viikot 2–11 kasvavat 1,05 → 1,15 × vauhti, loppupomo 1,5 × vauhti (potti vähentää enintään puolet).
+ */
 export function seasonHp(totalPledgeHours: number) {
   const pace = weeklyPace(totalPledgeHours);
-  const monsters: number[] = [];
-  monsters.push(round500(0.8 * pace * (11 / 7))); // viikko 1 on pidennetty
-  for (let i = 0; i < 9; i++) monsters.push(round500(pace * (0.82 + (0.18 * i) / 8)));
+  const monsters: number[] = [round500(1.2 * pace)];
+  for (let i = 0; i < MONSTER_WEEKS - 1; i++) monsters.push(round500(pace * (1.05 + (0.1 * i) / (MONSTER_WEEKS - 2))));
   const boss = round500(1.5 * pace);
   return { pace: Math.round(pace), monsters, boss, potCap: Math.floor(boss / 2) };
 }
@@ -94,7 +99,7 @@ export function seasonHp(totalPledgeHours: number) {
 // ---------- Kauden kirjanpito ----------
 
 export interface LedgerEvent {
-  week: number; // 1–11
+  week: number; // 1–12
   at: number; // kirjaushetki (ms), määrää järjestyksen
   userId: string;
   damage: number;
@@ -103,7 +108,7 @@ export interface LedgerEvent {
 }
 
 export interface LedgerInput {
-  monsterHp: number[]; // viikot 1–10
+  monsterHp: number[]; // viikot 1–11
   bossHp: number;
   events: LedgerEvent[];
   requiredByWeek: Record<number, string[]>; // terveet osallistujat viikolla
@@ -116,7 +121,7 @@ interface Fighter { week: number; hp: number; hitters: Set<string>; killedAt?: n
  * Laskee kauden tilanteen viikon uptoWeek loppuun. Jos weekOpen on tosi, viimeinen viikko on vielä
  * kesken: sunnuntain käsittely (padotun vahingon menetys ja lupausbonukset) jätetään tekemättä.
  */
-export function computeLedger(input: LedgerInput, uptoWeek = 11, weekOpen = false) {
+export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen = false) {
   const queue: Fighter[] = [];
   const done: Fighter[] = [];
   let pot = 0;
@@ -134,10 +139,10 @@ export function computeLedger(input: LedgerInput, uptoWeek = 11, weekOpen = fals
     return true;
   };
 
-  for (let w = 1; w <= Math.min(uptoWeek, 11); w++) {
-    if (w <= 10) queue.push({ week: w, hp: input.monsterHp[w - 1], hitters: new Set() });
+  for (let w = 1; w <= Math.min(uptoWeek, BOSS_WEEK); w++) {
+    if (w <= MONSTER_WEEKS) queue.push({ week: w, hp: input.monsterHp[w - 1], hitters: new Set() });
     else {
-      const boss: Fighter = { week: 11, hp: input.bossHp - Math.min(pot, potCap), hitters: new Set(), boss: true };
+      const boss: Fighter = { week: BOSS_WEEK, hp: input.bossHp - Math.min(pot, potCap), hitters: new Set(), boss: true };
       pot -= Math.min(pot, potCap);
       queue.push(boss);
     }
@@ -173,11 +178,11 @@ export function computeLedger(input: LedgerInput, uptoWeek = 11, weekOpen = fals
           j--;
           if (overflow > 0) {
             if (queue.length) queue[0].hp -= overflow;
-            else if (w <= 10) pot += overflow;
+            else if (w <= MONSTER_WEEKS) pot += overflow;
           }
         }
       }
-      if (dmg > 0 && w <= 10) pot += dmg; // viikon monsteri kaatunut → pottiin
+      if (dmg > 0 && w <= MONSTER_WEEKS) pot += dmg; // viikon monsteri kaatunut → pottiin
     }
 
     if (weekOpen && w === uptoWeek) break;
@@ -189,7 +194,7 @@ export function computeLedger(input: LedgerInput, uptoWeek = 11, weekOpen = fals
         f.hp = 1;
       }
     }
-    if (w <= 10) pot += (input.pledgeBonusesByWeek[w] ?? 0) * PLEDGE_BONUS;
+    if (w <= MONSTER_WEEKS) pot += (input.pledgeBonusesByWeek[w] ?? 0) * PLEDGE_BONUS;
   }
 
   return {

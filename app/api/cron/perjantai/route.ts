@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { fridayReminders } from '@/lib/reminders';
-import { helsinkiToday, seasonWeek } from '@/lib/season';
+import { helsinkiToday, seasonWeek, BOSS_WEEK } from '@/lib/season';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
   const day = helsinkiToday();
   const week = seasonWeek(day);
-  if (week < 1 || week > 11) return NextResponse.json({ skipped: 'Ei kautta.' });
+  if (week < 1 || week > BOSS_WEEK) return NextResponse.json({ skipped: 'Ei kautta.' });
 
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, key, { auth: { persistSession: false } });
   // Vain kerran viikossa, vaikka ajastus laukeaisi useammin.

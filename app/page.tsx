@@ -6,7 +6,7 @@ import { avatarUrl } from '@/lib/supabase/client';
 import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
-import { addDays, seasonWeek, weekRange } from '@/lib/season';
+import { addDays, seasonWeek, weekRange, AFTER_SEASON, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import { today, testOffsetMs } from '@/lib/today';
 import { announceReveal } from '@/lib/events';
 import Nav from '@/components/Nav';
@@ -30,15 +30,15 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   const locked = (heroes ?? []).filter((h) => h.pledge_locked_at);
   const img = avatarUrl(me.avatar_path);
   // Ylläpitäjä voi katsoa taistelunäkymää ennen kauden alkua osoitteella /?esikatselu=1.
-  const inSeason = (week >= 1 && week <= 11) || (me.is_admin && searchParams.esikatselu === '1');
+  const inSeason = (week >= 1 && week <= BOSS_WEEK) || (me.is_admin && searchParams.esikatselu === '1');
   const battle = maybeBattle ?? (inSeason ? await loadBattle(supabase, today()) : null);
   // Paljastusilmoitus tarkistetaan vain viikon kahtena ensimmäisenä päivänä, ei jokaisella latauksella.
   if (battle && battle.today <= addDays(weekRange(battle.week).start, 1)) await announceReveal(supabase, battle).catch(() => {});
 
   // Kauden jälkeen: lopputulos ja linkit, ei enää lyöntinappia
-  if (battle && week === 12) {
+  if (battle && week === AFTER_SEASON) {
     const kills = battle.ledger?.killed ?? [];
-    const bossDown = kills.some((k) => k.week === 11);
+    const bossDown = kills.some((k) => k.week === BOSS_WEEK);
     return (
       <>
         <Nav current="/" />
@@ -46,10 +46,10 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
           <span className="pill" style={{ background: 'var(--blood)', alignSelf: 'flex-start' }}>Kausi päättyi 20.12.</span>
           <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>{bossDown ? 'Loppupomo kaatui!' : 'Loppupomo selvisi'}</h2>
           <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>
-            Kaadoitte {kills.filter((k) => k.week <= 10).length}/10 viikon monsteria{bossDown ? ' ja loppupomon' : ''}. Kiitos taistelusta, sankarit.
+            Kaadoitte {kills.filter((k) => k.week <= MONSTER_WEEKS).length}/{MONSTER_WEEKS} viikon monsteria{bossDown ? ' ja loppupomon' : ''}. Kiitos taistelusta, sankarit.
           </p>
         </BossShadow>
-        <Link className="btn" href="/raportti/11">Viimeisen viikon raportti</Link>
+        <Link className="btn" href={`/raportti/${BOSS_WEEK}`}>Viimeisen viikon raportti</Link>
         <Link className="btn btn-ghost" href="/bestiaario">Bestiaario</Link>
         <Link className="btn btn-ghost" href="/sankarit">Sankarit</Link>
       </>
@@ -79,7 +79,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
       </div>
       <BossShadow>
         <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>Se odottaa</h2>
-        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kausi alkaa torstaina 1.10. Ensimmäinen vastus on Willa Rykman. Loppupomo herää 14.12.</p>
+        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kausi alkaa torstaina 1.10. Ensimmäinen vastus paljastuu silloin. Loppupomo herää 14.12.</p>
       </BossShadow>
 
       <section className="card">

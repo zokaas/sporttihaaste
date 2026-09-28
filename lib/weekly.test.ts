@@ -9,12 +9,12 @@ assert.equal(isSickOn(sick, 'a', '2026-10-16'), false);
 assert.equal(isSickOn(sick, 'b', '2026-11-30'), true);
 assert.equal(sickDaysBetween(sick, 'a', '2026-10-12', '2026-10-18'), 3);
 
-assert.equal(daysInWeek(1), 11);
+assert.equal(daysInWeek(1), 4);
 assert.equal(daysInWeek(2), 7);
 // 4 h, 3 sairaspäivää → 2,5 h (sama kuin adjustedPledge)
 assert.equal(weekPledgeTarget(4, 2, 3), 2.5);
-// Viikko 1: 11 päivää → 4 × 11/7 = 6,29 → 6,5 h
-assert.equal(weekPledgeTarget(4, 1, 0), 6.5);
+// Viikko 1: to–su 4 päivää → 4 × 4/7 = 2,29 → 2,5 h
+assert.equal(weekPledgeTarget(4, 1, 0), 2.5);
 assert.equal(weekPledgeTarget(4, 2, 7), 0);
 
 assert.equal(pledgeForWeek(4, [], 5), 4);
@@ -37,10 +37,10 @@ assert.deepEqual(patrolDays(steps, ['a', 'b', 'c'], periods), [
   { day: '2026-10-18', at: '2026-10-18T10:00:00Z' },
 ]);
 
-// Sinetti: b kipeänä viikolla 2 → ei vaadita
-assert.deepEqual(requiredForSeal(['a', 'b', 'c'], periods, 2, '2026-10-18'), ['a', 'c']);
+// Sinetti: b kipeänä viikolla 3 (12.–18.10.) → ei vaadita
+assert.deepEqual(requiredForSeal(['a', 'b', 'c'], periods, 3, '2026-10-18'), ['a', 'c']);
 // Kesken viikon (ennen sairastumista) b vaaditaan vielä
-assert.deepEqual(requiredForSeal(['a', 'b', 'c'], periods, 2, '2026-10-14'), ['a', 'b', 'c']);
+assert.deepEqual(requiredForSeal(['a', 'b', 'c'], periods, 3, '2026-10-14'), ['a', 'b', 'c']);
 
 console.log('Kaikki viikkotestit menivät läpi.');
 

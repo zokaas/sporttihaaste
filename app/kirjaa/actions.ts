@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { SPORTS, hitDamage, type Category } from '@/lib/rules';
-import { loggableDays, monthDay, seasonWeek } from '@/lib/season';
+import { loggableDays, monthDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
 import { monsterOfWeek } from '@/lib/battle';
 import { afterHit } from '@/lib/events';
@@ -16,7 +16,7 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
   const sport = SPORTS.find((s) => s.name === input.sport);
   if (!sport) return { error: 'Valitse laji.' } as const;
   const w = seasonWeek(input.day);
-  if (anyDay ? w < 1 || w > 11 || input.day > today() : !loggableDays(today()).includes(input.day)) return { error: 'Päivälle ei voi enää kirjata. Valitse kuluvan viikon päivä.' } as const;
+  if (anyDay ? w < 1 || w > BOSS_WEEK || input.day > today() : !loggableDays(today()).includes(input.day)) return { error: 'Päivälle ei voi enää kirjata. Valitse kuluvan viikon päivä.' } as const;
   if (!Number.isInteger(input.minutes) || input.minutes < 15 || input.minutes > 600) return { error: 'Keston pitää olla 15 min – 10 h.' } as const;
 
   const [{ data: heroes }, monster] = await Promise.all([

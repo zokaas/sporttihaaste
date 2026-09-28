@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { addDays, loggableDays, seasonWeek } from '@/lib/season';
+import { addDays, loggableDays, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
 import { afterStep } from '@/lib/events';
 import { loadBattle } from '@/lib/battle';
@@ -56,7 +56,7 @@ export async function changePledge(hours: number): Promise<Result> {
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   const next = seasonWeek(today()) + 1;
-  if (next < 2 || next > 11) return { ok: false, error: 'Lupausta ei voi enää muuttaa.' };
+  if (next < 2 || next > BOSS_WEEK) return { ok: false, error: 'Lupausta ei voi enää muuttaa.' };
   if (!(hours >= 1 && hours <= 15 && Number.isInteger(hours * 2))) return { ok: false, error: 'Lupauksen pitää olla 1–15 h puolen tunnin välein.' };
   return done((await supabase.from('pledge_changes').upsert({ user_id: user.id, from_week: next, hours })).error);
 }
@@ -85,4 +85,34 @@ export async function nudgeMissing(): Promise<Result & { sent?: number }> {
       : `${sender} muistuttaa: ${monster} kaatuu vasta, kun jokainen on lyönyt. Sinun iskusi puuttuu.`,
   }, missing);
   return { ok: true, sent };
+}
+
+/** Viesti porukalle: push kaikille muille ja näkyy Viestit-sivulla. Tietokanta rajaa yhteen päivässä (ylläpito rajatta). */
+export async function sendMessage(text: string): Promise<Result & { sent?: number }> {
+  const { supabase, user } = await me();
+  if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
+  const body = text.trim().replace(/\s+\n/g, '\n');
+  if (!body) return { ok: false, error: 'Kirjoita viesti.' };
+  if (body.length > 200) return { ok: false, error: 'Viesti on liian pitkä (enintään 200 merkkiä).' };
+  const { error } = await supabase.from('messages').insert({ sender: user.id, body });
+  if (error) return { ok: false, error: error.message.includes('messages') ? 'Viestejä ei voi vielä lähettää. Ylläpitäjän pitää ajaa migraatio 011_viestit.sql.' : error.message };
+
+  const [{ data: sender }, { data: heroes }] = await Promise.all([
+    supabase.from('profiles').select('hero_name').eq('id', user.id).single(),
+    supabase.from('profiles').select('id').not('pledge_locked_at', 'is', null),
+  ]);
+  const others = (heroes ?? []).map((h) => h.id).filter((id) => id !== user.id);
+  const sent = await sendPush(supabase, { title: `📣 ${sender?.hero_name ?? 'Sankari'}`, body, url: '/viestit' }, others);
+  revalidatePath('/viestit');
+  return { ok: true, sent };
+}
+
+/** Ylläpitäjä voi poistaa viestin. */
+export async function deleteMessage(id: number): Promise<Result> {
+  const { supabase, user } = await me();
+  if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
+  const { error } = await supabase.from('messages').delete().eq('id', id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/viestit');
+  return { ok: true };
 }

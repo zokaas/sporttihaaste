@@ -1,9 +1,14 @@
 // Kauden kalenteri. Päivät käsitellään Suomen aikaa merkkijonoina muodossa VVVV-KK-PP.
 // Sama laskenta on tietokannassa funktiona public.season_week.
 
-export const SEASON_START = '2026-10-01'; // to, viikko 1 alkaa (pidennetty viikko)
-export const WEEK2_START = '2026-10-12'; // ma, viikosta 2 alkaen viikot ovat ma–su
-export const SEASON_END = '2026-12-20'; // su, loppupomon viikko (11) päättyy
+export const SEASON_START = '2026-10-01'; // to, viikko 1 alkaa (lyhyt viikko to–su)
+export const WEEK2_START = '2026-10-05'; // ma, viikosta 2 alkaen viikot ovat ma–su
+export const SEASON_END = '2026-12-20'; // su, loppupomon viikko päättyy
+/** Tavallisia monstereita on viikoilla 1–11, loppupomo viikolla 12. */
+export const MONSTER_WEEKS = 11;
+export const BOSS_WEEK = 12;
+/** seasonWeek palauttaa tämän kauden jälkeen. */
+export const AFTER_SEASON = 13;
 
 const DAY = 86_400_000;
 const toMs = (iso: string) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
@@ -18,12 +23,12 @@ export function helsinkiToday(now = new Date()) {
   return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Helsinki' }).format(now);
 }
 
-/** Kauden viikko 1–11. 0 = ennen kautta, 12 = kauden jälkeen. */
+/** Kauden viikko 1–12. 0 = ennen kautta, 13 = kauden jälkeen. */
 export function seasonWeek(iso: string) {
   if (iso < SEASON_START) return 0;
-  if (iso > SEASON_END) return 12;
+  if (iso > SEASON_END) return AFTER_SEASON;
   if (iso < WEEK2_START) return 1;
-  return Math.min(11, 2 + Math.floor((toMs(iso) - toMs(WEEK2_START)) / (7 * DAY)));
+  return Math.min(BOSS_WEEK, 2 + Math.floor((toMs(iso) - toMs(WEEK2_START)) / (7 * DAY)));
 }
 
 /** Viikon ensimmäinen ja viimeinen päivä. */
@@ -36,7 +41,7 @@ export function weekRange(week: number) {
 /** Viikon päivät, joille voi vielä kirjata: viikon alusta tähän päivään asti. */
 export function loggableDays(today: string) {
   const week = seasonWeek(today);
-  if (week < 1 || week > 11) return [];
+  if (week < 1 || week > BOSS_WEEK) return [];
   const days: string[] = [];
   for (let d = weekRange(week).start; d <= today; d = addDays(d, 1)) days.push(d);
   return days;
