@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { hitDamage, type Category } from '@/lib/rules';
 import { formatDay } from '@/lib/season';
 import { logHit } from '@/app/kirjaa/actions';
+import Hint from '@/components/Hint';
 
 type Props = {
   days: string[];
@@ -92,7 +93,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
             <span>Treenasitko porukassa?</span>
             <span className="muted small">{withIds.length ? `${withIds.length + 1} henkeä` : 'Yksin'} ▾</span>
           </summary>
-          <p className="muted small" style={{ margin: '8px 0' }}>Valitse seuralaiset. Vähintään 3 yhdessä: +50 %, koko porukka: +100 %.</p>
+          <div style={{ margin: '8px 0' }}><Hint id="companions">Valitse seuralaiset. Vähintään 3 yhdessä: +50 %, koko porukka: +100 %.</Hint></div>
           <div className="chips">
             {companions.map((c) => (
               <button key={c.id} type="button" className="chip" aria-pressed={withIds.includes(c.id)} onClick={() => toggle(c.id)}>

@@ -13,6 +13,7 @@ import { today, testOffsetMs } from '@/lib/today';
 import { announceReveal } from '@/lib/events';
 import Nav from '@/components/Nav';
 import TodayCard from '@/components/TodayCard';
+import Hint from '@/components/Hint';
 
 export const dynamic = 'force-dynamic';
 
@@ -89,7 +90,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
             );
           })}
         </div>
-        <p className="muted" style={{ margin: 0 }}>Monsterien HP lasketaan kaikkien lupauksista, kun ilmoittautuminen sulkeutuu ke 30.9.</p>
+        <Hint id="hp-lock" className="muted">Monsterien HP lasketaan kaikkien lupauksista, kun ilmoittautuminen sulkeutuu ke 30.9.</Hint>
       </section>
 
       <section className="card">

@@ -330,3 +330,8 @@ details.companions[open] { padding-bottom: 12px; }
 .daycell.missed { border-style: dashed; }
 .daycell.future { opacity: 0.35; cursor: default; }
 .myweek-block .hpbar { background: var(--ground, #0e0c0b); }
+.hint { display: flex; gap: 8px; align-items: flex-start; margin: 0; }
+.hint-text { flex: 1; min-width: 0; }
+.hint-close { flex: 0 0 auto; width: 26px; height: 26px; margin: -3px -4px 0 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; }
+.hint-close:hover { background: var(--line); color: var(--text); }
+.hint-open { align-self: flex-start; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--muted); font-size: 13px; line-height: 1; cursor: pointer; padding: 0; }

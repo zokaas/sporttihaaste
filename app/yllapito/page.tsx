@@ -16,6 +16,7 @@ import ConfirmButton from '@/components/ConfirmButton';
 import ClearLocalState from '@/components/ClearLocalState';
 import MonsterEditor, { type Monster } from '@/components/MonsterEditor';
 import Nav from '@/components/Nav';
+import Hint from '@/components/Hint';
 
 export const dynamic = 'force-dynamic';
 
@@ -145,7 +146,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
       {helsinkiToday() < SEASON_START ? (
         <section className="card">
           <h2 className="display">Testitila</h2>
-          <p style={{ margin: 0 }}>Kokeile sovellusta ennen kautta: valitse päivä, niin sovellus toimii sinulle kuin se olisi tänään. Muut näkevät sovelluksen normaalisti.</p>
+          <Hint id="admin-test" className="">Kokeile sovellusta ennen kautta: valitse päivä, niin sovellus toimii sinulle kuin se olisi tänään. Muut näkevät sovelluksen normaalisti.</Hint>
           <form action={setTestDay} className="row" style={{ alignItems: 'center' }}>
             <input className="input grow" type="date" name="day" min={SEASON_START} max={SEASON_END} defaultValue={testDay() ?? '2026-10-07'} required />
             <button className="btn" type="submit">Aseta</button>
@@ -156,7 +157,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
           <form action={resetTestData}>
             <ConfirmButton message="Poistetaanko kaikkien iskut, askeleet, sairaudet ja lupausmuutokset?" className="btn btn-ghost" style={{ width: '100%', color: 'var(--blood-text)' }}>Tyhjennä testidata</ConfirmButton>
           </form>
-          <p className="muted small" style={{ margin: 0 }}>Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet, lupausmuutokset ja viestit. Tunnukset ja ilmoittautumiset säilyvät. Toimii vain ennen kauden alkua 1.10. Muista tyhjentää ennen kautta!</p>
+          <Hint id="admin-reset">Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet, lupausmuutokset ja viestit. Tunnukset ja ilmoittautumiset säilyvät. Toimii vain ennen kauden alkua 1.10. Muista tyhjentää ennen kautta!</Hint>
           {searchParams.testi ? <p className={`note${searchParams.testi.startsWith('Tyhjennys epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.testi}</p> : null}
           {searchParams.nollaa ? <ClearLocalState /> : null}
         </section>
@@ -164,7 +165,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
 
       <section className="card">
         <h2 className="display">Näkyvyys</h2>
-        <p className="muted small" style={{ margin: 0 }}>Automaattisesti Lyö näkyy kauden aikana (1.10.–20.12.) ja Bestiaario 1.10. alkaen. Testitilassa automaattinen näkyvyys seuraa testipäivää.</p>
+        <Hint id="admin-nav">Automaattisesti Lyö näkyy kauden aikana (1.10.–20.12.) ja Bestiaario 1.10. alkaen. Testitilassa automaattinen näkyvyys seuraa testipäivää.</Hint>
         <form action={saveNav} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {([['strike', 'Lyö-nappi (alapalkki)', season?.nav_strike], ['bestiary', 'Bestiaario (monsterilistaus)', season?.nav_bestiary]] as const).map(([name, label, value]) => (
             <label key={name} className="field">
@@ -204,7 +205,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
         </ul>
         <form action={sendTestPush}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Lähetä testi-ilmoitus kaikille</button></form>
         <form action={testFridayReminder}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Kokeile perjantain muistutusta (vain itsellesi)</button></form>
-        <p className="muted small" style={{ margin: 0 }}>Perjantain muistutus lähtee automaattisesti pe klo 9 (talviaikana klo 8) niille, joilta puuttuu lupauksen tunteja, isku sinettiin tai askelkuittauksia.</p>
+        <Hint id="admin-friday">Perjantain muistutus lähtee automaattisesti pe klo 9 (talviaikana klo 8) niille, joilta puuttuu lupauksen tunteja, isku sinettiin tai askelkuittauksia.</Hint>
         {searchParams.push ? <p className="note" role="status" style={{ margin: 0 }}>{searchParams.push}</p> : null}
       </section>
 
@@ -231,14 +232,14 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
             </tbody>
           </table>
         </div>
-        <p className="muted" style={{ margin: 0 }}>Pottikatto on puolet loppupomon HP:sta. Lukitse tavoite, kun kaikki ovat ilmoittautuneet. Lukituksen voi tehdä uudelleen, jos joku ilmoittautuu myöhässä.</p>
+        <Hint id="admin-lock" className="muted">Pottikatto on puolet loppupomon HP:sta. Lukitse tavoite, kun kaikki ovat ilmoittautuneet. Lukituksen voi tehdä uudelleen, jos joku ilmoittautuu myöhässä.</Hint>
         <form action={lockSeason}><button className="btn" type="submit">{season?.hp_locked_at ? 'Laske ja lukitse uudelleen' : 'Lukitse tavoite'}</button></form>
         {searchParams.tavoite ? <p className={`note${searchParams.tavoite.startsWith('Lukitus epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.tavoite}</p> : null}
       </section>
 
       <section className="card">
         <h2 className="display">Monsterit</h2>
-        <p className="muted" style={{ margin: 0 }}>Nimi, kuvaus, heikkous ja kuva näkyvät muille vasta monsterin viikon alkaessa (viikko 1: to 1.10., muut maanantaisin klo 00.00).</p>
+        <Hint id="admin-monsters" className="muted">Nimi, kuvaus, heikkous ja kuva näkyvät muille vasta monsterin viikon alkaessa (viikko 1: to 1.10., muut maanantaisin klo 00.00).</Hint>
         <MonsterEditor monsters={(monsters ?? []) as Monster[]} />
       </section>
     </>

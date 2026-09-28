@@ -141,7 +141,7 @@ export default function Ilmoittaudu() {
           <div className="note">
             <strong>{team.locked + (p.pledge_locked_at ? 1 : 0)}/10 lukinnut.</strong> Lupaukset yhteensä {String(teamHours).replace('.', ',')} h, eli porukan viikkovauhti on noin {Math.round(weeklyPace(teamHours)).toLocaleString('fi-FI')} vahinkoa.
           </div>
-          <p className="muted" style={{ margin: 0 }}>Kauden aikana lupausta voi muuttaa kerran viikossa. Muutos alkaa aina seuraavalta viikolta.</p>
+          <p className="muted" style={{ margin: 0 }}>Lupaus lukittuu ke 30.9. eikä sitä voi muuttaa kauden aikana. Sairaspäivät pienentävät viikon tavoitetta automaattisesti.</p>
         </section>
       )}
 

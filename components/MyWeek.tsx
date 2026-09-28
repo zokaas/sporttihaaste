@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { changePledge, setSick, toggleStep } from '@/app/actions';
+import { setSick, toggleStep } from '@/app/actions';
 import { formatDay } from '@/lib/season';
+import Hint from '@/components/Hint';
 
 type Props = {
   week: number;
@@ -15,8 +16,6 @@ type Props = {
   stepDamage: number;
   togetherCount: number;
   pledge: number;
-  nextPledge: number | null;
-  canChangePledge: boolean;
 };
 
 const h = (n: number) => `${String(Math.round(n * 10) / 10).replace('.', ',')} h`;
@@ -25,7 +24,6 @@ export default function MyWeek(p: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [newPledge, setNewPledge] = useState(p.nextPledge ?? p.pledge);
 
   async function run(fn: () => Promise<{ ok: boolean; error?: string }>) {
     setBusy(true);
@@ -86,7 +84,7 @@ export default function MyWeek(p: Props) {
             );
           })}
         </div>
-        <span className="muted small">Napauta päivää, kun olet kävellyt 10 000 askelta: +50. Jos kaikki terveet kuittaavat saman päivän, siitä tulee partiopäivä ⭐ +250.</span>
+        <Hint id="steps">Napauta päivää, kun olet kävellyt 10 000 askelta: +50. Jos kaikki terveet kuittaavat saman päivän, siitä tulee partiopäivä ⭐ +250.</Hint>
       </div>
 
       <p className="muted small" style={{ margin: 0 }}>
@@ -100,20 +98,6 @@ export default function MyWeek(p: Props) {
         </button>
       </div>
 
-      {p.canChangePledge ? (
-        <details>
-          <summary className="muted small" style={{ cursor: 'pointer' }}>Muuta lupausta ensi viikosta{p.nextPledge !== null ? ` (muutettu: ${h(p.nextPledge)})` : ''}</summary>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 10 }}>
-            <div className="stepper">
-              <button type="button" aria-label="Pienennä" onClick={() => setNewPledge((x) => Math.max(1, x - 0.5))}>−</button>
-              <div className="value"><strong style={{ fontSize: 30 }}>{h(newPledge)}</strong><span className="muted small">viikolta {p.week + 1} alkaen</span></div>
-              <button type="button" aria-label="Kasvata" onClick={() => setNewPledge((x) => Math.min(15, x + 0.5))}>+</button>
-            </div>
-            <button type="button" className="btn" disabled={busy || newPledge === (p.nextPledge ?? p.pledge)} onClick={() => run(() => changePledge(newPledge))}>Tallenna uusi lupaus</button>
-            <span className="muted small">Lupausta voi muuttaa kerran viikossa. Muutos alkaa aina seuraavalta viikolta.</span>
-          </div>
-        </details>
-      ) : null}
 
       {error ? <p className="error" role="alert" style={{ margin: 0 }}>{error}</p> : null}
     </section>
