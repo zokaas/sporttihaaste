@@ -89,6 +89,30 @@ function MonsterRow({ monster }: { monster: Monster }) {
     });
   }
 
+  const [swapWith, setSwapWith] = useState('');
+
+  // Vaihtaa tämän ja toisen viikon sisällön (nimi, kuvaus, heikkous, kuva, kolmikko). HP ja paljastusaika pysyvät viikolla.
+  async function swap() {
+    const other = Number(swapWith);
+    if (!other) return;
+    if (!confirm(`Vaihdetaanko viikkojen ${m.week} ja ${other} monsterit keskenään?`)) return;
+    setBusy(true);
+    setMsg(null);
+    const supabase = createClient();
+    const cols = 'name, description, weakness, image_path, parts';
+    const [{ data: a, error: e1 }, { data: b, error: e2 }] = await Promise.all([
+      supabase.from('monsters').select(cols).eq('week', m.week).single(),
+      supabase.from('monsters').select(cols).eq('week', other).single(),
+    ]);
+    const err = e1 ?? e2;
+    if (err || !a || !b) { setBusy(false); return setMsg({ ok: false, text: err?.message ?? 'Monsteria ei löytynyt.' }); }
+    const r1 = await supabase.from('monsters').update(b).eq('week', m.week);
+    const r2 = r1.error ? r1 : await supabase.from('monsters').update(a).eq('week', other);
+    setBusy(false);
+    if (r2.error) return setMsg({ ok: false, text: r2.error.message });
+    window.location.reload();
+  }
+
   return (
     <details className="monster-row">
       <summary>
@@ -162,6 +186,15 @@ function MonsterRow({ monster }: { monster: Monster }) {
           HP {m.hp?.toLocaleString('fi-FI') ?? 'lukitsematta'}.{' '}
           {revealed ? `Paljastuu kaikille ${revealed.toLocaleString('fi-FI', { timeZone: 'Europe/Helsinki', weekday: 'short', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}.` : 'Paljastusaikaa ei ole asetettu.'}
         </p>
+        {m.week !== BOSS_WEEK ? (
+          <div className="row" style={{ alignItems: 'center' }}>
+            <select className="input grow" style={{ minWidth: 0 }} value={swapWith} onChange={(e) => setSwapWith(e.target.value)} aria-label="Vaihda paikkaa viikon kanssa">
+              <option value="">Vaihda paikkaa viikon kanssa…</option>
+              {Array.from({ length: BOSS_WEEK - 1 }, (_, i) => i + 1).filter((w) => w !== m.week).map((w) => <option key={w} value={w}>Viikko {w}</option>)}
+            </select>
+            <button type="button" className="btn btn-ghost" style={{ flexShrink: 0 }} disabled={busy || !swapWith} onClick={swap}>Vaihda</button>
+          </div>
+        ) : null}
         <button className="btn" type="button" disabled={busy} onClick={saveAll}>
           {busy ? 'Tallennetaan…' : 'Tallenna'}
         </button>

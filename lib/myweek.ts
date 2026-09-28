@@ -1,5 +1,5 @@
 import type { loadBattle } from './battle';
-import { addDays, seasonWeek, weekRange, BOSS_WEEK } from './season';
+import { addDays, seasonWeek, weekRange } from './season';
 
 /** Minun viikkoni -kortin tiedot. */
 export function myWeekProps(b: NonNullable<Awaited<ReturnType<typeof loadBattle>>>, userId: string) {
@@ -16,7 +16,6 @@ export function myWeekProps(b: NonNullable<Awaited<ReturnType<typeof loadBattle>
   const status = b.pledgeStatus(userId, b.week);
   const myHits = b.hits.filter((h) => h.user_id === userId && seasonWeek(h.trained_on) === b.week);
   const stepDamage = days.filter((d) => d.stepped).length * 50;
-  const next = b.changes.find((c) => c.user_id === userId && c.from_week === b.week + 1);
   return {
     week: b.week,
     days,
@@ -28,7 +27,5 @@ export function myWeekProps(b: NonNullable<Awaited<ReturnType<typeof loadBattle>
     stepDamage,
     togetherCount: b.hits.filter((h) => seasonWeek(h.trained_on) === b.week && h.companions.length >= 2 && (h.user_id === userId || h.companions.includes(userId))).length,
     pledge: b.pledgeOf(userId, b.week),
-    nextPledge: next ? Number(next.hours) : null,
-    canChangePledge: b.week < BOSS_WEEK && seasonWeek(b.today) >= 1,
   };
 }

@@ -8,6 +8,7 @@ import { today } from '@/lib/today';
 import { monsterOfWeek } from '@/lib/battle';
 import HitForm from '@/components/HitForm';
 import DeleteHitButton from '@/components/DeleteHitButton';
+import Hint from '@/components/Hint';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,7 +79,7 @@ export default async function Kirjaa() {
             ))}
           </ul>
         )}
-        <p className="muted small" style={{ margin: 0 }}>Viikko lukittuu su {+end.slice(8, 10)}.{+end.slice(5, 7)}. klo 23.59. Sen jälkeen iskuja ei voi enää lisätä tai poistaa.</p>
+        <Hint id="week-lock">Viikko lukittuu su {+end.slice(8, 10)}.{+end.slice(5, 7)}. klo 23.59. Sen jälkeen iskuja ei voi enää lisätä tai poistaa.</Hint>
       </section>
     </>
   );

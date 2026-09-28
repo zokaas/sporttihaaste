@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: 'Monsterijahti',
   description: 'Ystävyyden voimalla yhtätoista monsteria ja loppupomoa vastaan.',
   manifest: '/manifest.webmanifest',
+  icons: { icon: [{ url: '/icons/icon-192.png', type: 'image/png', sizes: '192x192' }], apple: '/icons/icon-192.png' },
   appleWebApp: { capable: true, title: 'Monsterijahti', statusBarStyle: 'black-translucent' },
 };
 
@@ -25,7 +26,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fi" className={`${display.variable} ${body.variable}`}>
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body>
         {testDay() ? <div className="test-banner">Testitila: {formatDay(testDay()!)} · <a href="/yllapito">lopeta</a></div> : null}

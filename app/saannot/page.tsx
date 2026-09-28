@@ -39,7 +39,7 @@ const FAQ: [string, string][] = [
   ['Mitä askelkuittaus tarkoittaa?', `Kuittaa päivä, jona kävelit vähintään ${STEP_GOAL.toLocaleString('fi-FI')} askelta. Jokainen kuitattu päivä tekee ${STEP_DAY_DAMAGE} vahinkoa, mutta askeleet eivät täytä sinettiä.`],
   ['Miksi monsteri ei kaadu, vaikka HP on nollassa?', 'Sinetti on kesken: joku terve sankari ei ole vielä lyönyt sitä treenillä. Vahinko padotaan, ja monsteri kaatuu heti, kun sinetti täyttyy.'],
   ['Mitä rästi tarkoittaa?', 'Monsteri, joka jäi viikolla eloon. Se jatkaa seuraavalla viikolla 1 HP:lla, ja vanhin monsteri ottaa iskut aina ensin.'],
-  ['Voinko muuttaa lupaustani?', 'Kerran viikossa, ja muutos alkaa seuraavalta viikolta. Muuta lupausta Minä-sivulla.'],
+  ['Voinko muuttaa lupaustani?', 'Et. Lupaus lukittuu ke 30.9. ja pysyy samana koko kauden. Jos sairastut, merkitse itsesi kipeäksi Minä-sivulla: viikon tavoite pienenee sairaspäivien verran.'],
   ['Mihin ylimääräinen vahinko menee?', `Kun viikon monsteri on kaatunut, loput iskut menevät pottiin. Potti vähennetään loppupomon HP:sta, mutta enintään puolet siitä.`],
 ];
 

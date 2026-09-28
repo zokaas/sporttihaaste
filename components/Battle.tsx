@@ -13,6 +13,7 @@ import RecapPrompt from '@/components/RecapPrompt';
 import RecapCard from '@/components/RecapCard';
 import QuickStep from '@/components/QuickStep';
 import { stageParts, weaknessesOf } from '@/lib/trio';
+import Hint from '@/components/Hint';
 
 type BattleData = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -121,15 +122,21 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       {target && target.week < week ? (
         <section className="card threat">
           <p style={{ margin: 0 }}>
-            <strong style={{ color: 'var(--gold)' }}>{week === BOSS_WEEK ? 'Loppupomo odottaa rästien takana.' : `${nameOf(week)} odottaa rästien takana.`}</strong>{' '}
-            Iskut osuvat ensin vanhimpaan rästiin{overdue >= 2 ? `, ja rästejä on ${overdue}` : ''}.
-            {overdue >= 2 ? ' Vauhti ei riitä: tarvitaan yhteistreenejä ja heikkousbonuksia.' : ''}
+            <strong style={{ color: 'var(--gold)' }}>{week === BOSS_WEEK ? 'Loppupomo odottaa rästien takana.' : `${nameOf(week)} odottaa rästien takana.`}</strong>
+            {overdue >= 2 ? ` Rästejä on ${overdue}. Vauhti ei riitä: tarvitaan yhteistreenejä ja heikkousbonuksia.` : ''}
           </p>
+          <Hint id="backlog-wait">Iskut osuvat ensin vanhimpaan rästiin, ja vasta sen kaaduttua seuraavaan.</Hint>
         </section>
       ) : null}
 
       {seasonWeek(data.today) >= 1 && seasonWeek(data.today) <= BOSS_WEEK ? (
         <QuickStep day={data.today} stepped={data.steps.some((s) => s.user_id === userId && s.day === data.today)} />
+      ) : null}
+
+      {target && !missing.length && required.length ? (
+        <section className="card">
+          <p style={{ margin: 0 }}><strong className="ok">✓ Sinetti täynnä.</strong> Kaikki terveet sankarit ovat lyöneet. {nameOf(target.week)} kaatuu heti, kun sen HP loppuu.</p>
+        </section>
       ) : null}
 
       {target && missing.length ? (
@@ -139,7 +146,10 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
               <strong style={{ color: 'var(--gold)' }}>{fmt(target.padded)} vahinkoa padottuna!</strong> {nameOf(target.week)} kaatuu heti, kun sinetti täyttyy. Muuten pato menetetään su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59.
             </p>
           ) : (
-            <p style={{ margin: 0 }}>Sinetti {required.length - missing.length}/{required.length}. Monsteri kaatuu vasta, kun jokainen terve sankari on lyönyt sitä treenillä.</p>
+            <>
+              <p style={{ margin: 0 }}><strong>Sinetti {required.length - missing.length}/{required.length}.</strong></p>
+              <Hint id="seal">Monsteri kaatuu vasta, kun jokainen terve sankari on lyönyt sitä treenillä. Askeleet eivät täytä sinettiä.</Hint>
+            </>
           )}
           <p className="small" style={{ margin: 0 }}>Puuttuu: {missing.map((id) => heroById.get(id)?.hero_name).join(', ')}</p>
           {missing.some((id) => id !== userId) ? <NudgeButton count={missing.filter((id) => id !== userId).length} /> : null}
@@ -155,7 +165,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         <section className="card">
           <h2 className="display">Rästit</h2>
           {backlog.map((f) => <p key={f.week} style={{ margin: 0 }}>{nameOf(f.week)}: {f.padded ? `HP 0, ${fmt(f.padded)} padottuna` : `${fmt(f.hp)} HP`}</p>)}
-          <p className="muted small" style={{ margin: 0 }}>Vanhin rästi ottaa iskut ensin, ja sen jälkeen ylijäämä siirtyy seuraavaan.</p>
+          <Hint id="backlog">Vanhin rästi ottaa iskut ensin, ja sen jälkeen ylijäämä siirtyy seuraavaan.</Hint>
         </section>
       ) : null}
 
