@@ -3,7 +3,7 @@ import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import type { loadBattle } from '@/lib/battle';
 import { computeLedger, sealView } from '@/lib/rules';
 import { finalBlows, weekRecap } from '@/lib/stats';
-import { formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
+import { addDays, formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
 import MonsterStage, { type SealHero } from '@/components/MonsterStage';
 import KillFinale from '@/components/KillFinale';
@@ -51,6 +51,13 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Megamarssi' : null }));
   const missing = target ? required.filter((id) => !target.hitters.includes(id)) : [];
   const view = target ? sealView(target, required) : null;
+  // Monsterin repliikki HP:n mukaan: ylläpidon kirjoittama tai oletus.
+  const targetMonster = target ? monsters.get(target.week) : undefined;
+  const hpShare = view && targetMonster?.hp ? view.hp / targetMonster.hp : 1;
+  const taunt = !view ? null
+    : hpShare < 0.2 ? targetMonster?.taunt_low || 'Ei… ei vielä… minä en kaadu näin helposti!'
+    : hpShare < 0.5 ? targetMonster?.taunt_half || 'Tuo sattui. Mutta pelkkä naarmu, sankarit!'
+    : null;
   const seal: SealHero[] = participants.map((id) => {
     const h = heroById.get(id);
     return { id, name: h?.hero_name ?? '', initial: (h?.hero_name ?? '?').slice(0, 1), avatar: avatarUrl(h?.avatar_path), hit: Boolean(target?.hitters.includes(id)), excused: !required.includes(id) };
@@ -61,6 +68,10 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const potFull = ledger.pot >= ledger.potCap && ledger.potCap > 0;
   const overdue = ledger.alive.filter((f) => f.week < week).length;
   const nextReveal = week < BOSS_WEEK ? formatDay(weekRange(week + 1).start) : null;
+  // Ennakkoarvoitus: perjantaista alkaen varjo ja vihje seuraavasta monsterista.
+  const teaser = week < BOSS_WEEK && data.today >= addDays(weekRange(week).end, -2)
+    ? monsters.get(week + 1)?.teaser || (week + 1 === BOSS_WEEK ? 'Maa tärisee. Jokin valtava heräilee unestaan…' : 'Jotain liikkuu varjoissa. Se tietää jo nimesi…')
+    : null;
 
   // Taisteluloki: viikon iskut ja megamarssit uusimmasta alkaen; saman päivän askeleet yhtenä rivinä
   const stepDays = new Map<string, { names: string[]; at: string }>();
@@ -107,6 +118,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           seal={seal}
           endMs={endMs}
           currentWeek={week}
+          taunt={taunt}
           offsetMs={offsetMs}
           boss={target.week === BOSS_WEEK}
           potStrike={potBeforeBoss}
@@ -149,6 +161,20 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           )}
           <p className="small" style={{ margin: 0 }}>Puuttuu: {missing.map((id) => heroById.get(id)?.hero_name).join(', ')}</p>
           {missing.some((id) => id !== userId) ? <NudgeButton count={missing.filter((id) => id !== userId).length} /> : null}
+        </section>
+      ) : null}
+
+      {teaser ? (
+        <section className="card teaser">
+          <svg className="teaser-shadow" viewBox="0 0 390 300" aria-hidden="true">
+            <path d="M70 300 C80 215 125 170 158 156 C140 120 126 76 104 30 C146 60 166 100 176 138 C186 134 204 134 214 138 C224 100 244 60 286 30 C264 76 250 120 232 156 C265 170 310 215 320 300 Z" fill="#050303" />
+            <ellipse cx="180" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
+            <ellipse cx="210" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
+          </svg>
+          <div style={{ minWidth: 0 }}>
+            <span className="stage-week">{week + 1 === BOSS_WEEK ? 'Loppupomo' : `Viikko ${week + 1}`} · paljastuu {nextReveal}</span>
+            <p className="teaser-text">“{teaser}”</p>
+          </div>
         </section>
       ) : null}
 

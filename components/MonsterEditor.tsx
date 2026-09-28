@@ -13,6 +13,9 @@ export type Monster = {
   image_path: string | null;
   revealed_at: string | null;
   parts: Part[] | null;
+  taunt_half?: string | null;
+  taunt_low?: string | null;
+  teaser?: string | null;
 };
 
 type Part = { name: string; description: string | null; weakness: string | null; image_path: string | null };
@@ -77,7 +80,8 @@ function MonsterRow({ monster }: { monster: Monster }) {
   }
 
   function saveAll() {
-    if (!parts) return save({ name: m.name?.trim() || null, description: m.description?.trim() || null, weakness: m.weakness, parts: null });
+    const extras = { taunt_half: m.taunt_half?.trim() || null, taunt_low: m.taunt_low?.trim() || null, teaser: m.teaser?.trim() || null };
+    if (!parts) return save({ name: m.name?.trim() || null, description: m.description?.trim() || null, weakness: m.weakness, parts: null, ...extras });
     const clean = parts.map((x) => ({ name: x.name.trim(), description: x.description?.trim() || null, weakness: x.weakness || null, image_path: x.image_path }));
     if (clean.some((x) => !x.name)) return setMsg({ ok: false, text: 'Anna jokaiselle kolmikon osalle nimi.' });
     const names = clean.map((x) => x.name);
@@ -85,6 +89,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
       parts: clean,
       name: `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`,
       description: m.description?.trim() || null,
+      ...extras,
       weakness: clean[0].weakness,
     });
   }
@@ -99,7 +104,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
     setBusy(true);
     setMsg(null);
     const supabase = createClient();
-    const cols = 'name, description, weakness, image_path, parts';
+    const cols = 'name, description, weakness, image_path, parts, teaser, taunt_half, taunt_low';
     const [{ data: a, error: e1 }, { data: b, error: e2 }] = await Promise.all([
       supabase.from('monsters').select(cols).eq('week', m.week).single(),
       supabase.from('monsters').select(cols).eq('week', other).single(),
@@ -172,6 +177,18 @@ function MonsterRow({ monster }: { monster: Monster }) {
         <label className="field">
           {parts ? 'Yhteinen kuvaus' : 'Kuvaus'}
           <textarea className="input" rows={3} style={{ padding: 12 }} value={m.description ?? ''} onChange={(e) => setM({ ...m, description: e.target.value })} />
+        </label>
+        <label className="field">
+          Arvoitus (näkyy kaikille edellisen viikon perjantaista alkaen)
+          <textarea className="input" rows={2} style={{ padding: 12 }} placeholder="Esim. Ensi viikolla vastaan tulee jotain, mikä pelkää palloja…" value={m.teaser ?? ''} onChange={(e) => setM({ ...m, teaser: e.target.value })} />
+        </label>
+        <label className="field">
+          Repliikki, kun HP alle 50 %
+          <input className="input" placeholder="Tuo sattui. Mutta pelkkä naarmu, sankarit!" value={m.taunt_half ?? ''} onChange={(e) => setM({ ...m, taunt_half: e.target.value })} />
+        </label>
+        <label className="field">
+          Repliikki, kun HP alle 20 %
+          <input className="input" placeholder="Ei… ei vielä… minä en kaadu näin helposti!" value={m.taunt_low ?? ''} onChange={(e) => setM({ ...m, taunt_low: e.target.value })} />
         </label>
         {!parts ? (
           <label className="field">

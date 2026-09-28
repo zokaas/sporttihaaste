@@ -367,3 +367,24 @@ details.companions[open] { padding-bottom: 12px; }
 .mcell { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 8px; }
 .mcell.trained { background: var(--ember-fill); color: var(--light); }
 .mcell.legend { width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; }
+.stage-taunt { position: absolute; z-index: 3; top: 52px; left: 16px; max-width: 72%; padding: 10px 14px; border-radius: 16px 16px 16px 4px; background: rgba(242, 234, 224, 0.94); color: #1c1715; font: italic 600 14px/1.35 var(--font-body), sans-serif; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); animation: taunt-in 0.5s ease-out both; }
+@keyframes taunt-in { from { opacity: 0; transform: translateY(-6px) scale(0.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .stage-taunt { animation: none; } }
+.card.teaser { flex-direction: row; align-items: center; gap: 14px; background: radial-gradient(ellipse at 20% 50%, #2a1512, var(--surface) 70%); }
+.teaser-shadow { flex: 0 0 72px; width: 72px; height: 56px; filter: blur(1.5px); }
+.teaser-text { margin: 4px 0 0; font-style: italic; color: var(--light); }
+.season-chart { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.season-chart svg { width: 100%; height: auto; display: block; }
+.season-chart .grid { stroke: var(--line); stroke-width: 1; }
+.season-chart .tick { fill: var(--muted); font: 500 10px var(--font-body), sans-serif; }
+.season-chart .bar { fill: var(--ember); }
+.season-chart .bar.current { fill: var(--ember); opacity: 0.45; }
+.season-chart .hpline { stroke: var(--light); stroke-width: 2; stroke-linecap: round; }
+.season-chart .hit { fill: transparent; }
+.season-chart .chart-col:hover .bar { filter: brightness(1.15); }
+.season-chart .chart-col:hover .hit { fill: rgba(255, 255, 255, 0.04); }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); }
+.chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { display: inline-block; }
+.swatch.bar { width: 10px; height: 10px; border-radius: 2px; background: var(--ember); }
+.swatch.line { width: 14px; height: 2px; border-radius: 1px; background: var(--light); }

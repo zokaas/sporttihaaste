@@ -31,6 +31,8 @@ type Props = {
   seal?: SealHero[];
   /** Viikon loppu (ms) ja testitilan siirtymä. */
   endMs?: number;
+  /** Monsterin repliikki (HP alle 50 % / 20 %), näytetään puhekuplana. */
+  taunt?: string | null;
   /** Kuluva viikko, jos näyttämöllä on rästi (yläpalkin otsikko). */
   currentWeek?: number;
   offsetMs?: number;
@@ -174,6 +176,8 @@ export default function MonsterStage(p: Props) {
           −{fmt(flying.n)}{flying.label ? <small>{flying.label}</small> : null}
         </div>
       ) : null}
+
+      {p.taunt && !p.dead ? <div className="stage-taunt" role="note">“{p.taunt}”</div> : null}
 
       <div className="stage-info">
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
