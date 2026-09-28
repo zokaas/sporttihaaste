@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { isValidUsername, normalizeUsername, usernameToEmail } from '@/lib/username';
 import BossShadow from '@/components/BossShadow';
+import DayMonth from '@/components/DayMonth';
 
 export default function Kirjaudu() {
   const router = useRouter();
@@ -11,6 +12,7 @@ export default function Kirjaudu() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
+  const [birthday, setBirthday] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,6 +30,10 @@ export default function Kirjaudu() {
     }
     if (mode === 'signup' && password !== password2) {
       setError('Salasanat eivät täsmää.');
+      return;
+    }
+    if (mode === 'signup' && !birthday) {
+      setError('Valitse syntymäpäiväsi.');
       return;
     }
 
@@ -53,6 +59,8 @@ export default function Kirjaudu() {
         setBusy(false);
         return;
       }
+      // Profiilirivi syntyy tietokannassa tunnuksen mukana. Jos tallennus epäonnistuu, ilmoittautuminen kysyy päivän uudelleen.
+      await supabase.from('profiles').update({ birthday }).eq('id', data.session.user.id);
     }
     router.replace('/');
     router.refresh();
@@ -86,6 +94,12 @@ export default function Kirjaudu() {
             Salasana uudelleen
             <input className="input" type="password" required autoComplete="new-password" value={password2} onChange={(e) => setPassword2(e.target.value)} />
           </label>
+        ) : null}
+        {mode === 'signup' ? (
+          <>
+            <DayMonth label="Syntymäpäivä" value={birthday} onChange={setBirthday} />
+            <p className="muted small" style={{ margin: 0 }}>Syntymäpäivänäsi kaikkien iskut tekevät +50 %. Vuotta ei kysytä.</p>
+          </>
         ) : null}
         <button className="btn" type="submit" disabled={busy}>
           {busy ? 'Hetki…' : mode === 'login' ? 'Kirjaudu' : 'Luo tunnus'}
