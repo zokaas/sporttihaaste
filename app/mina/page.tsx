@@ -31,7 +31,7 @@ export default async function Mina() {
       {inSeason ? <MyWeek {...myWeekProps(b, user.id)} /> : (
         <section className="card">
           <h2 className="display">Minun viikkoni</h2>
-          <p style={{ margin: 0 }}>Kausi alkaa to 1.10. Silloin täällä näkyy lupauksesi eteneminen, askelkuittaukset ja sairastuminen.</p>
+          <p style={{ margin: 0 }}>Kausi alkaa to 1.10. Silloin täällä näkyy enemmän dataa.</p>
         </section>
       )}
 
