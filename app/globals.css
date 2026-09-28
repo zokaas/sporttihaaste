@@ -491,3 +491,7 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 /* Monsterin reaktio omaan iskuun: punertava kupla, joka pomppaa */
 @keyframes reply-pop { 0% { opacity: 0; transform: scale(0.6) rotate(-4deg); } 60% { opacity: 1; transform: scale(1.08) rotate(1deg); } 100% { transform: none; } }
 .stage-taunt.is-reply { background: #f6d9cf; border: 2px solid var(--blood); font-size: 16px; animation: reply-pop 0.45s ease-out both; }
+
+/* Tänään-kortti: päivän juhla korostetaan, tuleva juhla muistutuksena kortin lopussa */
+.celebration-today { background: rgba(212, 160, 60, 0.14); border: 1px solid rgba(212, 160, 60, 0.45); border-radius: 12px; padding: 8px 10px; }
+.soon-celebration { border-top: 1px solid var(--line); padding-top: 10px; font-size: 14px; }

@@ -2,15 +2,13 @@ import type { Battle } from '@/lib/stats';
 import { upcomingCelebrations } from '@/lib/stats';
 import { BOSS_WEEK, formatDay, weekRange } from '@/lib/season';
 import { isSickOn } from '@/lib/weekly';
-import { weaknessesOf } from '@/lib/trio';
 import { avatarUrl } from '@/lib/supabase/client';
 
-/** Tänään: viikon heikkous, päivän juhlapäivä (tai seuraava) ja päivän megamarssitilanne. */
+/** Tänään: päivän askeltilanne ja juhlapäivä. Tulevat juhlapäivät ilmoitetaan viikkoa etukäteen. */
 export default function TodayCard({ b, showNextReveal = true }: { b: Battle; showNextReveal?: boolean }) {
-  const weakness = weaknessesOf(b.monsters.get(b.week)).join(', ');
-  const celebrations = upcomingCelebrations(b, 60);
+  const celebrations = upcomingCelebrations(b, 8);
   const todays = celebrations.filter((c) => c.day === b.today);
-  const next = celebrations.find((c) => c.day > b.today);
+  const soon = celebrations.filter((c) => c.day > b.today);
   const healthy = b.participants.filter((u) => !isSickOn(b.periods, u, b.today));
   const stepped = new Set(b.steps.filter((s) => s.day === b.today).map((s) => s.user_id));
   const people = b.participants.map((u) => {
@@ -23,11 +21,8 @@ export default function TodayCard({ b, showNextReveal = true }: { b: Battle; sho
     <section className="card">
       <h2 className="display">Tänään {formatDay(b.today)}</h2>
       {showNextReveal ? <div className="row"><span aria-hidden="true">{b.week < BOSS_WEEK ? '👁️' : '🏁'}</span><span className="muted">{b.week < BOSS_WEEK ? <>Seuraava monsteri paljastuu <strong style={{ color: 'var(--text)' }}>{formatDay(weekRange(b.week + 1).start)} klo 00.00</strong></> : <>Kausi päättyy <strong style={{ color: 'var(--text)' }}>{formatDay(weekRange(BOSS_WEEK).end)} klo 23.59</strong></>}</span></div> : null}
-      {weakness ? <div className="row"><span aria-hidden="true">🎯</span><span>Viikon heikkous: <strong>{weakness}</strong> (+50 %)</span></div> : null}
       {todays.length ? (
-        <div className="row"><span aria-hidden="true">🎉</span><span><strong>{todays.map((c) => `${c.name} (${c.kind})`).join(', ')}</strong>: kaikkien iskut tänään +50 %!</span></div>
-      ) : next ? (
-        <div className="row"><span aria-hidden="true">🎂</span><span className="muted">Seuraava juhlapäivä {formatDay(next.day)}: {next.name}</span></div>
+        <div className="row celebration-today"><span aria-hidden="true">🎉</span><span><strong>{todays.map((c) => `${c.name} (${c.kind})`).join(', ')}</strong>: kaikkien iskut tänään +50 %!</span></div>
       ) : null}
       <div className="row" style={{ alignItems: 'center' }}>
         <span aria-hidden="true">{patrol ? '⭐' : '👣'}</span>
@@ -40,6 +35,12 @@ export default function TodayCard({ b, showNextReveal = true }: { b: Battle; sho
               {p.avatar ? <img src={p.avatar} alt="" /> : p.name.slice(0, 1)}
             </span>
           ))}
+        </div>
+      ) : null}
+      {soon.length ? (
+        <div className="row soon-celebration">
+          <span aria-hidden="true">🎂</span>
+          <span>Tulossa <strong>{formatDay(soon[0].day)}</strong>: {soon.filter((c) => c.day === soon[0].day).map((c) => `${c.name} (${c.kind})`).join(', ')}. Kaikkien iskut silloin +50 %. Suunnittele yhteistreeni sille päivälle!</span>
         </div>
       ) : null}
     </section>
