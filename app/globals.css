@@ -269,3 +269,14 @@ dl.glossary > div { padding: 8px 0; border-bottom: 1px solid var(--line); }
 dl.glossary > div:last-child { border-bottom: 0; }
 dl.glossary dt { font-weight: 700; color: var(--gold); }
 dl.glossary dd { margin: 2px 0 0; font-size: 14px; }
+
+table.step-matrix { font-size: 13px; }
+table.step-matrix th, table.step-matrix td { padding: 4px 2px; text-align: center; }
+table.step-matrix th:first-child, table.step-matrix td:first-child { text-align: left; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+table.step-matrix td { color: var(--moss-text); font-weight: 700; }
+table.step-matrix td:first-child { color: var(--text); font-weight: 500; }
+
+details.companions { border: 1px solid var(--line); border-radius: 12px; padding: 0 12px; }
+details.companions summary { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer; font-size: 14px; font-weight: 600; list-style: none; }
+details.companions summary::-webkit-details-marker { display: none; }
+details.companions[open] { padding-bottom: 12px; }

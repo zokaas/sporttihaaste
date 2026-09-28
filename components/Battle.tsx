@@ -56,14 +56,16 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const recap = week >= 2 ? weekRecap(data, week - 1) : null;
 
   // Taisteluloki: viikon iskut ja partiopäivät uusimmasta alkaen; saman päivän askeleet yhtenä rivinä
-  const stepDays = new Map<string, { count: number; at: string }>();
+  const stepDays = new Map<string, { names: string[]; at: string }>();
   for (const st of data.steps.filter((x) => seasonWeek(x.day) === week)) {
-    const cur = stepDays.get(st.day);
-    stepDays.set(st.day, { count: (cur?.count ?? 0) + 1, at: !cur || st.created_at > cur.at ? st.created_at : cur.at });
+    const cur = stepDays.get(st.day) ?? { names: [], at: st.created_at };
+    cur.names.push(heroById.get(st.user_id)?.hero_name ?? '?');
+    if (st.created_at > cur.at) cur.at = st.created_at;
+    stepDays.set(st.day, cur);
   }
   const log = [
     ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, who: heroById.get(h.user_id)?.hero_name ?? '', text: `${h.sport} ${h.minutes} min${h.companions.length ? ` · ${h.companions.length + 1} hengen porukka` : ''}`, dmg: h.damage, crit: h.bonus_pct >= 100 })),
-    ...[...stepDays].map(([day, v]) => ({ at: v.at, who: `👣 ${v.count} ${v.count === 1 ? "askelkuittaus" : "askelkuittausta"}`, text: formatDay(day), dmg: v.count * 50, crit: false })),
+    ...[...stepDays].map(([day, v]) => ({ at: v.at, who: `👣 Askeleet ${formatDay(day)}`, text: v.names.join(', '), dmg: v.names.length * 50, crit: false })),
     ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, who: '⭐ Partiopäivä', text: `Koko porukka ${formatDay(p.day)}`, dmg: 250, crit: false })),
   ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 8);
 

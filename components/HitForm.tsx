@@ -27,6 +27,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
   const [sportName, setSportName] = useState('');
   const [minutes, setMinutes] = useState(60);
   const [withIds, setWithIds] = useState<string[]>([]);
+  const [groupOpen, setGroupOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -86,8 +87,12 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
       </fieldset>
 
       {companions.length ? (
-        <fieldset className="field-group">
-          <legend>Kenen kanssa? <span className="muted small">(3+ yhdessä: +50 %)</span></legend>
+        <details className="companions" open={groupOpen} onToggle={(e) => setGroupOpen((e.target as HTMLDetailsElement).open)}>
+          <summary>
+            <span>Treenasitko porukassa?</span>
+            <span className="muted small">{withIds.length ? `${withIds.length + 1} henkeä` : 'Yksin'} ▾</span>
+          </summary>
+          <p className="muted small" style={{ margin: '8px 0' }}>Valitse seuralaiset. Vähintään 3 yhdessä: +50 %, koko porukka: +100 %.</p>
           <div className="chips">
             {companions.map((c) => (
               <button key={c.id} type="button" className="chip" aria-pressed={withIds.includes(c.id)} onClick={() => toggle(c.id)}>
@@ -96,7 +101,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
               </button>
             ))}
           </div>
-        </fieldset>
+        </details>
       ) : null}
 
       {preview ? (

@@ -27,7 +27,7 @@ export default function TodayCard({ b }: { b: Battle }) {
         <span aria-hidden="true">{patrol ? '⭐' : '👣'}</span>
         <span>
           {patrol ? <strong className="ok">Partiopäivä! Kaikki terveet kuittasivat askeleet (+250).</strong>
-            : <>Askeleet {stepped.size}/{healthy.length}. {missing.length ? <span className="muted">Puuttuu: {missing.join(', ')}</span> : null}</>}
+            : <>Askeleet {stepped.size}/{healthy.length}.{stepped.size ? <> Kuitanneet: {[...stepped].map((u) => b.heroes.find((h) => h.id === u)?.hero_name).filter(Boolean).join(', ')}.</> : null} {missing.length ? <span className="muted">Puuttuu: {missing.join(', ')}</span> : null}</>}
         </span>
       </div>
     </section>
