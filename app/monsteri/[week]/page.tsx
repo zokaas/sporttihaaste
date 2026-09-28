@@ -7,6 +7,7 @@ import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
 import { STEP_DAY_DAMAGE } from '@/lib/rules';
 import { formatDay, seasonWeek, weekRange } from '@/lib/season';
+import { stageParts, weaknessesOf } from '@/lib/trio';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,8 @@ export default async function Monsteri({ params }: { params: { week: string } })
   const blow = finalBlows(b)[week];
   const heroName = (id: string) => b.heroes.find((h) => h.id === id)?.hero_name ?? 'Partio';
   const { start, end } = weekRange(week);
+  const weak = weaknessesOf(m).join(', ');
+  const parts = stageParts(m, killed ? 0 : fighter?.hp ?? m?.hp ?? 0, Boolean(killed), monsterImageUrl);
 
   // Vahinko monsterin viikolla (iskut + askeleet) sankareittain
   const totals = new Map<string, number>();
@@ -40,7 +43,8 @@ export default async function Monsteri({ params }: { params: { week: string } })
         week={week}
         title={title}
         image={monsterImageUrl(m?.image_path)}
-        weakness={m?.weakness ?? null}
+        weakness={weak || null}
+        parts={parts}
         hp={killed ? 0 : fighter ? (fighter.padded ? 0 : fighter.hp) : m?.hp ?? 0}
         maxHp={m?.hp ?? 1}
         padded={fighter?.padded ?? 0}
@@ -51,9 +55,28 @@ export default async function Monsteri({ params }: { params: { week: string } })
       />
       {m?.description ? <p className="narrator">{m.description}</p> : null}
 
+      {parts && m?.parts ? (
+        <section className="card">
+          <h2 className="display">Kolmikko</h2>
+          <p className="muted small" style={{ margin: 0 }}>Kolme osaa jakavat viikon HP:n tasan ja kaatuvat järjestyksessä. Viimeinen kaatuu vasta, kun sinetti on täynnä.</p>
+          <ul className="people">
+            {m.parts.map((part, i) => (
+              <li key={i} style={parts[i].dead ? { opacity: 0.6 } : undefined}>
+                {parts[i].image ? <img className="avatar" src={parts[i].image!} alt="" width={56} height={56} style={parts[i].dead ? { filter: 'grayscale(1)' } : undefined} /> : <div className="avatar" style={{ width: 56, height: 56, fontSize: 22 }}>{parts[i].dead ? '✝' : i + 1}</div>}
+                <div className="grow" style={{ minWidth: 0 }}>
+                  <div className="who">{part.name}</div>
+                  <div className="facts">{parts[i].dead ? <span className="ok">Kaatunut</span> : `${fmt(parts[i].left)} / ${fmt(parts[i].hp)} HP`}{part.weakness ? ` · heikkous ${part.weakness}` : ''}</div>
+                  {part.description ? <div className="facts">{part.description}</div> : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <section className="card">
         <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">Viikko</span><span>{week} · {formatDay(start)}–{formatDay(end)}</span></div>
-        {m?.weakness ? <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">Heikkous</span><span>{m.weakness} (+50 %)</span></div> : null}
+        {weak ? <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">Heikkous</span><span>{weak} (+50 %)</span></div> : null}
         <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">Tila</span>
           <span>{killed?.killedAt ? <span className="ok">Kaatui {helsinki(killed.killedAt, { weekday: 'short', day: 'numeric', month: 'numeric' })}</span>
             : fighter?.padded ? <span style={{ color: 'var(--gold)' }}>HP 0, {fmt(fighter.padded)} padottuna</span>

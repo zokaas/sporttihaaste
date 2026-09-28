@@ -9,6 +9,9 @@ assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', gro
 assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', groupSize: 10, celebration: true, weakness: 'Voimailu' }).damage, 300);
 // Yhdeksän ilmoittautunutta: kaikki yhdeksän yhdessä saa +100 %
 assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Muu', groupSize: 9, celebration: false, weakness: null, participants: 9 }).pct, 100);
+// Kolmikko: heikkousbonus, jos laji osuu minkä tahansa osan heikkouteen
+assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Palloilu', groupSize: 1, celebration: false, weakness: ['Voimailu', 'Palloilu'] }).pct, 50);
+assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Muu', groupSize: 1, celebration: false, weakness: ['Voimailu', 'Palloilu'] }).pct, 0);
 // Uinti 30 min yksin = 100
 assert.equal(hitDamage({ minutes: 30, sportValue: 200, category: 'Kestävyys', groupSize: 1, celebration: false, weakness: null }).damage, 100);
 // Lupaukseen: 1 h uintia = 2 h, 2 h golfia = 1 h

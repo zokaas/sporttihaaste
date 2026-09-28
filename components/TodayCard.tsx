@@ -2,10 +2,11 @@ import type { Battle } from '@/lib/stats';
 import { upcomingCelebrations } from '@/lib/stats';
 import { formatDay } from '@/lib/season';
 import { isSickOn } from '@/lib/weekly';
+import { weaknessesOf } from '@/lib/trio';
 
 /** Tänään: viikon heikkous, päivän juhlapäivä (tai seuraava) ja päivän partiotilanne. */
 export default function TodayCard({ b }: { b: Battle }) {
-  const weakness = b.monsters.get(b.week)?.weakness;
+  const weakness = weaknessesOf(b.monsters.get(b.week)).join(', ');
   const celebrations = upcomingCelebrations(b, 60);
   const todays = celebrations.filter((c) => c.day === b.today);
   const next = celebrations.find((c) => c.day > b.today);
@@ -27,7 +28,7 @@ export default function TodayCard({ b }: { b: Battle }) {
         <span aria-hidden="true">{patrol ? '⭐' : '👣'}</span>
         <span>
           {patrol ? <strong className="ok">Partiopäivä! Kaikki terveet kuittasivat askeleet (+250).</strong>
-            : <>Askeleet {stepped.size}/{healthy.length}. {missing.length ? <span className="muted">Puuttuu: {missing.join(', ')}</span> : null}</>}
+            : <>Askeleet {stepped.size}/{healthy.length}.{stepped.size ? <> Kuitanneet: {[...stepped].map((u) => b.heroes.find((h) => h.id === u)?.hero_name).filter(Boolean).join(', ')}.</> : null} {missing.length ? <span className="muted">Puuttuu: {missing.join(', ')}</span> : null}</>}
         </span>
       </div>
     </section>

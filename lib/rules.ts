@@ -45,7 +45,7 @@ export interface HitInput {
   category: Category;
   groupSize: number; // kirjaaja + merkityt seuralaiset
   celebration: boolean; // nimi- tai syntymäpäivä jollakulla
-  weakness: Category | null; // viikon monsterin heikkous
+  weakness: Category | Category[] | null; // viikon monsterin heikkous (kolmikolla useampi)
   participants?: number; // ilmoittautuneiden määrä ("kaikki yhdessä"), oletus 10
 }
 
@@ -56,7 +56,8 @@ export function hitDamage(h: HitInput) {
   if (h.groupSize >= all && all >= 3) bonuses.push({ label: 'Koko porukka yhdessä', pct: 100 });
   else if (h.groupSize >= 3) bonuses.push({ label: `Yhdessä (${h.groupSize} henkeä)`, pct: 50 });
   if (h.celebration) bonuses.push({ label: 'Juhlapäivä', pct: 50 });
-  if (h.weakness && h.category === h.weakness) bonuses.push({ label: `Heikkous: ${h.weakness}`, pct: 50 });
+  const weaknesses = Array.isArray(h.weakness) ? h.weakness : h.weakness ? [h.weakness] : [];
+  if (weaknesses.includes(h.category)) bonuses.push({ label: `Heikkous: ${h.category}`, pct: 50 });
   const pct = Math.min(BONUS_CAP_PCT, bonuses.reduce((a, b) => a + b.pct, 0));
   return { base, bonuses, pct, damage: Math.round(base * (1 + pct / 100)) };
 }

@@ -56,6 +56,23 @@ export default async function Sankarit({ searchParams }: { searchParams: { tab?:
                   );
                 })}
               </div>
+              <table className="plain step-matrix">
+                <thead>
+                  <tr><th>Sankari</th>{days.map((d) => <th key={d}>{formatDay(d).split(' ')[0]}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {b.participants.map((u) => (
+                    <tr key={u}>
+                      <td>{b.heroes.find((h) => h.id === u)?.hero_name}</td>
+                      {days.map((d) => {
+                        const done = b.steps.some((s) => s.user_id === u && s.day === d);
+                        const sick = isSickOn(b.periods, u, d);
+                        return <td key={d} title={formatDay(d)}>{done ? '✓' : sick ? '🤒' : '·'}</td>;
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </>
           ) : null}
           <div className="stat-row">

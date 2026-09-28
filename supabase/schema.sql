@@ -70,6 +70,7 @@ create table public.monsters (
   hp int,
   image_path text,
   revealed_at timestamptz
+  -- parts (monsterikolmikko): migrations/009_kolmikko.sql
 );
 insert into public.monsters (week) select generate_series(1, 11);
 update public.monsters set name = 'Willa Rykman' where week = 1;

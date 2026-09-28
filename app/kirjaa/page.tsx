@@ -53,7 +53,7 @@ export default async function Kirjaa() {
         days={days}
         sports={SPORTS}
         companions={participants.filter((h) => h.id !== user.id).map((h) => ({ id: h.id, name: h.hero_name ?? '', avatar: avatarUrl(h.avatar_path) }))}
-        weakness={(monster?.weakness as Category | null) ?? null}
+        weakness={monster.weaknesses}
         celebrations={celebrations}
       />
 
