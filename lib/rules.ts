@@ -104,7 +104,7 @@ export interface LedgerEvent {
   userId: string;
   damage: number;
   isTraining: boolean; // askeleet ja partiopäivät eivät täytä sinettiä
-  allTogether?: boolean; // koko porukka yhdessä (loppupomon viimeinen isku)
+  allTogether?: boolean; // koko porukka yhdessä (vain tilastoihin)
 }
 
 export interface LedgerInput {
@@ -115,7 +115,7 @@ export interface LedgerInput {
   pledgeBonusesByWeek: Record<number, number>; // pidettyjen lupausten määrä
 }
 
-interface Fighter { week: number; hp: number; hitters: Set<string>; killedAt?: number; boss?: boolean; finalBlow?: boolean }
+interface Fighter { week: number; hp: number; hitters: Set<string>; killedAt?: number; boss?: boolean }
 
 /**
  * Laskee kauden tilanteen viikon uptoWeek loppuun. Jos weekOpen on tosi, viimeinen viikko on vielä
@@ -133,7 +133,6 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
 
   const tryKill = (f: Fighter, week: number, at: number) => {
     if (f.hp > 0) return false;
-    if (f.boss && !f.finalBlow) return false;
     if (!sealFull(f, week)) return false;
     f.killedAt = at;
     return true;
@@ -154,7 +153,6 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
       while (dmg > 0 && i < queue.length) {
         const f = queue[i];
         if (e.isTraining) f.hitters.add(e.userId);
-        if (f.boss && e.allTogether) f.finalBlow = true;
         f.hp -= dmg;
         dmg = 0;
         if (tryKill(f, w, e.at)) {

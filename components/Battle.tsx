@@ -55,6 +55,9 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const endMs = helsinkiMs(weekRange(week).end);
   const potBeforeBoss = week === BOSS_WEEK && data.ledgerInput ? Math.min(computeLedger(data.ledgerInput, MONSTER_WEEKS).pot, ledger.potCap) : 0;
   const recap = week >= 2 ? weekRecap(data, week - 1) : null;
+  const potFull = ledger.pot >= ledger.potCap && ledger.potCap > 0;
+  const overdue = ledger.alive.filter((f) => f.week < week).length;
+  const nextReveal = week < BOSS_WEEK ? formatDay(weekRange(week + 1).start) : null;
 
   // Taisteluloki: viikon iskut ja partiopäivät uusimmasta alkaen; saman päivän askeleet yhtenä rivinä
   const stepDays = new Map<string, { names: string[]; at: string }>();
@@ -105,10 +108,23 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         />
       ) : (
         <section className="card">
-          <h2 className="display">Viikon monsteri on kaatunut!</h2>
-          <p style={{ margin: 0 }}>Kaikki tämän viikon iskut menevät pottiin loppupomoa vastaan.</p>
+          <h2 className="display">{week === BOSS_WEEK ? 'Loppupomo on kaatunut!' : 'Viikon monsteri on kaatunut!'}</h2>
+          {week === BOSS_WEEK ? <p style={{ margin: 0 }}>Kausi on voitettu. Treenit kerryttävät vielä lupauksia ja tilastoja kauden loppuun.</p>
+            : potFull ? <p style={{ margin: 0 }}>💰 Potti on täynnä, eli loppupomon HP puolittuu. Iskut kerryttävät silti lupauksia, tilastoja ja kunniamerkkejä.</p>
+            : <p style={{ margin: 0 }}>Kaikki tämän viikon iskut menevät pottiin loppupomoa vastaan.</p>}
+          {nextReveal ? <p className="muted small" style={{ margin: 0 }}>Seuraava monsteri paljastuu {nextReveal} klo 00.00.</p> : null}
         </section>
       )}
+
+      {target && target.week < week ? (
+        <section className="card threat">
+          <p style={{ margin: 0 }}>
+            <strong style={{ color: 'var(--gold)' }}>{week === BOSS_WEEK ? 'Loppupomo odottaa rästien takana.' : `${nameOf(week)} odottaa rästien takana.`}</strong>{' '}
+            Iskut osuvat ensin vanhimpaan rästiin{overdue >= 2 ? `, ja rästejä on ${overdue}` : ''}.
+            {overdue >= 2 ? ' Vauhti ei riitä: tarvitaan yhteistreenejä ja heikkousbonuksia.' : ''}
+          </p>
+        </section>
+      ) : null}
 
       <Link className="btn btn-strike" href="/kirjaa">⚔️ Lyö – kirjaa treeni</Link>
       {seasonWeek(data.today) >= 1 && seasonWeek(data.today) <= BOSS_WEEK ? (
@@ -131,7 +147,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
 
       <div className="stat-row">
         <Link href="/bestiaario" className="stat rowlink"><span className="muted small">Kaatuneet</span><strong>{ledger.killed.filter((k) => k.week <= MONSTER_WEEKS).length}/{MONSTER_WEEKS}</strong></Link>
-        <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{fmt(ledger.pot)}</strong><span className="muted small">katto {fmt(ledger.potCap)}</span></div>
+        <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{potFull ? `💰 ${fmt(ledger.potCap)}` : fmt(ledger.pot)}</strong><span className="muted small">{potFull ? 'täynnä' : `katto ${fmt(ledger.potCap)}`}</span></div>
       </div>
 
       {backlog.length ? (

@@ -300,3 +300,23 @@ details.companions summary::-webkit-details-marker { display: none; }
 details.companions[open] { padding-bottom: 12px; }
 .linklike { background: none; border: 0; padding: 0; color: var(--ember); cursor: pointer; font: inherit; text-decoration: underline; }
 .message-body { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.finale-banner .stage-info { gap: 10px; }
+.trophies { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.trophy { position: relative; aspect-ratio: 1; border-radius: 14px; overflow: hidden; display: grid; place-items: center; background: var(--track); color: var(--light); text-decoration: none; border: 2px solid transparent; }
+.trophy img { width: 100%; height: 100%; object-fit: cover; }
+.trophy span { position: absolute; right: 4px; bottom: 2px; font-size: 16px; text-shadow: 0 1px 4px #000; }
+.trophy.killed img { filter: grayscale(1) brightness(0.6); }
+.trophy.survived { border-color: var(--blood); }
+.finale-numbers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.finale-numbers .stat strong { font-size: 22px; }
+.awards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.award { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: 16px; background: var(--track); }
+.award-icon { font-size: 30px; line-height: 1; filter: grayscale(1) brightness(0.6); transition: filter 0.4s; }
+.award.open .award-icon { filter: none; }
+.award.open { animation: award-in 0.6s ease-out; box-shadow: 0 0 0 1px rgba(232, 176, 74, 0.35); }
+.award-hidden { margin-top: 6px; letter-spacing: 0.3em; color: var(--muted); font-weight: 700; }
+.award-winners { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+@keyframes award-in { from { transform: scale(0.96); box-shadow: 0 0 0 3px var(--gold); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .award.open { animation: none; } }
+.topbar-icon { position: relative; }
+.unread-dot { position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%; background: #e0452f; box-shadow: 0 0 0 2px var(--track); }

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import UnreadDot from '@/components/UnreadDot';
 
 const LEFT = [
   { href: '/', label: 'Taistelu', icon: '👹' },
@@ -21,7 +22,7 @@ export default function Nav({ current }: { current: string }) {
     <>
       <header className="topbar">
         <span className="display topbar-title">Monsterijahti</span>
-        <Link href="/viestit" className="topbar-icon" aria-label="Viestit" aria-current={current === '/viestit' ? 'page' : undefined}>📣</Link>
+        <Link href="/viestit" className="topbar-icon" aria-label="Viestit" aria-current={current === '/viestit' ? 'page' : undefined}>📣<UnreadDot seenNow={current === '/viestit'} /></Link>
         <Link href="/saannot" className="topbar-icon" aria-label="Säännöt" aria-current={current === '/saannot' ? 'page' : undefined}>?</Link>
       </header>
       <nav className="tabbar" aria-label="Päävalikko">

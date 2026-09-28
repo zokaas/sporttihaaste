@@ -88,14 +88,21 @@ export async function nudgeMissing(): Promise<Result & { sent?: number }> {
 }
 
 /** Viesti porukalle: push kaikille muille ja näkyy Viestit-sivulla. Tietokanta rajaa yhteen päivässä (ylläpito rajatta). */
-export async function sendMessage(text: string): Promise<Result & { sent?: number }> {
+export async function sendMessage(text: string): Promise<Result & { sent?: number; queued?: boolean }> {
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   const body = text.trim().replace(/\s+\n/g, '\n');
   if (!body) return { ok: false, error: 'Kirjoita viesti.' };
   if (body.length > 200) return { ok: false, error: 'Viesti on liian pitkä (enintään 200 merkkiä).' };
-  const { error } = await supabase.from('messages').insert({ sender: user.id, body });
-  if (error) return { ok: false, error: error.message.includes('messages') ? 'Viestejä ei voi vielä lähettää. Ylläpitäjän pitää ajaa migraatio 011_viestit.sql.' : error.message };
+  // Hiljaiset tunnit klo 22–07: viesti tallentuu, mutta push lähtee vasta aamun ajastuksella.
+  const hour = Number(new Intl.DateTimeFormat('fi-FI', { timeZone: 'Europe/Helsinki', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
+  const quiet = hour >= 22 || hour < 7;
+  const { error } = await supabase.from('messages').insert({ sender: user.id, body, pushed_at: quiet ? null : new Date().toISOString() });
+  if (error) return { ok: false, error: error.message.includes('messages') ? 'Viestejä ei voi vielä lähettää. Ylläpitäjän pitää ajaa migraatiot 011 ja 012.' : error.message };
+  if (quiet) {
+    revalidatePath('/viestit');
+    return { ok: true, sent: 0, queued: true };
+  }
 
   const [{ data: sender }, { data: heroes }] = await Promise.all([
     supabase.from('profiles').select('hero_name').eq('id', user.id).single(),

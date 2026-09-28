@@ -70,13 +70,15 @@ assert.equal(r.pot, 220);
 r = computeLedger({ ...base, events: [ev(1, 1, 'a', 900), ev(1, 2, 'b', 50, false), ev(1, 3, 'c', 200)] }, 1);
 assert.equal(r.killed.length, 0);
 
-// 6) Loppupomo: potti vähentää, katto puolet, viimeinen isku yhdessä
+// 6) Loppupomo: potti vähentää (katto puolet), kaatuu kuten muut: HP nollaan ja sinetti täyteen
 const allKilled = [] as ReturnType<typeof ev>[];
 for (let w = 1; w <= 11; w++) users.forEach((u, i) => allKilled.push(ev(w, i, u, u === 'c' ? 2000 : 10)));
-r = computeLedger({ ...base, events: [...allKilled, ev(12, 1, 'a', 10), ev(12, 2, 'b', 10), ev(12, 3, 'c', 5000)] }, 12);
-assert.equal(r.alive.length, 1, 'pomo ei kaadu ilman yhteistreeniä');
-r = computeLedger({ ...base, events: [...allKilled, ev(12, 1, 'a', 10), ev(12, 2, 'b', 10), ev(12, 3, 'c', 5000, true, true)] }, 12);
-assert.equal(r.alive.length, 0);
+r = computeLedger({ ...base, events: [...allKilled, ev(12, 1, 'a', 10), ev(12, 2, 'b', 10)] }, 12, true);
+assert.equal(r.alive[0].hp, 2000 - 20, 'potti vähensi puolet 4 000 HP:sta');
+r = computeLedger({ ...base, events: [...allKilled, ev(12, 1, 'a', 2000), ev(12, 2, 'b', 10)] }, 12, true);
+assert.equal(r.alive.length, 1, 'sinetistä puuttuu c');
+r = computeLedger({ ...base, events: [...allKilled, ev(12, 1, 'a', 2000), ev(12, 2, 'b', 10), ev(12, 3, 'c', 10)] }, 12);
+assert.equal(r.alive.length, 0, 'pomo kaatuu ilman yhteistreeniä');
 
 // Tietokannan lajilista (migraatio 007, sport_value) vastaa sovelluksen lajeja ja arvoja
 import { SPORTS } from './rules.ts';
