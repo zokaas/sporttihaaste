@@ -19,7 +19,6 @@ const GLOSSARY: [string, string][] = [
   ['Sinetti', 'Jokaisen terveen sankarin täytyy lyödä viikon monsteria vähintään yhdellä treenillä. Askeleet eivät täytä sinettiä.'],
   ['Rästi', 'Monsteri, joka jäi viikolla henkiin. Se jatkaa seuraavalla viikolla, ja vanhin rästi ottaa iskut ensin.'],
   ['Potti', 'Kaatuneen monsterin yli mennyt voima ja lupausbonukset. Potti vähennetään loppupomon HP:sta.'],
-  ['Pottikatto', 'Potti voi vähentää loppupomon HP:sta enintään puolet.'],
   ['Heikkous', 'Viikon monsterin heikko kohta. Sen lajiryhmän treenit tekevät +50 %.'],
   ['Juhlapäivä', 'Kenen tahansa sankarin nimi- tai syntymäpäivä. Silloin kaikkien iskut tekevät +50 %.'],
   ['Yhteistreeni', 'Vähintään kolmen hengen treeni (+50 %). Koko porukka yhdessä (kaikki sinä päivänä terveet) tekee +100 %.'],
@@ -40,7 +39,7 @@ const FAQ: [string, string][] = [
   ['Miksi monsterin HP jää 10, 20 tai 30:een?', 'Sinetti on kesken: jokainen puuttuva sankari pitää monsterille 10 HP. Ylimenevä voima säästyy, ja monsteri kaatuu heti, kun viimeinenkin puuttuva lyö.'],
   ['Mitä rästi tarkoittaa?', 'Monsteri, joka jäi viikolla eloon. Se jatkaa seuraavalla viikolla, ja vanhin monsteri ottaa iskut aina ensin.'],
   ['Voinko muuttaa lupaustani?', 'Et. Lupaus lukittuu ke 30.9. ja pysyy samana koko kauden. Jos sairastut, merkitse itsesi kipeäksi Minä-sivulla: viikon tavoite pienenee sairaspäivien verran.'],
-  ['Mihin ylimääräinen voima menee?', `Kun viikon monsteri on kaatunut, loput iskut menevät pottiin. Potti vähennetään loppupomon HP:sta, mutta enintään puolet siitä.`],
+  ['Mihin ylimääräinen voima menee?', `Kun viikon monsteri on kaatunut, loput iskut menevät pottiin. Potti iskee loppupomoon sen herätessä.`],
 ];
 
 export default function Saannot() {
@@ -104,7 +103,7 @@ export default function Saannot() {
 
       <section className="card">
         <h2 className="display">Loppupomo</h2>
-        <p style={{ margin: 0 }}>Loppupomo herää ma 14.12. Potti vähennetään sen HP:sta (enintään puolet). Loppupomo kaatuu samoin kuin muut monsterit: HP nollaan ja sinetti täyteen. Jos rästejä on vielä jäljellä, ne pitää kaataa ensin.</p>
+        <p style={{ margin: 0 }}>Loppupomo herää ma 14.12. Se on vahvempi kuin yksikään kauden monstereista, ja vain koko porukka yhdessä voi sen kaataa. Potti iskee siihen sen herätessä. Muuta siitä ei tiedetä ennen kuin se nousee. Loppupomo kaatuu samoin kuin muut monsterit: HP nollaan ja sinetti täyteen. Jos rästejä on vielä jäljellä, ne pitää kaataa ensin.</p>
       </section>
 
       <section className="card">

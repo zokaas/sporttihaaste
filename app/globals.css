@@ -388,3 +388,29 @@ details.companions[open] { padding-bottom: 12px; }
 .swatch { display: inline-block; }
 .swatch.bar { width: 10px; height: 10px; border-radius: 2px; background: var(--ember); }
 .swatch.line { width: 14px; height: 2px; border-radius: 1px; background: var(--light); }
+
+/* Minun viikkoni: viikon voima otsikon alla, profiili yhdellä rivillä */
+.week-power { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.week-power strong { font-size: 22px; }
+.profile-line { align-items: center; gap: 10px; }
+.profile-line .avatar { width: 36px; height: 36px; font-size: 16px; }
+
+/* Loppupomon kuiskaus kaatumiskortissa */
+.boss-whisper { margin: 4px 0 0; padding: 12px 14px 12px 16px; border-left: 3px solid var(--blood); background: rgba(8, 5, 4, 0.55); border-radius: 0 12px 12px 0; position: relative; display: flex; flex-direction: column; gap: 4px; }
+.boss-whisper p { margin: 0; font-style: italic; color: var(--light); }
+.boss-whisper cite { font-style: normal; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #ff6a4d; }
+.boss-whisper-eyes { position: absolute; top: 10px; right: 14px; width: 24px; height: 5px; background: radial-gradient(circle at 3px 50%, #ff4a2e 2px, transparent 3px), radial-gradient(circle at 21px 50%, #ff4a2e 2px, transparent 3px); filter: drop-shadow(0 0 4px #ff4a2e); animation: glow 3.8s ease-in-out infinite; }
+
+/* Varjo viikolla 11: sykkii levottomammin */
+.boss-near .body { animation: loom 2.4s ease-in-out infinite; }
+.boss-near { box-shadow: 0 0 28px rgba(179, 38, 30, 0.35); }
+
+/* Loppupomon herätys: pidempi, tummempi, punainen ja tärisevä */
+@keyframes boss-sky { 0% { opacity: 1; background: #000; } 30% { background: rgba(40, 4, 2, 0.95); } 70% { opacity: 1; background: radial-gradient(ellipse at center, rgba(179, 38, 30, 0.35), rgba(8, 2, 1, 0.92)); } 100% { opacity: 0; } }
+.is-boss.is-revealing { animation: stage-shake 0.7s ease-in-out 1.2s 3; }
+.is-boss.is-revealing .stage-img { animation: rise 4.2s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.is-boss.is-revealing .stage-info { animation: info-in 5.2s ease-out both; }
+.is-boss .stage-reveal { animation: boss-sky 5.2s ease-out forwards; }
+.is-boss .stage-reveal span { color: #ff6a4d; letter-spacing: 0.4em; }
+.is-boss .stage-reveal strong { font-size: 52px; text-shadow: 0 0 32px #ff2a10, 0 0 8px #000; animation: reveal-text 5.2s ease-out forwards; }
+.is-boss .stage-reveal em { font-size: 14px; color: #e8c9bf; animation: reveal-text 5.2s ease-out 0.4s both; }

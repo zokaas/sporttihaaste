@@ -5,6 +5,7 @@ import { computeLedger, sealView } from '@/lib/rules';
 import { finalBlows, weekRecap } from '@/lib/stats';
 import { addDays, formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
+import { bossWhisper } from '@/lib/boss';
 import MonsterStage, { type SealHero } from '@/components/MonsterStage';
 import KillFinale from '@/components/KillFinale';
 import NudgeButton from '@/components/NudgeButton';
@@ -67,7 +68,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const endMs = helsinkiMs(weekRange(week).end);
   const potBeforeBoss = week === BOSS_WEEK && data.ledgerInput ? Math.min(computeLedger(data.ledgerInput, MONSTER_WEEKS).pot, ledger.potCap) : 0;
   const recap = week >= 2 ? weekRecap(data, week - 1) : null;
-  const potFull = ledger.pot >= ledger.potCap && ledger.potCap > 0;
+  // Loppupomon HP (ja siitä johdettu pottikatto) pysyy salassa, kunnes se herää.
+  const potFull = week === BOSS_WEEK && ledger.pot >= ledger.potCap && ledger.potCap > 0;
   const overdue = ledger.alive.filter((f) => f.week < week).length;
   const nextReveal = week < BOSS_WEEK ? formatDay(weekRange(week + 1).start) : null;
   // Ennakkoarvoitus: perjantaista alkaen varjo ja vihje seuraavasta monsterista.
@@ -131,6 +133,13 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           {week === BOSS_WEEK ? <p style={{ margin: 0 }}>Kausi on voitettu. Treenit kerryttävät vielä lupauksia ja tilastoja kauden loppuun.</p>
             : potFull ? <p style={{ margin: 0 }}>💰 Potti on täynnä, eli loppupomon HP puolittuu. Iskut kerryttävät silti lupauksia, tilastoja ja kunniamerkkejä.</p>
             : <p style={{ margin: 0 }}>Kaikki tämän viikon iskut menevät pottiin loppupomoa vastaan.</p>}
+          {week < BOSS_WEEK ? (
+            <blockquote className="boss-whisper">
+              <span className="boss-whisper-eyes" aria-hidden="true" />
+              <p>”{bossWhisper(week, monsters.get(week)?.boss_whisper)}”</p>
+              <cite>Jokin varjoissa</cite>
+            </blockquote>
+          ) : null}
         </section>
       )}
 
@@ -185,7 +194,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       ) : null}
 
       <div className="stat-row" style={{ gridTemplateColumns: '1fr' }}>
-        <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{potFull ? `💰 ${fmt(ledger.potCap)}` : fmt(ledger.pot)}</strong><span className="muted small">{potFull ? 'täynnä' : `katto ${fmt(ledger.potCap)}`}</span></div>
+        <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{potFull ? `💰 ${fmt(ledger.potCap)}` : fmt(ledger.pot)}</strong><span className="muted small">{potFull ? 'täynnä' : week === BOSS_WEEK ? `katto ${fmt(ledger.potCap)}` : 'kasvaa loppupomoa vastaan'}</span></div>
       </div>
 
       <section className="card">

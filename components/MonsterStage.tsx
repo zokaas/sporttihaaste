@@ -110,9 +110,11 @@ export default function MonsterStage(p: Props) {
     if (p.revealed) write(seenKey, '1');
     if (firstSight && !reduced) {
       const reveal = () => {
+        const dur = p.boss ? 5200 : 3200;
         setRevealing(true);
-        later(() => setRevealing(false), 3200);
-        if (p.boss && p.potStrike) later(() => strike(p.potStrike!, 'Potti iskee!', true, p.maxHp), 3400);
+        later(() => setRevealing(false), dur);
+        if (p.boss && 'vibrate' in navigator) navigator.vibrate([200, 100, 200, 100, 400]);
+        if (p.boss && p.potStrike) later(() => strike(p.potStrike!, 'Potti iskee!', true, p.maxHp), dur + 200);
       };
       if ((window as unknown as { __mjModalOpen?: boolean }).__mjModalOpen) {
         window.addEventListener('mj:modal-closed', reveal, { once: true });
@@ -224,6 +226,7 @@ export default function MonsterStage(p: Props) {
         <div className="stage-reveal" aria-hidden="true">
           <span>{p.boss ? 'Loppupomo herää' : `Viikko ${p.week}`}</span>
           <strong className="display">{p.title}</strong>
+          {p.boss ? <em>Maa järisee. Taivas punertuu. Se on täällä.</em> : null}
         </div>
       ) : null}
     </>
