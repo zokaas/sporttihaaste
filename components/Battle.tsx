@@ -128,7 +128,6 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         </section>
       ) : null}
 
-      <Link className="btn btn-strike" href="/kirjaa">⚔️ Lyö – kirjaa treeni</Link>
       {seasonWeek(data.today) >= 1 && seasonWeek(data.today) <= BOSS_WEEK ? (
         <QuickStep day={data.today} stepped={data.steps.some((s) => s.user_id === userId && s.day === data.today)} />
       ) : null}

@@ -39,6 +39,15 @@ async function lockSeason() {
   redirect(`/yllapito?tavoite=${encodeURIComponent(error ? `Lukitus epäonnistui: ${error.message}. Onko migraatio 010_kalenteri.sql ajettu?` : 'Tavoite lukittu. Monsterien HP:t on laskettu.')}`);
 }
 
+async function saveNav(form: FormData) {
+  'use server';
+  const supabase = await requireAdmin();
+  const mode = (v: FormDataEntryValue | null) => (v === 'on' || v === 'off' ? v : 'auto');
+  const { error } = await supabase.from('season').update({ nav_strike: mode(form.get('strike')), nav_bestiary: mode(form.get('bestiary')) }).eq('id', 1);
+  revalidatePath('/', 'layout');
+  redirect(`/yllapito?nakyvyys=${encodeURIComponent(error ? `Tallennus epäonnistui: ${error.message}. Onko migraatio 013_nakyvyys.sql ajettu?` : 'Näkyvyys tallennettu.')}`);
+}
+
 async function sendTestPush() {
   'use server';
   const supabase = await requireAdmin();
@@ -105,7 +114,7 @@ async function testFridayReminder() {
   redirect(`/yllapito?push=${encodeURIComponent(res.skipped ?? `Perjantain muistutus lähetetty itsellesi (${res.sent} laitteeseen).`)}`);
 }
 
-export default async function Yllapito({ searchParams }: { searchParams: { push?: string; testi?: string; tavoite?: string; nollaa?: string } }) {
+export default async function Yllapito({ searchParams }: { searchParams: { push?: string; testi?: string; tavoite?: string; nollaa?: string; nakyvyys?: string } }) {
   const supabase = await requireAdmin();
   const battle = await loadBattle(supabase, today());
   const lastRecap = battle.week >= 2 ? weekRecap(battle, battle.week - 1) : null;
@@ -152,6 +161,25 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
           {searchParams.nollaa ? <ClearLocalState /> : null}
         </section>
       ) : null}
+
+      <section className="card">
+        <h2 className="display">Näkyvyys</h2>
+        <p className="muted small" style={{ margin: 0 }}>Automaattisesti Lyö näkyy kauden aikana (1.10.–20.12.) ja Bestiaario 1.10. alkaen. Testitilassa automaattinen näkyvyys seuraa testipäivää.</p>
+        <form action={saveNav} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {([['strike', 'Lyö-nappi (alapalkki)', season?.nav_strike], ['bestiary', 'Bestiaario (monsterilistaus)', season?.nav_bestiary]] as const).map(([name, label, value]) => (
+            <label key={name} className="field">
+              {label}
+              <select className="input" name={name} defaultValue={value ?? 'auto'}>
+                <option value="auto">Automaattinen (kauden aikana)</option>
+                <option value="on">Näytä aina</option>
+                <option value="off">Piilota</option>
+              </select>
+            </label>
+          ))}
+          <button className="btn" type="submit">Tallenna näkyvyys</button>
+        </form>
+        {searchParams.nakyvyys ? <p className={`note${searchParams.nakyvyys.startsWith('Tallennus epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.nakyvyys}</p> : null}
+      </section>
 
       <section className="card">
         <h2 className="display">Ilmoittautuneet {locked.length}/10</h2>
