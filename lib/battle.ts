@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { weaknessesOf, type MonsterPart } from './trio';
 import { computeLedger, pledgeHours, seasonHp, SPORTS, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, type Category, type LedgerEvent } from './rules';
-import { seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from './season';
+import { addDays, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from './season';
 import { patrolDays, pledgeForWeek, requiredForSeal, sickDaysBetween, isSickOn, weekPledgeTarget, type SickPeriod } from './weekly';
 
 export type Hero = {
@@ -22,6 +22,9 @@ export type PublicMonster = {
   weakness: Category | null;
   image_path: string | null;
   parts?: MonsterPart[] | null;
+  taunt_half?: string | null;
+  taunt_low?: string | null;
+  teaser?: string | null;
 };
 
 type Hit = { id: number; user_id: string; trained_on: string; sport: string; minutes: number; damage: number; bonus_pct: number; all_together: boolean; companions: string[]; created_at: string };
@@ -40,7 +43,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at'),
     // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot. Haetaan rinnakkain.
-    supabase.from('monsters').select('week, hp, name, description, weakness, image_path, parts').order('week'),
+    supabase.from('monsters').select('week, hp, name, description, weakness, image_path, parts, taunt_half, taunt_low, teaser').order('week'),
     supabase.from('monsters_public').select('*').order('week'),
     supabase.from('hits').select('id, user_id, trained_on, sport, minutes, damage, bonus_pct, all_together, companions, created_at'),
     supabase.from('step_days').select('user_id, day, created_at'),
@@ -67,7 +70,11 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     monsterList = monsterList.map((m) => ({ ...m, hp: m.week === BOSS_WEEK ? preview.boss : preview.monsters[m.week - 1] }));
   }
   // Tulevat monsterit pysyvät salassa myös ylläpitäjältä (testitilassa "tänään" voi olla ennen paljastusta).
-  const byWeek = new Map(monsterList.map((m) => [m.week, m.week > week ? { ...m, name: null, description: null, weakness: null, image_path: null, parts: null } : m]));
+  // Seuraavan viikon arvoitus näkyy kuluvan viikon perjantaista alkaen.
+  const teaserOpen = today >= addDays(weekRange(week).end, -2);
+  const byWeek = new Map(monsterList.map((m) => [m.week, m.week > week
+    ? { ...m, name: null, description: null, weakness: null, image_path: null, parts: null, taunt_half: null, taunt_low: null, teaser: m.week === week + 1 && teaserOpen ? m.teaser ?? null : null }
+    : m]));
 
   const pledgeOf = (userId: string, w: number) =>
     pledgeForWeek(Number(heroList.find((h) => h.id === userId)?.pledge_hours ?? 0), changeList.filter((c) => c.user_id === userId), w);

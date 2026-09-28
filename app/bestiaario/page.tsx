@@ -8,7 +8,9 @@ import { monsterImageUrl } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
 import { formatDay, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import { weaknessesOf } from '@/lib/trio';
-import { sealView } from '@/lib/rules';
+import { sealView, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE } from '@/lib/rules';
+import SeasonChart from '@/components/SeasonChart';
+import { seasonWeek } from '@/lib/season';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +39,21 @@ export default async function Bestiaario() {
           {boss?.hp ? `${fmt(boss.hp)} HP. ` : ''}Potti {fmt(b.ledger?.pot ?? 0)} / {fmt(b.ledger?.potCap ?? 0)} vähennetään sen HP:sta. Se kaatuu kuten muutkin: HP nollaan ja sinetti täyteen.
         </span>
       </BossShadow>
+
+      <section className="card">
+        <h2 className="display">Kauden käyrä</h2>
+        <SeasonChart
+          bossWeek={BOSS_WEEK}
+          rows={Array.from({ length: Math.min(b.week, BOSS_WEEK) }, (_, i) => {
+            const w = i + 1;
+            const voima = b.hits.filter((h) => seasonWeek(h.trained_on) === w).reduce((a, h) => a + h.damage, 0)
+              + b.steps.filter((x) => seasonWeek(x.day) === w).length * STEP_DAY_DAMAGE
+              + b.patrols.filter((p) => seasonWeek(p.day) === w).length * PATROL_DAY_DAMAGE;
+            return { week: w, voima, hp: b.monsters.get(w)?.hp ?? null, current: w === b.week && seasonWeek(b.today) <= BOSS_WEEK };
+          })}
+        />
+        <p className="muted small" style={{ margin: 0 }}>Kun pylväs nousee viivan yli, porukka teki viikossa enemmän voimaa kuin viikon monsterissa on HP:ta.</p>
+      </section>
 
       <section className="card">
         <ul className="people">
