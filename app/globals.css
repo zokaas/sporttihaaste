@@ -28,8 +28,10 @@ a:hover { color: #f08a55; }
 :focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
 
 .app { max-width: 480px; margin: 0 auto; padding: 20px 20px 40px; min-height: 100vh; display: flex; flex-direction: column; gap: 18px; }
-.display { font-family: var(--font-display), Georgia, serif; font-weight: 700; line-height: 1.08; margin: 0; }
-h1.display { font-size: 32px; }
+.display { font-family: var(--font-body), system-ui, sans-serif; font-weight: 700; line-height: 1.15; letter-spacing: -0.01em; margin: 0; }
+/* Goottilainen kirjasin vain sovelluksen nimeen; otsikoissa se on liian vaikealukuinen. */
+.brand { font-family: var(--font-display), Georgia, serif; letter-spacing: 0; }
+h1.display { font-size: 28px; }
 h2.display { font-size: 22px; }
 .muted { color: var(--muted); font-size: 14px; }
 .small { font-size: 13px; }
@@ -47,7 +49,7 @@ h2.display { font-size: 22px; }
 label.field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; }
 .input, select.input { min-height: 52px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); padding: 0 14px; font: 400 16px var(--font-body), sans-serif; }
 
-.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .steps span { height: 6px; border-radius: 999px; background: var(--line); }
 .steps span.on { background: var(--ember); }
 
@@ -56,11 +58,11 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; 
 .stepper { display: flex; align-items: center; gap: 12px; }
 .stepper button { width: 52px; height: 52px; border-radius: 14px; border: 1px solid var(--line); background: var(--ground); color: var(--text); font-size: 22px; cursor: pointer; }
 .stepper .value { flex: 1; text-align: center; display: flex; flex-direction: column; }
-.stepper .value strong { font-family: var(--font-display), serif; font-size: 40px; font-weight: 700; }
+.stepper .value strong { font-size: 36px; font-weight: 700; }
 
 .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; background: var(--track); border-radius: 14px; padding: 4px; }
 .tabs button { min-height: 44px; border-radius: 10px; border: 0; background: transparent; color: var(--muted); font: 500 14px var(--font-body), sans-serif; cursor: pointer; }
-.tabs button[aria-selected='true'] { background: var(--surface); color: var(--text); font-weight: 600; }
+.tabs button[aria-selected='true'] { background: var(--ember-fill); color: var(--light); font-weight: 600; }
 
 ol.guide { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; counter-reset: g; }
 ol.guide li { counter-increment: g; display: flex; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; font-size: 14px; }
@@ -72,6 +74,12 @@ ol.guide li::before { content: counter(g); width: 26px; height: 26px; flex-shrin
 table.admin { width: 100%; border-collapse: collapse; font-size: 14px; }
 table.admin th, table.admin td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 .scroll { overflow-x: auto; }
+
+ul.people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+ul.people li { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+ul.people li:last-child { border-bottom: 0; }
+ul.people .who { font-weight: 600; overflow-wrap: anywhere; }
+ul.people .facts { color: var(--muted); font-size: 13px; }
 
 /* Loppupomon varjo */
 .boss { position: relative; height: 300px; border-radius: 22px; overflow: hidden; background: var(--deep); border: 1px solid #5a2a1e; }

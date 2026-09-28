@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { createClient, avatarUrl } from '@/lib/supabase/client';
 import { weeklyPace } from '@/lib/rules';
 import DayMonth from '@/components/DayMonth';
+import PushToggle from '@/components/PushToggle';
 
 type Profile = {
   id: string;
@@ -26,12 +27,6 @@ async function squareJpeg(file: File): Promise<Blob> {
   return new Promise((res) => canvas.toBlob((b) => res(b!), 'image/jpeg', 0.85));
 }
 
-function urlBase64ToUint8Array(base64: string) {
-  const padding = '='.repeat((4 - (base64.length % 4)) % 4);
-  const raw = atob((base64 + padding).replace(/-/g, '+').replace(/_/g, '/'));
-  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
-}
-
 export default function Ilmoittaudu() {
   const supabase = createClient();
   const router = useRouter();
@@ -42,8 +37,6 @@ export default function Ilmoittaudu() {
   const [preview, setPreview] = useState<string | null>(null);
   const [team, setTeam] = useState({ locked: 0, hours: 0 });
   const [os, setOs] = useState<'ios' | 'android'>('ios');
-  const [push, setPush] = useState<'off' | 'on' | 'denied' | 'unsupported'>('off');
-  const [standalone, setStandalone] = useState(false);
   // Ennen syntymäpäivän kysymistä tunnuksen luonnissa luoduilta tileiltä kysytään se vaiheessa 1.
   const [needsBirthday, setNeedsBirthday] = useState(false);
 
@@ -60,10 +53,6 @@ export default function Ilmoittaudu() {
       setTeam({ locked: others.length, hours: others.reduce((a, x) => a + Number(x.pledge_hours), 0) });
     })();
     setOs(/android/i.test(navigator.userAgent) ? 'android' : 'ios');
-    setStandalone(window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true);
-    if (!('Notification' in window) || !('PushManager' in window)) setPush('unsupported');
-    else if (Notification.permission === 'granted') setPush('on');
-    else if (Notification.permission === 'denied') setPush('denied');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -94,20 +83,6 @@ export default function Ilmoittaudu() {
     await save({ avatar_path: path });
   }
 
-  async function enablePush() {
-    setError('');
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return setPush('denied');
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
-    });
-    const res = await fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) });
-    if (!res.ok) return setError('Ilmoitusten tallennus epäonnistui. Yritä uudelleen.');
-    setPush('on');
-  }
-
   const pledge = p.pledge_hours ?? 4;
   const teamHours = team.hours + pledge;
 
@@ -127,7 +102,7 @@ export default function Ilmoittaudu() {
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <span className="display" style={{ fontSize: 22 }}>Monsterijahti</span>
+        <span className="display brand" style={{ fontSize: 24 }}>Monsterijahti</span>
         <span className="muted">Ilmoittautuminen, vaihe {step}/3. Valmiina ke 30.9. mennessä.</span>
         <div className="steps" aria-hidden="true">{[1, 2, 3].map((i) => <span key={i} className={i <= step ? 'on' : ''} />)}</div>
       </div>
@@ -195,15 +170,7 @@ export default function Ilmoittaudu() {
               </>
             )}
           </ol>
-          {push === 'on' ? (
-            <p className="ok">Ilmoitukset ovat päällä.</p>
-          ) : push === 'denied' ? (
-            <p className="error">Ilmoitukset on estetty. Salli ne puhelimen asetuksista kohdasta Monsterijahti.</p>
-          ) : push === 'unsupported' || (os === 'ios' && !standalone) ? (
-            <p className="note">Ilmoitukset voi sallia, kun olet avannut sovelluksen kotinäytöltä.</p>
-          ) : (
-            <button className="btn btn-moss" type="button" onClick={enablePush}>Salli ilmoitukset</button>
-          )}
+          <PushToggle />
         </section>
       )}
 
