@@ -69,6 +69,7 @@ export default function MonsterStage(p: Props) {
   const [hit, setHit] = useState(false);
   const [revealing, setRevealing] = useState(false);
   const [partFall, setPartFall] = useState<string | null>(null);
+  const [claw, setClaw] = useState(0);
   const timers = useRef<number[]>([]);
   const parts = p.parts?.length ? p.parts : null;
   const front = parts ? parts.find((x) => !x.dead) ?? parts[parts.length - 1] : null;
@@ -95,6 +96,8 @@ export default function MonsterStage(p: Props) {
       setShownHp(from);
       setFlying({ n, label, crit });
       setHit(true);
+      // Oma isku jättää hetkeksi kynnenjäljen monsteriin.
+      if (label) { setClaw(Date.now()); later(() => setClaw(0), 2200); }
       later(() => setShownHp(p.hp), 450);
       later(() => setHit(false), 900);
       later(() => setFlying(null), crit ? 2300 : 1800);
@@ -112,6 +115,7 @@ export default function MonsterStage(p: Props) {
       const reveal = () => {
         const dur = p.boss ? 5200 : 3200;
         setRevealing(true);
+        if (!p.boss && 'vibrate' in navigator) navigator.vibrate([70, 130, 70, 500]);
         later(() => setRevealing(false), dur);
         if (p.boss && 'vibrate' in navigator) navigator.vibrate([200, 100, 200, 100, 400]);
         if (p.boss && p.potStrike) later(() => strike(p.potStrike!, 'Potti iskee!', true, p.maxHp), dur + 200);
@@ -139,7 +143,8 @@ export default function MonsterStage(p: Props) {
   // Pato näytetään suhteessa kolmannekseen monsterin HP:sta, jotta pienikin pato näkyy.
   const damPct = Math.min(100, (p.padded / Math.max(1, p.maxHp / 3)) * 100);
   const label = `${p.title}, ${fmt(p.hp)} / ${fmt(p.maxHp)} HP.`;
-  const className = `stage state-${state}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
+  const nearDeath = state === 'dying' && p.hp / p.maxHp < 0.1;
+  const className = `stage state-${state}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
   const sealDone = p.seal ? p.seal.filter((s) => !s.excused).every((s) => s.hit) : false;
 
   const image = front ? front.image ?? p.image : p.image;
@@ -166,6 +171,18 @@ export default function MonsterStage(p: Props) {
             <path d="M8 0 L14 18 L9 27 L17 41 M14 18 L24 22 M92 100 L85 80 L90 70 L81 57 M85 80 L74 83 M60 0 L57 12 L63 20 L58 31" />
             {state === 'dying' ? <path d="M0 62 L12 60 L18 67 L30 64 M100 30 L88 34 L84 28 L72 33 L66 44" /> : null}
           </svg>
+        ) : null}
+        {claw ? (
+          <svg key={claw} className="stage-claw" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path d="M30 18 C40 38 48 58 52 84" />
+            <path d="M40 14 C50 36 58 56 63 80" />
+            <path d="M50 12 C60 34 68 52 74 74" />
+          </svg>
+        ) : null}
+        {state !== 'dead' ? (
+          <div className="stage-embers">
+            {Array.from({ length: 9 }, (_, i) => <i key={i} style={{ left: `${6 + ((i * 41) % 88)}%`, animationDelay: `${(i * 1.7) % 9}s`, animationDuration: `${8 + (i % 4) * 2}s` }} />)}
+          </div>
         ) : null}
         <div className="stage-vignette" />
         {state === 'shielded' ? <div className="stage-shield" /> : null}
