@@ -2,7 +2,9 @@ import { redirect } from 'next/navigation';
 import PushToggle from '@/components/PushToggle';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { avatarUrl } from '@/lib/supabase/client';
+import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
+import SeasonFinale from '@/components/SeasonFinale';
+import { seasonFinale } from '@/lib/finale';
 import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
@@ -14,7 +16,7 @@ import TodayCard from '@/components/TodayCard';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string; krit?: string } }) {
+export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string; krit?: string; finaali?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/kirjaudu');
@@ -35,23 +37,15 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   // Paljastusilmoitus tarkistetaan vain viikon kahtena ensimmäisenä päivänä, ei jokaisella latauksella.
   if (battle && battle.today <= addDays(weekRange(battle.week).start, 1)) await announceReveal(supabase, battle).catch(() => {});
 
-  // Kauden jälkeen: lopputulos ja linkit, ei enää lyöntinappia
-  if (battle && week === AFTER_SEASON) {
-    const kills = battle.ledger?.killed ?? [];
-    const bossDown = kills.some((k) => k.week === BOSS_WEEK);
+  // Kauden jälkeen: loppugaala. Ylläpitäjä voi esikatsella sitä osoitteella /?finaali=1.
+  const finale = week === AFTER_SEASON || (me.is_admin && searchParams.finaali === '1');
+  const finaleBattle = finale ? battle ?? (await loadBattle(supabase, today())) : null;
+  if (finaleBattle) {
     return (
       <>
         <Nav current="/" />
-        <BossShadow>
-          <span className="pill" style={{ background: 'var(--blood)', alignSelf: 'flex-start' }}>Kausi päättyi 20.12.</span>
-          <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>{bossDown ? 'Loppupomo kaatui!' : 'Loppupomo selvisi'}</h2>
-          <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>
-            Kaadoitte {kills.filter((k) => k.week <= MONSTER_WEEKS).length}/{MONSTER_WEEKS} viikon monsteria{bossDown ? ' ja loppupomon' : ''}. Kiitos taistelusta, sankarit.
-          </p>
-        </BossShadow>
-        <Link className="btn" href={`/raportti/${BOSS_WEEK}`}>Viimeisen viikon raportti</Link>
-        <Link className="btn btn-ghost" href="/bestiaario">Bestiaario</Link>
-        <Link className="btn btn-ghost" href="/sankarit">Sankarit</Link>
+        <SeasonFinale f={seasonFinale(finaleBattle, user.id, avatarUrl, monsterImageUrl)} />
+        <Link className="btn btn-ghost" href={`/raportti/${BOSS_WEEK}`}>Viimeisen viikon raportti</Link>
       </>
     );
   }
