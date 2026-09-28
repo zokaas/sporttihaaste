@@ -5,6 +5,7 @@ import { computeLedger, sealView } from '@/lib/rules';
 import { finalBlows, weekRecap } from '@/lib/stats';
 import { addDays, formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
+import { bossWhisper } from '@/lib/boss';
 import MonsterStage, { type SealHero } from '@/components/MonsterStage';
 import KillFinale from '@/components/KillFinale';
 import NudgeButton from '@/components/NudgeButton';
@@ -132,6 +133,13 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           {week === BOSS_WEEK ? <p style={{ margin: 0 }}>Kausi on voitettu. Treenit kerryttävät vielä lupauksia ja tilastoja kauden loppuun.</p>
             : potFull ? <p style={{ margin: 0 }}>💰 Potti on täynnä, eli loppupomon HP puolittuu. Iskut kerryttävät silti lupauksia, tilastoja ja kunniamerkkejä.</p>
             : <p style={{ margin: 0 }}>Kaikki tämän viikon iskut menevät pottiin loppupomoa vastaan.</p>}
+          {week < BOSS_WEEK ? (
+            <blockquote className="boss-whisper">
+              <span className="boss-whisper-eyes" aria-hidden="true" />
+              <p>”{bossWhisper(week, monsters.get(week)?.boss_whisper)}”</p>
+              <cite>Jokin varjoissa</cite>
+            </blockquote>
+          ) : null}
         </section>
       )}
 

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient, monsterImageUrl } from '@/lib/supabase/client';
 import { BOSS_WEEK } from '@/lib/season';
+import { bossWhisper } from '@/lib/boss';
 
 export type Monster = {
   week: number;
@@ -16,6 +17,7 @@ export type Monster = {
   taunt_half?: string | null;
   taunt_low?: string | null;
   teaser?: string | null;
+  boss_whisper?: string | null;
 };
 
 type Part = { name: string; description: string | null; weakness: string | null; image_path: string | null };
@@ -80,7 +82,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
   }
 
   function saveAll() {
-    const extras = { taunt_half: m.taunt_half?.trim() || null, taunt_low: m.taunt_low?.trim() || null, teaser: m.teaser?.trim() || null };
+    const extras = { taunt_half: m.taunt_half?.trim() || null, taunt_low: m.taunt_low?.trim() || null, teaser: m.teaser?.trim() || null, boss_whisper: m.boss_whisper?.trim() || null };
     if (!parts) return save({ name: m.name?.trim() || null, description: m.description?.trim() || null, weakness: m.weakness, parts: null, ...extras });
     const clean = parts.map((x) => ({ name: x.name.trim(), description: x.description?.trim() || null, weakness: x.weakness || null, image_path: x.image_path }));
     if (clean.some((x) => !x.name)) return setMsg({ ok: false, text: 'Anna jokaiselle kolmikon osalle nimi.' });
@@ -104,7 +106,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
     setBusy(true);
     setMsg(null);
     const supabase = createClient();
-    const cols = 'name, description, weakness, image_path, parts, teaser, taunt_half, taunt_low';
+    const cols = 'name, description, weakness, image_path, parts, teaser, taunt_half, taunt_low, boss_whisper';
     const [{ data: a, error: e1 }, { data: b, error: e2 }] = await Promise.all([
       supabase.from('monsters').select(cols).eq('week', m.week).single(),
       supabase.from('monsters').select(cols).eq('week', other).single(),
@@ -190,6 +192,12 @@ function MonsterRow({ monster }: { monster: Monster }) {
           Repliikki, kun HP alle 20 %
           <input className="input" placeholder="Ei… ei vielä… minä en kaadu näin helposti!" value={m.taunt_low ?? ''} onChange={(e) => setM({ ...m, taunt_low: e.target.value })} />
         </label>
+        {m.week < BOSS_WEEK ? (
+          <label className="field">
+            Loppupomon kuiskaus, kun tämä monsteri kaatuu
+            <input className="input" placeholder={bossWhisper(m.week) ?? ''} value={m.boss_whisper ?? ''} onChange={(e) => setM({ ...m, boss_whisper: e.target.value })} />
+          </label>
+        ) : null}
         {!parts ? (
           <label className="field">
             Heikkous

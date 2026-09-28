@@ -72,7 +72,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
       </div>
       <BossShadow>
         <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>Se odottaa</h2>
-        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kausi alkaa torstaina 1.10. Ensimmäinen vastus paljastuu silloin. Loppupomo herää 14.12.</p>
+        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kausi alkaa torstaina 1.10. Ensimmäinen vastus paljastuu silloin. Loppupomo herää 14.12., ja se on vahvempi kuin yksikään kauden monstereista.</p>
       </BossShadow>
 
       <section className="card">
