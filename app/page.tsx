@@ -12,7 +12,6 @@ import { addDays, seasonWeek, weekRange, AFTER_SEASON, BOSS_WEEK, MONSTER_WEEKS 
 import { today, testOffsetMs } from '@/lib/today';
 import { announceReveal } from '@/lib/events';
 import Nav from '@/components/Nav';
-import TodayCard from '@/components/TodayCard';
 import Hint from '@/components/Hint';
 
 export const dynamic = 'force-dynamic';
@@ -56,7 +55,6 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
       <>
         <Nav current="/" />
         <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1'} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
-        <TodayCard b={battle} />
       </>
     );
   }

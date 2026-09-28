@@ -6,6 +6,7 @@ import { today } from '@/lib/today';
 import { afterStep } from '@/lib/events';
 import { loadBattle } from '@/lib/battle';
 import { sendPush } from '@/lib/push';
+import { isSickOn, type SickPeriod } from '@/lib/weekly';
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -26,6 +27,10 @@ export async function toggleStep(day: string, on: boolean): Promise<Result> {
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   if (!loggableDays(today()).includes(day)) return { ok: false, error: 'Päivää ei voi enää kuitata.' };
+  if (on) {
+    const { data: sick } = await supabase.from('sick_periods').select('user_id, starts_on, ends_on').eq('user_id', user.id);
+    if (isSickOn((sick ?? []) as SickPeriod[], user.id, day)) return { ok: false, error: 'Päivä on merkitty sairaspäiväksi. Poista sairausmerkintä ensin, jos kävelit silti.' };
+  }
   const { error } = on
     ? await supabase.from('step_days').upsert({ user_id: user.id, day })
     : await supabase.from('step_days').delete().eq('user_id', user.id).eq('day', day);

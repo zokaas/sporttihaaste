@@ -17,8 +17,8 @@ export default function Countdown({ endMs, offsetMs = 0 }: { endMs: number; offs
   const m = Math.floor((left % 3_600_000) / 60_000);
   const urgent = left < 24 * 3_600_000;
   return (
-    <span className={urgent ? 'countdown urgent' : 'countdown'}>
-      ⏳ {left === 0 ? 'Viikko päättyi' : d > 0 ? `${d} pv ${h} h` : `${h} h ${m} min`}
+    <span className={urgent ? 'countdown urgent' : 'countdown'} title="Aikaa siihen, kun viikko lukittuu su klo 23.59">
+      ⏳ {left === 0 ? 'Viikko päättyi' : d > 0 ? `${d} pv ${h} h jäljellä` : `${h} h ${m} min jäljellä`}
     </span>
   );
 }
