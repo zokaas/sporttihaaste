@@ -108,7 +108,11 @@ export interface LedgerInput {
 
 interface Fighter { week: number; hp: number; hitters: Set<string>; killedAt?: number; boss?: boolean; finalBlow?: boolean }
 
-export function computeLedger(input: LedgerInput, uptoWeek = 11) {
+/**
+ * Laskee kauden tilanteen viikon uptoWeek loppuun. Jos weekOpen on tosi, viimeinen viikko on vielä
+ * kesken: sunnuntain käsittely (padotun vahingon menetys ja lupausbonukset) jätetään tekemättä.
+ */
+export function computeLedger(input: LedgerInput, uptoWeek = 11, weekOpen = false) {
   const queue: Fighter[] = [];
   const done: Fighter[] = [];
   let pot = 0;
@@ -171,6 +175,8 @@ export function computeLedger(input: LedgerInput, uptoWeek = 11) {
       }
       if (dmg > 0 && w <= 10) pot += dmg; // viikon monsteri kaatunut → pottiin
     }
+
+    if (weekOpen && w === uptoWeek) break;
 
     // Sunnuntai: padottu vahinko menetetään, eloon jääneet jatkavat 1 HP:lla.
     for (const f of queue) {

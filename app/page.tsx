@@ -4,10 +4,13 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl } from '@/lib/supabase/client';
 import BossShadow from '@/components/BossShadow';
+import Battle from '@/components/Battle';
+import { loadBattle } from '@/lib/battle';
+import { seasonWeek, today } from '@/lib/season';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: { esikatselu?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/kirjaudu');
@@ -18,6 +21,10 @@ export default async function Home() {
   const { data: heroes } = await supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at').order('created_at');
   const locked = (heroes ?? []).filter((h) => h.pledge_locked_at);
   const img = avatarUrl(me.avatar_path);
+  const week = seasonWeek(today());
+  // Ylläpitäjä voi katsoa taistelunäkymää ennen kauden alkua osoitteella /?esikatselu=1.
+  const inSeason = (week >= 1 && week <= 11) || (me.is_admin && searchParams.esikatselu === '1');
+  const battle = inSeason ? await loadBattle(supabase, today()) : null;
 
   return (
     <>
@@ -29,10 +36,12 @@ export default async function Home() {
         </div>
       </div>
 
-      <BossShadow>
-        <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>Se odottaa</h2>
-        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kausi alkaa torstaina 1.10. Ensimmäinen vastus on Willa Rykman. Loppupomo herää 14.12.</p>
-      </BossShadow>
+      {battle ? <Battle data={battle} /> : (
+        <BossShadow>
+          <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>Se odottaa</h2>
+          <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kausi alkaa torstaina 1.10. Ensimmäinen vastus on Willa Rykman. Loppupomo herää 14.12.</p>
+        </BossShadow>
+      )}
 
       <section className="card">
         <h2 className="display">Sankarit {locked.length}/10</h2>
@@ -47,7 +56,7 @@ export default async function Home() {
             );
           })}
         </div>
-        <p className="muted" style={{ margin: 0 }}>Monsterien HP lasketaan kaikkien lupauksista, kun ilmoittautuminen sulkeutuu ke 30.9.</p>
+        {battle ? null : <p className="muted" style={{ margin: 0 }}>Monsterien HP lasketaan kaikkien lupauksista, kun ilmoittautuminen sulkeutuu ke 30.9.</p>}
       </section>
 
       <section className="card">
@@ -55,7 +64,7 @@ export default async function Home() {
         <PushToggle />
       </section>
 
-      <Link className="btn btn-ghost" href="/ilmoittaudu">Muokkaa ilmoittautumista</Link>
+      {battle ? null : <Link className="btn btn-ghost" href="/ilmoittaudu">Muokkaa ilmoittautumista</Link>}
       {me.is_admin ? <Link className="btn btn-ghost" href="/yllapito">Ylläpito</Link> : null}
     </>
   );

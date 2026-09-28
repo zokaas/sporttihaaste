@@ -88,3 +88,26 @@ ul.people .facts { color: var(--muted); font-size: 13px; }
 .boss .body { animation: loom 6s ease-in-out infinite; transform-origin: 50% 100%; }
 .boss .eyes { animation: glow 3.8s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+
+/* Kirjaus */
+fieldset.field-group { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+fieldset.field-group legend { font-size: 14px; font-weight: 600; padding: 0; margin-bottom: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 40px; border-radius: 999px; border: 1px solid var(--line); background: var(--ground); color: var(--text); padding: 0 14px; font: 500 14px var(--font-body), sans-serif; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.chip[aria-pressed='true'] { background: var(--ember-fill); border-color: var(--ember-fill); color: var(--light); }
+
+/* Taistelu */
+.hpbar { height: 14px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.hpbar span { display: block; height: 100%; background: var(--blood); border-radius: 999px; transition: width 0.6s ease; }
+.stat-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stat { background: var(--track); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.stat strong { font-size: 20px; }
+.seal { display: flex; flex-wrap: wrap; gap: 6px; }
+.seal img, .seal .avatar { width: 32px; height: 32px; }
+.seal .missing { opacity: 0.3; filter: grayscale(1); }
+.pill { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: 13px; font-weight: 600; background: var(--moss); color: var(--light); }
+
+details.monster-row { border-bottom: 1px solid var(--line); padding: 12px 0; }
+details.monster-row:last-child { border-bottom: 0; }
+details.monster-row summary { cursor: pointer; min-height: 32px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+textarea.input { font: 400 16px var(--font-body), sans-serif; resize: vertical; }

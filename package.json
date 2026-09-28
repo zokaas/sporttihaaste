@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:rules": "node --experimental-strip-types lib/rules.test.ts"
+    "test:rules": "node --experimental-strip-types lib/rules.test.ts && node --experimental-strip-types lib/season.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
