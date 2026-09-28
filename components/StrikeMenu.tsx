@@ -28,9 +28,10 @@ export default function StrikeMenu({ day, stepped }: { day: string | null; stepp
     const res = await toggleStep(day, true);
     setBusy(false);
     if (!res.ok) return setMsg({ ok: false, text: res.error });
-    setMsg({ ok: true, text: '👣 Askeleet kuitattu! +50' });
+    // Taistelunäkymään: monsteri ottaa askelten voiman vastaan animaation kera.
+    setOpen(false);
+    router.push('/?askel=1');
     router.refresh();
-    window.setTimeout(() => { setOpen(false); setMsg(null); }, 1200);
   }
 
   return (

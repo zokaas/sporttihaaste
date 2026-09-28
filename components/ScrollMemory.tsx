@@ -42,7 +42,7 @@ export default function ScrollMemory() {
     // Palautus: odotetaan, että sivu on tarpeeksi pitkä (sisältö voi vielä latautua). Oma kosketus keskeyttää.
     let saved = 0;
     try { saved = Number(sessionStorage.getItem(key(path)) ?? 0); } catch { /* ei tallennusta */ }
-    const skip = new URLSearchParams(window.location.search).has('isku') || Boolean(window.location.hash);
+    const skip = ['isku', 'askel'].some((k) => new URLSearchParams(window.location.search).has(k)) || Boolean(window.location.hash);
     let frame = 0;
     let userMoved = false;
     const started = performance.now();
