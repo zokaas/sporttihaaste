@@ -129,10 +129,10 @@ export default function MyWeek(p: Props) {
         <span className="muted small">Jokainen sairaspäivä pienentää viikon lupausta 1/7:lla, ja yksikin sairaspäivä vapauttaa sinut sen viikon sinetistä.</span>
         {askContinue ? (
           <div className="sick-box">
-            <strong>Oletko kipeänä myös huomenna?</strong>
-            <span className="muted small">Jos sairaus jatkuu, tulevat päivät merkitään automaattisesti, kunnes painat &quot;Olen taas terve&quot;.</span>
+            <strong>Onko paha?</strong>
+            <span className="muted small">Jos sairaus tuntuu vievän pidemmän ajan, tulevat päivät merkitään automaattisesti, kunnes painat &quot;Olen taas terve&quot;.</span>
             <div className="row" style={{ flexWrap: 'wrap' }}>
-              <button type="button" className="btn grow" disabled={busy} onClick={() => { setAskContinue(false); run(() => toggleSickDay(today!, true, true)); }}>Kyllä, jatkuu</button>
+              <button type="button" className="btn grow" disabled={busy} onClick={() => { setAskContinue(false); run(() => toggleSickDay(today!, true, true)); }}>On paha</button>
               <button type="button" className="btn btn-ghost grow" disabled={busy} onClick={() => { setAskContinue(false); run(() => toggleSickDay(today!, true, false)); }}>Vain tänään</button>
             </div>
             <button type="button" className="linklike small" onClick={() => setAskContinue(false)}>Peru</button>
@@ -140,7 +140,7 @@ export default function MyWeek(p: Props) {
         ) : null}
         {p.sick && p.sickSince ? (
           <>
-            <span className="small">Kipeänä {formatDay(p.sickSince)} alkaen. Sairaus jatkuu, kunnes merkitset itsesi terveeksi.</span>
+            <span className="small"> Kipeänä {formatDay(p.sickSince)} alkaen. Sairaus jatkuu, kunnes merkitset itsesi terveeksi.</span>
             <button type="button" className="btn btn-ghost" style={{ minHeight: 44 }} disabled={busy} onClick={() => run(() => toggleSickDay(today!, false))}>💪 Olen taas terve</button>
           </>
         ) : null}
