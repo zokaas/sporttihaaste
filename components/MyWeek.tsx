@@ -60,10 +60,7 @@ export default function MyWeek(p: Props) {
       </div>
 
       <div className="myweek-block">
-        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span className="muted small">Askeleet (10 000 / pv)</span>
-          <strong>{stepCount} / {p.days.length} pv</strong>
-        </div>
+        <Hint id="steps" title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Askeleet (10 000 / pv)</span><strong>{stepCount} / {p.days.length} pv</strong></div>}>Napauta päivää, kun olet kävellyt 10 000 askelta: +50. Jos kaikki terveet kuittaavat saman päivän, siitä tulee partiopäivä ⭐ +250.</Hint>
         <div className="weekstrip" style={{ gridTemplateColumns: `repeat(${p.days.length}, 1fr)` }}>
           {p.days.map((d) => {
             const [wd, date] = formatDay(d.day).split(' ');
@@ -84,7 +81,6 @@ export default function MyWeek(p: Props) {
             );
           })}
         </div>
-        <Hint id="steps">Napauta päivää, kun olet kävellyt 10 000 askelta: +50. Jos kaikki terveet kuittaavat saman päivän, siitä tulee partiopäivä ⭐ +250.</Hint>
       </div>
 
       <p className="muted small" style={{ margin: 0 }}>
