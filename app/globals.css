@@ -363,3 +363,4 @@ details.companions[open] { padding-bottom: 12px; }
 .sickcell { min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .sickcell span { font-size: 11px; }
 .sick-details[open] { gap: 10px; }
+.sick-details > span { display: block; }
