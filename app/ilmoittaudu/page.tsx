@@ -33,8 +33,14 @@ function urlBase64ToUint8Array(base64: string) {
 }
 
 function DayMonth({ label, value, onChange }: { label: string; value: string | null; onChange: (v: string | null) => void }) {
-  const [m, d] = value ? value.split('-') : ['', ''];
-  const set = (mm: string, dd: string) => onChange(mm && dd ? `${mm}-${dd}` : null);
+  // Päivä ja kuukausi pidetään omassa tilassaan, jotta puolikas valinta ei katoa ennen kuin molemmat on valittu.
+  const [m, setM] = useState(value ? value.split('-')[0] : '');
+  const [d, setD] = useState(value ? value.split('-')[1] : '');
+  const set = (mm: string, dd: string) => {
+    setM(mm);
+    setD(dd);
+    onChange(mm && dd ? `${mm}-${dd}` : null);
+  };
   return (
     <fieldset style={{ border: 0, margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
       <legend style={{ fontSize: 14, fontWeight: 600, padding: 0, marginBottom: 6 }}>{label}</legend>
@@ -48,6 +54,7 @@ function DayMonth({ label, value, onChange }: { label: string; value: string | n
           {MONTHS.map((name, i) => <option key={name} value={String(i + 1).padStart(2, '0')}>{name}kuu</option>)}
         </select>
       </div>
+      {(m && !d) || (!m && d) ? <span className="muted small">Valitse myös {m ? 'päivä' : 'kuukausi'}.</span> : null}
     </fieldset>
   );
 }
