@@ -46,12 +46,14 @@ export interface HitInput {
   groupSize: number; // kirjaaja + merkityt seuralaiset
   celebration: boolean; // nimi- tai syntymäpäivä jollakulla
   weakness: Category | null; // viikon monsterin heikkous
+  participants?: number; // ilmoittautuneiden määrä ("kaikki yhdessä"), oletus 10
 }
 
 export function hitDamage(h: HitInput) {
   const base = Math.round((h.minutes / 60) * h.sportValue);
   const bonuses: { label: string; pct: number }[] = [];
-  if (h.groupSize >= PARTICIPANTS) bonuses.push({ label: 'Kaikki kymmenen yhdessä', pct: 100 });
+  const all = h.participants ?? PARTICIPANTS;
+  if (h.groupSize >= all && all >= 3) bonuses.push({ label: all === 10 ? 'Kaikki kymmenen yhdessä' : `Kaikki ${all} yhdessä`, pct: 100 });
   else if (h.groupSize >= 3) bonuses.push({ label: `Yhdessä (${h.groupSize} henkeä)`, pct: 50 });
   if (h.celebration) bonuses.push({ label: 'Juhlapäivä', pct: 50 });
   if (h.weakness && h.category === h.weakness) bonuses.push({ label: `Heikkous: ${h.weakness}`, pct: 50 });
