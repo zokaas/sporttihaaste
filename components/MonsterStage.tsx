@@ -210,7 +210,7 @@ export default function MonsterStage(p: Props) {
             ))}
           </div>
         ) : null}
-        {p.boss ? <span className="small" style={{ color: '#f0c9a8' }}>Viimeinen isku vaatii kaikki sankarit samaan treeniin.</span> : null}
+        {p.boss ? <span className="small" style={{ color: '#f0c9a8' }}>Viimeinen taistelu. Potti iski jo, loput on teidän.</span> : null}
       </div>
 
       {partFall ? (

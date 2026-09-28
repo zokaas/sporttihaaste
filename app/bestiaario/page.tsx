@@ -30,7 +30,7 @@ export default async function Bestiaario() {
         <span className="pill" style={{ background: 'var(--blood)', alignSelf: 'flex-start' }}>Loppupomo · {formatDay(weekRange(BOSS_WEEK).start)}</span>
         <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>{bossRevealed ? boss!.name : '???'}</h2>
         <span className="small" style={{ color: '#c9c1b4' }}>
-          {boss?.hp ? `${fmt(boss.hp)} HP. ` : ''}Potti {fmt(b.ledger?.pot ?? 0)} / {fmt(b.ledger?.potCap ?? 0)} vähennetään sen HP:sta. Viimeinen isku vaatii kaikki sankarit yhdessä.
+          {boss?.hp ? `${fmt(boss.hp)} HP. ` : ''}Potti {fmt(b.ledger?.pot ?? 0)} / {fmt(b.ledger?.potCap ?? 0)} vähennetään sen HP:sta. Se kaatuu kuten muutkin: HP nollaan ja sinetti täyteen.
         </span>
       </BossShadow>
 

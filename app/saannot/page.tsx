@@ -104,7 +104,7 @@ export default function Saannot() {
 
       <section className="card">
         <h2 className="display">Loppupomo</h2>
-        <p style={{ margin: 0 }}>Loppupomo herää ma 14.12. Potti vähennetään sen HP:sta (enintään puolet). Viimeinen isku vaatii kaikki ilmoittautuneet samaan treeniin, ja kaikki täytyy merkitä seuralaisiksi.</p>
+        <p style={{ margin: 0 }}>Loppupomo herää ma 14.12. Potti vähennetään sen HP:sta (enintään puolet). Loppupomo kaatuu samoin kuin muut monsterit: HP nollaan ja sinetti täyteen. Jos rästejä on vielä jäljellä, ne pitää kaataa ensin.</p>
       </section>
 
       <section className="card">
