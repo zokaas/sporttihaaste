@@ -111,3 +111,5 @@ details.monster-row { border-bottom: 1px solid var(--line); padding: 12px 0; }
 details.monster-row:last-child { border-bottom: 0; }
 details.monster-row summary { cursor: pointer; min-height: 32px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 textarea.input { font: 400 16px var(--font-body), sans-serif; resize: vertical; }
+
+.seal .sick { outline: 2px dashed var(--muted); outline-offset: 1px; }

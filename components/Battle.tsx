@@ -9,7 +9,7 @@ type BattleData = Awaited<ReturnType<typeof loadBattle>>;
 const fmt = (n: number) => n.toLocaleString('fi-FI');
 
 export default function Battle({ data }: { data: BattleData }) {
-  const { week, ledger, monsters, heroes, participants } = data;
+  const { week, ledger, monsters, heroes, participants, required, sickNow } = data;
   const { end } = weekRange(week);
 
   if (!ledger) {
@@ -38,23 +38,27 @@ export default function Battle({ data }: { data: BattleData }) {
 
       {target ? (
         <section className="card">
-          <h2 className="display">Sinetti {target.hitters.length}/{participants.length}</h2>
-          <p className="muted" style={{ margin: 0 }}>Monsteri kaatuu vasta, kun jokainen sankari on lyönyt sitä vähintään kerran.</p>
+          <h2 className="display">Sinetti {required.filter((id) => target.hitters.includes(id)).length}/{required.length}</h2>
+          <p className="muted" style={{ margin: 0 }}>Monsteri kaatuu vasta, kun jokainen terve sankari on lyönyt sitä treenillä. Askeleet eivät täytä sinettiä.</p>
           <div className="seal">
             {participants.map((id) => {
               const h = heroById.get(id);
               const src = avatarUrl(h?.avatar_path);
               const hit = target.hitters.includes(id);
+              const excused = !required.includes(id);
+              const label = `${h?.hero_name ?? ''}${excused ? ' (kipeä)' : ''}`;
+              const cls = `avatar${hit ? '' : ' missing'}${excused ? ' sick' : ''}`;
               return src
-                ? <img key={id} className={`avatar${hit ? '' : ' missing'}`} src={src} alt={h?.hero_name ?? ''} title={h?.hero_name ?? ''} width={32} height={32} />
-                : <div key={id} className={`avatar${hit ? '' : ' missing'}`} title={h?.hero_name ?? ''}>{(h?.hero_name ?? '?').slice(0, 1)}</div>;
+                ? <img key={id} className={cls} src={src} alt={label} title={label} width={32} height={32} />
+                : <div key={id} className={cls} title={label}>{(h?.hero_name ?? '?').slice(0, 1)}</div>;
             })}
           </div>
-          {target.hitters.length < participants.length ? (
+          {required.some((id) => !target.hitters.includes(id)) ? (
             <p className="small" style={{ margin: 0 }}>
-              Puuttuu: {participants.filter((id) => !target.hitters.includes(id)).map((id) => heroById.get(id)?.hero_name).join(', ')}
+              Puuttuu: {required.filter((id) => !target.hitters.includes(id)).map((id) => heroById.get(id)?.hero_name).join(', ')}
             </p>
           ) : <p className="ok" style={{ margin: 0 }}>Sinetti on täynnä!</p>}
+          {sickNow.length ? <p className="muted small" style={{ margin: 0 }}>Kipeänä: {sickNow.map((id) => heroById.get(id)?.hero_name).join(', ')}</p> : null}
         </section>
       ) : null}
 

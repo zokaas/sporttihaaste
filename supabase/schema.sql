@@ -192,4 +192,4 @@ create policy "monsterikuvat ylläpitäjälle" on storage.objects for all to aut
   using (bucket_id = 'monsters' and public.is_admin())
   with check (bucket_id = 'monsters' and public.is_admin());
 
--- Kauden viikot, kirjausten viikkolukitus ja paljastusajat: aja myös migrations/002_kausi.sql.
+-- Kauden viikot, lukitukset ja paljastusajat: aja myös tiedostot kansiosta migrations/ numerojärjestyksessä.
