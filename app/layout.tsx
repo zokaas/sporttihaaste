@@ -3,7 +3,7 @@ import { Grenze_Gotisch, IBM_Plex_Sans } from 'next/font/google';
 import './globals.css';
 
 const display = Grenze_Gotisch({ subsets: ['latin', 'latin-ext'], weight: ['500', '700'], variable: '--font-display' });
-const body = IBM_Plex_Sans({ subsets: ['latin', 'latin-ext'], weight: ['400', '500', '600', '700'], variable: '--font-body' });
+const body = IBM_Plex_Sans({ subsets: ['latin', 'latin-ext'], weight: ['400', '500', '600'], variable: '--font-body' });
 
 export const metadata: Metadata = {
   title: 'Monsterijahti',

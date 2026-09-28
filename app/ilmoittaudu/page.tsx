@@ -102,7 +102,7 @@ export default function Ilmoittaudu() {
   return (
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <span className="display brand" style={{ fontSize: 24 }}>Monsterijahti</span>
+        <span className="display" style={{ fontSize: 22 }}>Monsterijahti</span>
         <span className="muted">Ilmoittautuminen, vaihe {step}/3. Valmiina ke 30.9. mennessä.</span>
         <div className="steps" aria-hidden="true">{[1, 2, 3].map((i) => <span key={i} className={i <= step ? 'on' : ''} />)}</div>
       </div>
