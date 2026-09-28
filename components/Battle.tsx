@@ -6,6 +6,7 @@ import { finalBlows, weekRecap } from '@/lib/stats';
 import { addDays, formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
 import { bossWhisper } from '@/lib/boss';
+import { fullTaunt, hitReaction } from '@/lib/taunts';
 import MonsterStage, { type SealHero } from '@/components/MonsterStage';
 import KillFinale from '@/components/KillFinale';
 import NudgeButton from '@/components/NudgeButton';
@@ -60,6 +61,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const taunt = !view ? null
     : hpShare < 0.2 ? targetMonster?.taunt_low || 'Ei… ei vielä… minä en kaadu näin helposti!'
     : hpShare < 0.5 ? targetMonster?.taunt_half || 'Tuo sattui. Mutta pelkkä naarmu, sankarit!'
+    : hpShare >= 0.9 ? fullTaunt(targetMonster?.taunt_full)
     : null;
   const seal: SealHero[] = participants.map((id) => {
     const h = heroById.get(id);
@@ -123,6 +125,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           endMs={endMs}
           currentWeek={week}
           taunt={taunt}
+          hitLine={ownHit != null ? hitReaction(targetMonster?.hit_lines, targetMonster?.hit_crit, crit) : null}
           offsetMs={offsetMs}
           boss={target.week === BOSS_WEEK}
           potStrike={potBeforeBoss}

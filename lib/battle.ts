@@ -26,6 +26,9 @@ export type PublicMonster = {
   taunt_low?: string | null;
   teaser?: string | null;
   boss_whisper?: string | null;
+  hit_lines?: string | null;
+  hit_crit?: string | null;
+  taunt_full?: string | null;
 };
 
 type Hit = { id: number; user_id: string; trained_on: string; sport: string; minutes: number; damage: number; bonus_pct: number; all_together: boolean; companions: string[]; created_at: string };
@@ -44,7 +47,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at'),
     // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot. Haetaan rinnakkain.
-    supabase.from('monsters').select('week, hp, name, description, weakness, image_path, parts, taunt_half, taunt_low, teaser, boss_whisper').order('week'),
+    supabase.from('monsters').select('week, hp, name, description, weakness, image_path, parts, taunt_half, taunt_low, teaser, boss_whisper, hit_lines, hit_crit, taunt_full').order('week'),
     supabase.from('monsters_public').select('*').order('week'),
     supabase.from('hits').select('id, user_id, trained_on, sport, minutes, damage, bonus_pct, all_together, companions, created_at'),
     supabase.from('step_days').select('user_id, day, created_at'),
@@ -74,7 +77,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   // Seuraavan viikon arvoitus näkyy kuluvan viikon perjantaista alkaen.
   const teaserOpen = today >= addDays(weekRange(week).end, -2);
   const byWeek = new Map(monsterList.map((m) => [m.week, m.week > week
-    ? { ...m, name: null, description: null, weakness: null, image_path: null, parts: null, taunt_half: null, taunt_low: null, boss_whisper: null, teaser: m.week === week + 1 && teaserOpen ? m.teaser ?? null : null }
+    ? { ...m, name: null, description: null, weakness: null, image_path: null, parts: null, taunt_half: null, taunt_low: null, boss_whisper: null, hit_lines: null, hit_crit: null, taunt_full: null, teaser: m.week === week + 1 && teaserOpen ? m.teaser ?? null : null }
     : m]));
 
   const pledgeOf = (userId: string, w: number) =>
