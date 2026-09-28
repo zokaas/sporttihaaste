@@ -141,7 +141,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         <section className={`card${view?.dam ? ' threat' : ''}`}>
           {view?.dam ? (
             <p style={{ margin: 0 }}>
-              <strong style={{ color: 'var(--gold)' }}>{fmt(view.dam)} vahinkoa padottuna!</strong> {nameOf(target.week)} on sinettirajalla ({fmt(view.hp)} HP = 10 HP jokaista puuttuvaa kohden) ja kaatuu heti, kun sinetti täyttyy. Muuten pato menetetään su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59.
+              <strong style={{ color: 'var(--gold)' }}>{fmt(view.dam)} voimaa padottuna!</strong> {nameOf(target.week)} on sinettirajalla ({fmt(view.hp)} HP = 10 HP jokaista puuttuvaa kohden) ja kaatuu heti, kun sinetti täyttyy. Muuten pato menetetään su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59.
             </p>
           ) : (
             <Hint id="seal" title={<strong>Sinetti {required.length - missing.length}/{required.length}</strong>}>Monsteri kaatuu vasta, kun jokainen terve sankari on lyönyt sitä treenillä. Askeleet eivät täytä sinettiä.</Hint>

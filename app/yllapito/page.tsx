@@ -138,7 +138,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
       {lastRecap ? (
         <section className={`card${lastRecap.bonusShare > 25 ? ' threat' : ''}`}>
           <h2 className="display">Viikko {lastRecap.week}</h2>
-          <p style={{ margin: 0 }}>Bonusten osuus vahingosta: <strong>{lastRecap.bonusShare} %</strong>{lastRecap.bonusShare > 25 ? ' ⚠️ yli 25 %. Monsterit kaatuvat bonuksilla helpommin kuin HP:t olettavat.' : ' (tavoite alle 25 %)'}</p>
+          <p style={{ margin: 0 }}>Bonusten osuus voimasta: <strong>{lastRecap.bonusShare} %</strong>{lastRecap.bonusShare > 25 ? ' ⚠️ yli 25 %. Monsterit kaatuvat bonuksilla helpommin kuin HP:t olettavat.' : ' (tavoite alle 25 %)'}</p>
           <a href={`/raportti/${lastRecap.week}`}>Viikon raportti ja jako WhatsAppiin →</a>
         </section>
       ) : null}

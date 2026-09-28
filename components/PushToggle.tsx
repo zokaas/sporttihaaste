@@ -14,8 +14,11 @@ async function saveSubscription(sub: PushSubscription) {
   if (!res.ok) throw new Error((await res.json().catch(() => null))?.error ?? `Palvelin vastasi ${res.status}`);
 }
 
-/** Ilmoitusten tila ja päälle kytkentä. Tarkistaa, että tilaus on oikeasti olemassa ja tallessa palvelimella. */
-export default function PushToggle() {
+/**
+ * Ilmoitusten tila ja päälle kytkentä. Tarkistaa, että tilaus on oikeasti olemassa ja tallessa palvelimella.
+ * card: näytetään omana korttinaan vain, kun ilmoitukset puuttuvat (ei silloin, kun ne ovat jo päällä).
+ */
+export default function PushToggle({ card = false }: { card?: boolean }) {
   const [state, setState] = useState<State>('checking');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -72,7 +75,8 @@ export default function PushToggle() {
     }
   }
 
-  return (
+  if (card && (state === 'checking' || state === 'on')) return null;
+  const body = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {state === 'checking' ? <p className="muted" style={{ margin: 0 }}>Tarkistetaan ilmoituksia…</p> : null}
       {state === 'on' ? <p className="ok" style={{ margin: 0 }}>✓ Ilmoitukset ovat päällä tässä laitteessa.</p> : null}
@@ -85,4 +89,5 @@ export default function PushToggle() {
       {error ? <p className="error" role="alert" style={{ margin: 0 }}>{error}</p> : null}
     </div>
   );
+  return card ? <section className="card"><h2 className="display">Ilmoitukset</h2>{body}</section> : body;
 }

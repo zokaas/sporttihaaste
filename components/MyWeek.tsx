@@ -87,7 +87,7 @@ export default function MyWeek(p: Props) {
       </div>
 
       <p className="muted small" style={{ margin: 0 }}>
-        Vahinkosi tällä viikolla <strong style={{ color: 'var(--text)' }}>{p.weekDamage.toLocaleString('fi-FI')}</strong> (askeleista {p.stepDamage}) · yhteistreenejä {p.togetherCount}
+        Voimasi tällä viikolla <strong style={{ color: 'var(--text)' }}>{p.weekDamage.toLocaleString('fi-FI')}</strong> (askeleista {p.stepDamage}) · yhteistreenejä {p.togetherCount}
       </p>
 
       {p.sick ? (

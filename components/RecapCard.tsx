@@ -11,10 +11,10 @@ export default function RecapCard({ r }: { r: WeekRecap }) {
       {r.killed.length ? <h2 className="display recap-title ok">💀 {r.killed.join(' ja ')} kaatui!</h2> : null}
       {r.survived.map((s) => <h2 key={s.name} className="display recap-title" style={{ color: 'var(--blood-text)' }}>😈 {s.name} jäi henkiin</h2>)}
       <div className="stat-row">
-        <div className="stat"><span className="muted small">Vahinkoa</span><strong>{fmt(r.damage)}</strong><span className="muted small">bonuksista {r.bonusShare} %</span></div>
+        <div className="stat"><span className="muted small">Voimaa</span><strong>{fmt(r.damage)}</strong><span className="muted small">bonuksista {r.bonusShare} %</span></div>
         <div className="stat"><span className="muted small">Potti</span><strong>+{fmt(r.potGain)}</strong><span className="muted small">yhteensä {fmt(r.pot)}</span></div>
       </div>
-      {r.lostToSeal ? <p className="note threat" style={{ margin: 0 }}>🛡️ Sinetti jäi vajaaksi: {fmt(r.lostToSeal)} padottua vahinkoa menetettiin.</p> : null}
+      {r.lostToSeal ? <p className="note threat" style={{ margin: 0 }}>🛡️ Sinetti jäi vajaaksi: {fmt(r.lostToSeal)} padottua voimaa menetettiin.</p> : null}
       {r.mvp ? <p style={{ margin: 0 }}>🏆 Viikon sankari: <strong>{r.mvp.name}</strong> ({fmt(r.mvp.damage)})</p> : null}
       <p style={{ margin: 0 }}>🤝 Lupauksen piti {r.pledgesKept}/{r.participants}</p>
       <p style={{ margin: 0 }}>👣 Askelpäiviä {r.stepDays}, partiopäiviä {r.patrolDays} · yhteistreenejä {r.jointTrainings}</p>

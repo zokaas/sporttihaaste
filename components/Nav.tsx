@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import UnreadDot from '@/components/UnreadDot';
+import InstallHint from '@/components/InstallHint';
 import { navVisibility } from '@/lib/nav';
 
 const LEFT = [
@@ -28,6 +29,7 @@ export default async function Nav({ current }: { current: string }) {
         <Link href="/viestit" className="topbar-icon" aria-label="Viestit" aria-current={current === '/viestit' ? 'page' : undefined}>📣<UnreadDot seenNow={current === '/viestit'} /></Link>
         <Link href="/saannot" className="topbar-icon" aria-label="Säännöt" aria-current={current === '/saannot' ? 'page' : undefined}>?</Link>
       </header>
+      <InstallHint />
       <nav className="tabbar" aria-label="Päävalikko" style={{ gridTemplateColumns: `repeat(${LEFT.length + right.length + (show.strike ? 1 : 0)}, 1fr)` }}>
         {LEFT.map(tab)}
         {show.strike ? (

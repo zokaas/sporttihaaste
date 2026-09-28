@@ -107,7 +107,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
 
       {preview ? (
         <div className="note" aria-live="polite">
-          <div>Perusvahinko {preview.base} ({duration(minutes)} × {sport!.value}/h)</div>
+          <div>Perusvoima {preview.base} ({duration(minutes)} × {sport!.value}/h)</div>
           {preview.bonuses.map((b) => <div key={b.label}>{b.label}: +{b.pct} %</div>)}
           {preview.pct === 200 && preview.bonuses.reduce((a, b) => a + b.pct, 0) > 200 ? <div className="muted small">Bonusten katto on +200 %.</div> : null}
           <div style={{ fontSize: 18, fontWeight: 600, marginTop: 4 }}>Isku: {preview.damage}</div>

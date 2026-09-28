@@ -88,7 +88,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
 
       {top.length ? (
         <section className="card">
-          <h2 className="display">Eniten vahinkoa</h2>
+          <h2 className="display">Eniten voimaa</h2>
           <ul className="people">
             {top.map(([id, dmg], i) => {
               const h = b.heroes.find((x) => x.id === id);

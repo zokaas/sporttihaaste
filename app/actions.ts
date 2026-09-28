@@ -78,7 +78,7 @@ export async function nudgeMissing(): Promise<Result & { sent?: number }> {
   const sent = await sendPush(supabase, {
     title: '⏳ Sinetti odottaa sinua',
     body: target.padded
-      ? `${sender} muistuttaa: ${monster} on jo nollissa, ${target.padded} vahinkoa odottaa padottuna. Tarvitaan vain sinun iskusi!`
+      ? `${sender} muistuttaa: ${monster} on jo sinettirajalla, ${target.padded} voimaa odottaa padottuna. Tarvitaan vain sinun iskusi!`
       : `${sender} muistuttaa: ${monster} kaatuu vasta, kun jokainen on lyönyt. Sinun iskusi puuttuu.`,
   }, missing);
   return { ok: true, sent };

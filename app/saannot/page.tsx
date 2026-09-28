@@ -12,14 +12,14 @@ const examples = [
 ];
 
 const GLOSSARY: [string, string][] = [
-  ['Isku', 'Kirjattu treeni. Jokainen isku tekee monsteriin vahinkoa.'],
-  ['Vahinko', 'Iskun voima: kesto tunteina × lajin arvo, ja päälle bonukset.'],
+  ['Isku', 'Kirjattu treeni. Jokaisella iskulla on voima, joka vähentää monsterin HP:ta.'],
+  ['Voima', 'Iskun voima: kesto tunteina × lajin arvo, ja päälle bonukset.'],
   ['HP', 'Monsterin elinvoima. Kun se loppuu ja sinetti on täynnä, monsteri kaatuu.'],
   ['Sinettiraja', 'Niin kauan kuin sinetti on kesken, monsterille jää 10 HP jokaista puuttuvaa sankaria kohden. Se ei siis näy koskaan nollassa ennen kuin kaikki ovat lyöneet.'],
   ['Sinetti', 'Jokaisen terveen sankarin täytyy lyödä viikon monsteria vähintään yhdellä treenillä. Askeleet eivät täytä sinettiä.'],
-  ['Padottu vahinko', 'Vahinko, joka kertyy patoon, kun HP on jo sinettirajalla mutta sinetti on kesken. Pato purkautuu, kun sinetti täyttyy. Jos sinetti jää sunnuntaina vajaaksi, padottu vahinko menetetään.'],
+  ['Padottu voima', 'Voima, joka kertyy patoon, kun HP on jo sinettirajalla mutta sinetti on kesken. Pato purkautuu, kun sinetti täyttyy. Jos sinetti jää sunnuntaina vajaaksi, padottu voima menetetään.'],
   ['Rästi', 'Monsteri, joka jäi viikolla henkiin. Se jatkaa seuraavalla viikolla 1 HP:lla, ja vanhin rästi ottaa iskut ensin.'],
-  ['Potti', 'Kaatuneen monsterin yli mennyt vahinko ja lupausbonukset. Potti vähennetään loppupomon HP:sta.'],
+  ['Potti', 'Kaatuneen monsterin yli mennyt voima ja lupausbonukset. Potti vähennetään loppupomon HP:sta.'],
   ['Pottikatto', 'Potti voi vähentää loppupomon HP:sta enintään puolet.'],
   ['Heikkous', 'Viikon monsterin heikko kohta. Sen lajiryhmän treenit tekevät +50 %.'],
   ['Juhlapäivä', 'Kenen tahansa sankarin nimi- tai syntymäpäivä. Silloin kaikkien iskut tekevät +50 %.'],
@@ -28,7 +28,7 @@ const GLOSSARY: [string, string][] = [
   ['Askelkuittaus', `Päivä, jona kävelit vähintään ${STEP_GOAL.toLocaleString('fi-FI')} askelta: +${STEP_DAY_DAMAGE}.`],
   ['Partiopäivä', `Päivä, jona kaikki terveet kuittaavat askeleensa: +${PATROL_DAY_DAMAGE}.`],
   ['Lupaus', `Montako tuntia treenaat viikossa. Pidetty lupaus tuo +${PLEDGE_BONUS} pottiin.`],
-  ['Viikon sankari', 'Sankari, joka teki päättyneellä viikolla eniten vahinkoa.'],
+  ['Viikon sankari', 'Sankari, joka teki päättyneellä viikolla eniten voimaa.'],
   ['Viimeinen isku', 'Isku, joka kaatoi monsterin.'],
   ['Bestiaario', 'Kauden kaikki monsterit: kaatuneet, nykyinen ja tulevat.'],
 ];
@@ -37,11 +37,11 @@ const FAQ: [string, string][] = [
   ['Unohdin kirjata treenin. Ehtiikö vielä?', 'Kyllä, jos treeni oli tällä viikolla. Kuluvan viikon päiville voi kirjata sunnuntaihin klo 23.59 asti. Sen jälkeen viikko lukittuu.'],
   ['Kirjasin väärin. Miten korjaan?', 'Poista isku Kirjaa treeni -sivulla ja kirjaa uudelleen. Sekin onnistuu vain kuluvan viikon aikana.'],
   ['Sairastuin. Mitä teen?', 'Paina Minä-sivulla Olen kipeä ja valitse, mistä päivästä alkaen. Silloin 1) viikon lupaus pienenee sairaspäivien verran, 2) sinua ei tarvita sen viikon sinettiin ja 3) partiopäivään riittävät terveet. Kun paranet, paina Olen taas terve: viimeinen sairaspäivä on eilinen.'],
-  ['Mitä askelkuittaus tarkoittaa?', `Kuittaa päivä, jona kävelit vähintään ${STEP_GOAL.toLocaleString('fi-FI')} askelta. Jokainen kuitattu päivä tekee ${STEP_DAY_DAMAGE} vahinkoa, mutta askeleet eivät täytä sinettiä.`],
-  ['Miksi monsterin HP jää 10, 20 tai 30:een?', 'Sinetti on kesken: jokainen puuttuva sankari pitää monsterille 10 HP. Ylimenevä vahinko padotaan, ja monsteri kaatuu heti, kun viimeinenkin puuttuva lyö.'],
+  ['Mitä askelkuittaus tarkoittaa?', `Kuittaa päivä, jona kävelit vähintään ${STEP_GOAL.toLocaleString('fi-FI')} askelta. Jokainen kuitattu päivä tuo ${STEP_DAY_DAMAGE} voimaa, mutta askeleet eivät täytä sinettiä.`],
+  ['Miksi monsterin HP jää 10, 20 tai 30:een?', 'Sinetti on kesken: jokainen puuttuva sankari pitää monsterille 10 HP. Ylimenevä voima padotaan, ja monsteri kaatuu heti, kun viimeinenkin puuttuva lyö.'],
   ['Mitä rästi tarkoittaa?', 'Monsteri, joka jäi viikolla eloon. Se jatkaa seuraavalla viikolla 1 HP:lla, ja vanhin monsteri ottaa iskut aina ensin.'],
   ['Voinko muuttaa lupaustani?', 'Et. Lupaus lukittuu ke 30.9. ja pysyy samana koko kauden. Jos sairastut, merkitse itsesi kipeäksi Minä-sivulla: viikon tavoite pienenee sairaspäivien verran.'],
-  ['Mihin ylimääräinen vahinko menee?', `Kun viikon monsteri on kaatunut, loput iskut menevät pottiin. Potti vähennetään loppupomon HP:sta, mutta enintään puolet siitä.`],
+  ['Mihin ylimääräinen voima menee?', `Kun viikon monsteri on kaatunut, loput iskut menevät pottiin. Potti vähennetään loppupomon HP:sta, mutta enintään puolet siitä.`],
 ];
 
 export default function Saannot() {
@@ -54,7 +54,7 @@ export default function Saannot() {
         <h2 className="display">Lyhyesti</h2>
         <p style={{ margin: 0 }}>Kausi kestää 1.10.–20.12. Ensimmäinen monsteri paljastuu to 1.10., ja sen jälkeen uusi joka maanantai: yhteensä 11 monsteria ja viimeisellä viikolla loppupomo. Seuraavaa pääsee lyömään vasta, kun edellinen on tuhottu. Treenit ovat iskuja: jokainen kirjattu treeni vähentää monsterin HP:ta.</p>
         <p style={{ margin: 0 }}>Monsteri kaatuu, kun sen HP loppuu <strong>ja</strong> sinetti on täynnä eli jokainen terve sankari on lyönyt sitä vähintään yhdellä treenillä. Siihen asti monsterille jää 10 HP jokaista puuttuvaa sankaria kohden.</p>
-        <p style={{ margin: 0 }}>Jos sinetti jää sunnuntaina vajaaksi, padottu vahinko menetetään ja monsteri jää rästiin 1 HP:lla.</p>
+        <p style={{ margin: 0 }}>Jos sinetti jää sunnuntaina vajaaksi, padottu voima menetetään ja monsteri jää rästiin 1 HP:lla.</p>
       </section>
 
       <section className="card">
@@ -68,7 +68,7 @@ export default function Saannot() {
 
       <section className="card">
         <h2 className="display">Isku</h2>
-        <p style={{ margin: 0 }}>Vahinko = treenin kesto tunteina × lajin arvo. Useimmat lajit tekevät 100 vahinkoa tunnissa.</p>
+        <p style={{ margin: 0 }}>Voima = treenin kesto tunteina × lajin arvo. Useimmissa lajeissa tunnin treenin voima on 100.</p>
         <table className="plain">
           <thead><tr><th>Bonus</th><th>Lisä</th></tr></thead>
           <tbody>
@@ -93,12 +93,12 @@ export default function Saannot() {
 
       <section className="card">
         <h2 className="display">Askeleet ja partio</h2>
-        <p style={{ margin: 0 }}>Kun kävelet päivässä vähintään {STEP_GOAL.toLocaleString('fi-FI')} askelta, kuittaa päivä. Se tekee {STEP_DAY_DAMAGE} vahinkoa. Jos kaikki terveet kuittaavat saman päivän, se on partiopäivä: +{PATROL_DAY_DAMAGE}.</p>
+        <p style={{ margin: 0 }}>Kun kävelet päivässä vähintään {STEP_GOAL.toLocaleString('fi-FI')} askelta, kuittaa päivä. Se tuo {STEP_DAY_DAMAGE} voimaa. Jos kaikki terveet kuittaavat saman päivän, se on partiopäivä: +{PATROL_DAY_DAMAGE}.</p>
       </section>
 
       <section className="card">
         <h2 className="display">Lupaus</h2>
-        <p style={{ margin: 0 }}>Lupaat, montako tuntia treenaat viikossa. Lupaukseen lasketaan vahinko ilman bonuksia jaettuna sadalla: tunti uintia on 2 h, tunti joogaa 0,5 h.</p>
+        <p style={{ margin: 0 }}>Lupaat, montako tuntia treenaat viikossa. Lupaukseen lasketaan voima ilman bonuksia jaettuna sadalla: tunti uintia on 2 h, tunti joogaa 0,5 h.</p>
         <p style={{ margin: 0 }}>Pidetty lupaus tuo +{PLEDGE_BONUS} pottiin, kun viikko lukittuu. Tulostaulun ykkönen on se, joka pitää lupauksensa useimmin.</p>
         <p className="muted small" style={{ margin: 0 }}>Viikko 1 kestää 4 päivää (to 1.10.–su 4.10.), joten sen tavoite on lupaus × 4/7. Sairaspäivät pienentävät tavoitetta.</p>
       </section>

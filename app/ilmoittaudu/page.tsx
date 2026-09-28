@@ -134,12 +134,12 @@ export default function Ilmoittaudu() {
           <div className="card">
             <div className="stepper">
               <button type="button" aria-label="Pienennä lupausta" onClick={() => setP({ ...p, pledge_hours: Math.max(1, pledge - 0.5) })}>−</button>
-              <div className="value"><strong>{String(pledge).replace('.', ',')} h</strong><span className="muted">viikossa, {pledge * 100} vahinkoa</span></div>
+              <div className="value"><strong>{String(pledge).replace('.', ',')} h</strong><span className="muted">viikossa, {pledge * 100} voimaa</span></div>
               <button type="button" aria-label="Kasvata lupausta" onClick={() => setP({ ...p, pledge_hours: Math.min(15, pledge + 0.5) })}>+</button>
             </div>
           </div>
           <div className="note">
-            <strong>{team.locked + (p.pledge_locked_at ? 1 : 0)}/10 lukinnut.</strong> Lupaukset yhteensä {String(teamHours).replace('.', ',')} h, eli porukan viikkovauhti on noin {Math.round(weeklyPace(teamHours)).toLocaleString('fi-FI')} vahinkoa.
+            <strong>{team.locked + (p.pledge_locked_at ? 1 : 0)}/10 lukinnut.</strong> Lupaukset yhteensä {String(teamHours).replace('.', ',')} h, eli porukan viikkovauhti on noin {Math.round(weeklyPace(teamHours)).toLocaleString('fi-FI')} voimaa.
           </div>
           <p className="muted" style={{ margin: 0 }}>Lupaus lukittuu ke 30.9. eikä sitä voi muuttaa kauden aikana. Sairaspäivät pienentävät viikon tavoitetta automaattisesti.</p>
         </section>

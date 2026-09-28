@@ -16,7 +16,7 @@ export async function afterHit(supabase: SupabaseClient) {
   if (!b.ledger || !b.hpLocked) return;
   for (const k of b.ledger.killed) {
     if (!k.killedAt || k.killedAt < Date.now() - 15 * 60_000) continue;
-    await sendOnce(supabase, `kill-${k.week}`, { title: `💀 ${nameOf(b, k.week)} kaatui!`, body: 'Sinetti täyttyi ja vahinko riitti. Katso, kuka löi viimeisen iskun.' });
+    await sendOnce(supabase, `kill-${k.week}`, { title: `💀 ${nameOf(b, k.week)} kaatui!`, body: 'Sinetti täyttyi ja voima riitti. Katso, kuka löi viimeisen iskun.' });
   }
   if (b.ledger.potCap > 0 && b.ledger.pot >= b.ledger.potCap && b.week < BOSS_WEEK) {
     await sendOnce(supabase, 'pot-full', { title: '💰 Potti on täynnä!', body: 'Loppupomon HP puolittuu. Iskut kerryttävät silti lupauksia, tilastoja ja kunniamerkkejä.' });
@@ -39,7 +39,7 @@ export async function afterStep(supabase: SupabaseClient, day: string) {
   if (testDay()) return;
   const b = await loadBattle(supabase, today());
   if (!b.hpLocked || !b.patrols.some((p) => p.day === day)) return;
-  await sendOnce(supabase, `patrol-${day}`, { title: '⭐ Partiopäivä!', body: 'Kaikki terveet kuittasivat askeleensa. +250 vahinkoa monsterille.' });
+  await sendOnce(supabase, `patrol-${day}`, { title: '⭐ Partiopäivä!', body: 'Kaikki terveet kuittasivat askeleensa. +250 voimaa monsterille.' });
 }
 
 /** Viikon monsterin paljastus: ensimmäinen sovelluksen avaus uudella viikolla lähettää ilmoituksen kaikille. */

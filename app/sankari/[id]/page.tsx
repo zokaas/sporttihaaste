@@ -26,7 +26,7 @@ export default async function Sankari({ params }: { params: { id: string } }) {
   const status = b.pledgeStatus(s.id, b.week);
 
   const rows: [string, (x: HeroStats) => string][] = [
-    ['Vahinko', (x) => fmt(x.damage)],
+    ['Voima', (x) => fmt(x.damage)],
     ['Iskut', (x) => String(x.hitCount)],
     ['Treenitunnit (lupaukseen)', (x) => h(x.hours)],
     ['Pidetyt lupaukset', (x) => `${x.pledgesKept}/${x.closedWeeks}`],
