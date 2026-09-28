@@ -354,3 +354,12 @@ details.companions[open] { padding-bottom: 12px; }
 .sickcell { min-height: 32px; border-radius: 10px; border: 1px dashed var(--line); background: transparent; color: var(--muted); font-size: 14px; cursor: pointer; padding: 0; }
 .sickcell.on { border: 1px solid var(--gold); background: rgba(232, 176, 74, 0.12); }
 .sickcell:disabled { opacity: 0.3; cursor: default; }
+.sick-details { padding: 10px 12px; }
+.sick-details summary { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; cursor: pointer; list-style: none; }
+.sick-details summary::-webkit-details-marker { display: none; }
+.sick-details summary::after { content: '▾'; color: var(--muted); }
+.sick-details[open] summary::after { content: '▴'; }
+.sick-details[open] summary { margin-bottom: 4px; }
+.sickcell { min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.sickcell span { font-size: 11px; }
+.sick-details[open] { gap: 10px; }

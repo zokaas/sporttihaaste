@@ -43,7 +43,9 @@ export default function MyWeek(p: Props) {
   const pct = p.target > 0 ? Math.min(100, (p.hours / p.target) * 100) : 100;
   const kept = p.target > 0 && p.hours >= p.target;
   const today = p.days.filter((d) => !d.future).at(-1)?.day;
-  const stepCount = p.days.filter((d) => d.stepped).length;
+  const stepCount = p.days.filter((d) => d.stepped && !d.sick).length;
+  const sickCount = p.days.filter((d) => d.sick).length;
+  const healthyDays = p.days.length - sickCount;
   const shortWeek = p.days.length < 7;
 
   function tapSick(d: Day) {
@@ -75,8 +77,8 @@ export default function MyWeek(p: Props) {
       </div>
 
       <div className="myweek-block">
-        <Hint id="steps" title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Askeleet ja sairaspäivät</span><strong>{stepCount} / {p.days.length} pv</strong></div>}>
-          Ylärivi: napauta päivää, kun olet kävellyt 10 000 askelta (+50). Jos kaikki terveet kuittaavat saman päivän, siitä tulee megamarssi ⭐ +250. Alarivi 🤒: merkitse päivät, joina olit kipeä. Sairaspäivä pienentää viikon lupausta 1/7:lla, ja yksikin sairaspäivä vapauttaa sinut sen viikon sinetistä.
+        <Hint id="steps" title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Askeleet (10 000 / pv)</span><strong>{stepCount} / {healthyDays} pv</strong></div>}>
+          Napauta päivää, kun olet kävellyt 10 000 askelta: +50. Jos kaikki terveet kuittaavat saman päivän, siitä tulee megamarssi ⭐ +250.
         </Hint>
         <div className="weekstrip" style={{ gridTemplateColumns: `repeat(${p.days.length}, 1fr)` }}>
           {p.days.map((d) => {
@@ -97,23 +99,37 @@ export default function MyWeek(p: Props) {
               </button>
             );
           })}
-          {p.days.map((d) => (
-            <button
-              key={`s-${d.day}`}
-              type="button"
-              className={`sickcell${d.sick ? ' on' : ''}`}
-              aria-pressed={d.sick}
-              aria-label={`${formatDay(d.day)}: ${d.sick ? 'poista sairaspäivä' : 'merkitse sairaspäiväksi'}`}
-              disabled={d.future || busy}
-              onClick={() => tapSick(d)}
-            >
-              {d.future ? '' : d.sick ? '🤒' : '+'}
-            </button>
-          ))}
         </div>
+      </div>
+
+      <details className="myweek-block sick-details" open={sickCount > 0 || askContinue}>
+        <summary>
+          <span>🤒 Sairaspäivät</span>
+          <span className="muted small">{sickCount ? `${sickCount} pv tällä viikolla` : 'Merkitse, jos olet kipeä'}</span>
+        </summary>
+        <div className="weekstrip" style={{ gridTemplateColumns: `repeat(${p.days.length}, 1fr)` }}>
+          {p.days.map((d) => {
+            const [wd] = formatDay(d.day).split(' ');
+            return (
+              <button
+                key={`s-${d.day}`}
+                type="button"
+                className={`sickcell${d.sick ? ' on' : ''}`}
+                aria-pressed={d.sick}
+                aria-label={`${formatDay(d.day)}: ${d.sick ? 'poista sairaspäivä' : 'merkitse sairaspäiväksi'}`}
+                disabled={d.future || busy}
+                onClick={() => tapSick(d)}
+              >
+                <span>{wd}</span>
+                <b>{d.future ? '' : d.sick ? '🤒' : '+'}</b>
+              </button>
+            );
+          })}
+        </div>
+        <span className="muted small">Jokainen sairaspäivä pienentää viikon lupausta 1/7:lla, ja yksikin sairaspäivä vapauttaa sinut sen viikon sinetistä.</span>
         {askContinue ? (
           <div className="sick-box">
-            <strong>🤒 Oletko kipeänä myös huomenna?</strong>
+            <strong>Oletko kipeänä myös huomenna?</strong>
             <span className="muted small">Jos sairaus jatkuu, tulevat päivät merkitään automaattisesti, kunnes painat &quot;Olen taas terve&quot;.</span>
             <div className="row" style={{ flexWrap: 'wrap' }}>
               <button type="button" className="btn grow" disabled={busy} onClick={() => { setAskContinue(false); run(() => toggleSickDay(today!, true, true)); }}>Kyllä, jatkuu</button>
@@ -123,12 +139,12 @@ export default function MyWeek(p: Props) {
           </div>
         ) : null}
         {p.sick && p.sickSince ? (
-          <div className="row" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
-            <span className="small grow">🤒 Kipeänä {formatDay(p.sickSince)} alkaen, jatkuu kunnes merkitset itsesi terveeksi.</span>
-            <button type="button" className="btn btn-ghost" style={{ minHeight: 40 }} disabled={busy} onClick={() => run(() => toggleSickDay(today!, false))}>💪 Olen taas terve</button>
-          </div>
+          <>
+            <span className="small">Kipeänä {formatDay(p.sickSince)} alkaen. Sairaus jatkuu, kunnes merkitset itsesi terveeksi.</span>
+            <button type="button" className="btn btn-ghost" style={{ minHeight: 44 }} disabled={busy} onClick={() => run(() => toggleSickDay(today!, false))}>💪 Olen taas terve</button>
+          </>
         ) : null}
-      </div>
+      </details>
 
       <p className="muted small" style={{ margin: 0 }}>
         Voimasi tällä viikolla <strong style={{ color: 'var(--text)' }}>{p.weekDamage.toLocaleString('fi-FI')}</strong> (askeleista {p.stepDamage}) · yhteistreenejä {p.togetherCount}
