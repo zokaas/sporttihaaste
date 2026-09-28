@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { SPORTS } from '@/lib/rules';
-import { SEASON_START, formatDay, seasonWeek, weekRange } from '@/lib/season';
+import { SEASON_START, formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
 import { AdminHitForm, AdminSickForm, DeleteRow } from '@/components/AdminTools';
 
@@ -25,8 +25,8 @@ export default async function Korjaukset({ searchParams }: { searchParams: { vko
   if (!me?.is_admin) redirect('/');
 
   const now = today();
-  const current = Math.min(11, Math.max(1, seasonWeek(now)));
-  const week = Math.min(11, Math.max(1, Number(searchParams.vko) || current));
+  const current = Math.min(BOSS_WEEK, Math.max(1, seasonWeek(now)));
+  const week = Math.min(BOSS_WEEK, Math.max(1, Number(searchParams.vko) || current));
   const { start, end } = weekRange(week);
   const [{ data: heroes }, { data: hits }, { data: sick }] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, pledge_locked_at').order('hero_name'),

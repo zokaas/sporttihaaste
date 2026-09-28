@@ -3,7 +3,7 @@ import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import type { loadBattle } from '@/lib/battle';
 import { computeLedger } from '@/lib/rules';
 import { finalBlows, weekRecap } from '@/lib/stats';
-import { formatDay, helsinkiMs, seasonWeek, weekRange } from '@/lib/season';
+import { formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
 import MonsterStage, { type SealHero } from '@/components/MonsterStage';
 import KillFinale from '@/components/KillFinale';
@@ -44,7 +44,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const target = ledger.alive[0];
   const backlog = ledger.alive.slice(1);
   const heroById = new Map(heroes.map((h) => [h.id, h]));
-  const nameOf = (w: number) => monsters.get(w)?.name ?? (w === 11 ? 'Loppupomo' : `Viikon ${w} monsteri`);
+  const nameOf = (w: number) => monsters.get(w)?.name ?? (w === BOSS_WEEK ? 'Loppupomo' : `Viikon ${w} monsteri`);
   const blows = finalBlows(data);
   const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Partio' : null }));
   const missing = target ? required.filter((id) => !target.hitters.includes(id)) : [];
@@ -53,7 +53,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
     return { id, name: h?.hero_name ?? '', initial: (h?.hero_name ?? '?').slice(0, 1), avatar: avatarUrl(h?.avatar_path), hit: Boolean(target?.hitters.includes(id)), excused: !required.includes(id) };
   });
   const endMs = helsinkiMs(weekRange(week).end);
-  const potBeforeBoss = week === 11 && data.ledgerInput ? Math.min(computeLedger(data.ledgerInput, 10).pot, ledger.potCap) : 0;
+  const potBeforeBoss = week === BOSS_WEEK && data.ledgerInput ? Math.min(computeLedger(data.ledgerInput, MONSTER_WEEKS).pot, ledger.potCap) : 0;
   const recap = week >= 2 ? weekRecap(data, week - 1) : null;
 
   // Taisteluloki: viikon iskut ja partiopäivät uusimmasta alkaen; saman päivän askeleet yhtenä rivinä
@@ -100,7 +100,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           seal={seal}
           endMs={endMs}
           offsetMs={offsetMs}
-          boss={target.week === 11}
+          boss={target.week === BOSS_WEEK}
           potStrike={potBeforeBoss}
         />
       ) : (
@@ -111,7 +111,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       )}
 
       <Link className="btn btn-strike" href="/kirjaa">⚔️ Lyö – kirjaa treeni</Link>
-      {seasonWeek(data.today) >= 1 && seasonWeek(data.today) <= 11 ? (
+      {seasonWeek(data.today) >= 1 && seasonWeek(data.today) <= BOSS_WEEK ? (
         <QuickStep day={data.today} stepped={data.steps.some((s) => s.user_id === userId && s.day === data.today)} />
       ) : null}
 
@@ -130,7 +130,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       ) : null}
 
       <div className="stat-row">
-        <Link href="/bestiaario" className="stat rowlink"><span className="muted small">Kaatuneet</span><strong>{ledger.killed.filter((k) => k.week <= 10).length}/10</strong></Link>
+        <Link href="/bestiaario" className="stat rowlink"><span className="muted small">Kaatuneet</span><strong>{ledger.killed.filter((k) => k.week <= MONSTER_WEEKS).length}/{MONSTER_WEEKS}</strong></Link>
         <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{fmt(ledger.pot)}</strong><span className="muted small">katto {fmt(ledger.potCap)}</span></div>
       </div>
 

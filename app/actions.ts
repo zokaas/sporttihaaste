@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { addDays, loggableDays, seasonWeek } from '@/lib/season';
+import { addDays, loggableDays, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
 import { afterStep } from '@/lib/events';
 import { loadBattle } from '@/lib/battle';
@@ -56,7 +56,7 @@ export async function changePledge(hours: number): Promise<Result> {
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   const next = seasonWeek(today()) + 1;
-  if (next < 2 || next > 11) return { ok: false, error: 'Lupausta ei voi enää muuttaa.' };
+  if (next < 2 || next > BOSS_WEEK) return { ok: false, error: 'Lupausta ei voi enää muuttaa.' };
   if (!(hours >= 1 && hours <= 15 && Number.isInteger(hours * 2))) return { ok: false, error: 'Lupauksen pitää olla 1–15 h puolen tunnin välein.' };
   return done((await supabase.from('pledge_changes').upsert({ user_id: user.id, from_week: next, hours })).error);
 }

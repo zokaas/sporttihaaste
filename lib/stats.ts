@@ -1,7 +1,7 @@
 import type { loadBattle } from './battle';
 import { hoursInWeek } from './battle';
 import { STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, computeLedger } from './rules';
-import { addDays, formatDay, monthDay, seasonWeek, weekRange } from './season';
+import { addDays, formatDay, monthDay, seasonWeek, weekRange, BOSS_WEEK } from './season';
 
 export type Battle = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -142,10 +142,10 @@ export type WeekRecap = {
 /** Päättyneen viikon yhteenveto: mitä kaatui, mitä jäi, potti, viikon sankari ja lupaukset. */
 export function weekRecap(b: Battle, w: number): WeekRecap | null {
   // Kauden jälkeen myös viimeinen viikko on valmis.
-  if (!b.ledgerInput || w < 1 || w > 11 || (w >= b.week && seasonWeek(b.today) <= 11)) return null;
+  if (!b.ledgerInput || w < 1 || w > BOSS_WEEK || (w >= b.week && seasonWeek(b.today) <= BOSS_WEEK)) return null;
   const before = w > 1 ? computeLedger(b.ledgerInput, w - 1) : null;
   const after = computeLedger(b.ledgerInput, w);
-  const nameOf = (week: number) => b.monsters.get(week)?.name ?? (week === 11 ? 'Loppupomo' : `Viikon ${week} monsteri`);
+  const nameOf = (week: number) => b.monsters.get(week)?.name ?? (week === BOSS_WEEK ? 'Loppupomo' : `Viikon ${week} monsteri`);
   const killedBefore = new Set((before?.killed ?? []).map((k) => k.week));
 
   const hits = b.hits.filter((h) => seasonWeek(h.trained_on) === w);

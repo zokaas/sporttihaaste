@@ -23,17 +23,21 @@ assert.equal(adjustedPledge(4, 7), 0);
 
 // HP 45 tunnin lupauksilla
 const hp = seasonHp(45);
-assert.equal(hp.pace, 8150);
-assert.equal(hp.monsters[0], 10000);
-assert.equal(hp.monsters[9], 8000);
-assert.equal(hp.boss, 12000);
-assert.equal(hp.potCap, 6000);
+assert.equal(hp.pace, 7250);
+assert.equal(hp.monsters.length, 11);
+assert.equal(hp.monsters[0], 8500); // Willa 1,2 × vauhti
+assert.equal(hp.monsters[1], 7500); // 1,05 × vauhti
+assert.equal(hp.monsters[10], 8500); // 1,15 × vauhti
+assert.equal(hp.boss, 11000);
+assert.equal(hp.potCap, 5500);
+// Pelkät lupaukset ja askeleet eivät riitä yhdenkään monsterin kaatamiseen viikossa
+for (const m of hp.monsters.slice(1)) assert.ok(m > hp.pace);
 
 // Kirjanpito
 const users = ['a', 'b', 'c'];
-const req = { 1: users, 2: users, 11: users };
+const req = { 1: users, 2: users, 12: users };
 const ev = (week: number, at: number, userId: string, damage: number, isTraining = true, allTogether = false) => ({ week, at, userId, damage, isTraining, allTogether });
-const base = { monsterHp: [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000], bossHp: 4000, requiredByWeek: req, pledgeBonusesByWeek: {} as Record<number, number> };
+const base = { monsterHp: Array(11).fill(1000), bossHp: 4000, requiredByWeek: req, pledgeBonusesByWeek: {} as Record<number, number> };
 
 // 1) Monsteri kaatuu, ylijäämä ja lupausbonukset pottiin
 let r = computeLedger({ ...base, pledgeBonusesByWeek: { 1: 2 }, events: [ev(1, 1, 'a', 600), ev(1, 2, 'b', 300), ev(1, 3, 'c', 400)] }, 1);
@@ -68,10 +72,10 @@ assert.equal(r.killed.length, 0);
 
 // 6) Loppupomo: potti vähentää, katto puolet, viimeinen isku yhdessä
 const allKilled = [] as ReturnType<typeof ev>[];
-for (let w = 1; w <= 10; w++) users.forEach((u, i) => allKilled.push(ev(w, i, u, u === 'c' ? 2000 : 10)));
-r = computeLedger({ ...base, events: [...allKilled, ev(11, 1, 'a', 10), ev(11, 2, 'b', 10), ev(11, 3, 'c', 5000)] }, 11);
+for (let w = 1; w <= 11; w++) users.forEach((u, i) => allKilled.push(ev(w, i, u, u === 'c' ? 2000 : 10)));
+r = computeLedger({ ...base, events: [...allKilled, ev(12, 1, 'a', 10), ev(12, 2, 'b', 10), ev(12, 3, 'c', 5000)] }, 12);
 assert.equal(r.alive.length, 1, 'pomo ei kaadu ilman yhteistreeniä');
-r = computeLedger({ ...base, events: [...allKilled, ev(11, 1, 'a', 10), ev(11, 2, 'b', 10), ev(11, 3, 'c', 5000, true, true)] }, 11);
+r = computeLedger({ ...base, events: [...allKilled, ev(12, 1, 'a', 10), ev(12, 2, 'b', 10), ev(12, 3, 'c', 5000, true, true)] }, 12);
 assert.equal(r.alive.length, 0);
 
 // Tietokannan lajilista (migraatio 007, sport_value) vastaa sovelluksen lajeja ja arvoja

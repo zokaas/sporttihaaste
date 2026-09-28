@@ -6,7 +6,7 @@ import DeleteHitButton from '@/components/DeleteHitButton';
 import { requireHero } from '@/lib/page';
 import { avatarUrl } from '@/lib/supabase/client';
 import { myWeekProps } from '@/lib/myweek';
-import { formatDay, seasonWeek } from '@/lib/season';
+import { formatDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +15,7 @@ const duration = (min: number) => [Math.floor(min / 60) ? `${Math.floor(min / 60
 export default async function Mina() {
   const { battle: b, user, me } = await requireHero();
   const img = avatarUrl(me.avatar_path);
-  const inSeason = seasonWeek(b.today) >= 1 && seasonWeek(b.today) <= 11;
+  const inSeason = seasonWeek(b.today) >= 1 && seasonWeek(b.today) <= BOSS_WEEK;
   const names = new Map(b.heroes.map((h) => [h.id, h.hero_name ?? '']));
   const myHits = b.hits.filter((h) => h.user_id === user.id && seasonWeek(h.trained_on) === b.week).sort((a, c) => c.trained_on.localeCompare(a.trained_on) || c.created_at.localeCompare(a.created_at));
 

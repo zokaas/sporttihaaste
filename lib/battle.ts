@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { weaknessesOf, type MonsterPart } from './trio';
 import { computeLedger, pledgeHours, seasonHp, SPORTS, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, type Category, type LedgerEvent } from './rules';
-import { seasonWeek, weekRange } from './season';
+import { seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from './season';
 import { patrolDays, pledgeForWeek, requiredForSeal, sickDaysBetween, isSickOn, weekPledgeTarget, type SickPeriod } from './weekly';
 
 export type Hero = {
@@ -55,16 +55,16 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const periods = (sick ?? []) as SickPeriod[];
   const changeList = (changes ?? []) as PledgeChange[];
   const participants = heroList.filter((h) => h.pledge_locked_at).map((h) => h.id);
-  const week = Math.min(11, Math.max(1, seasonWeek(today)));
+  const week = Math.min(BOSS_WEEK, Math.max(1, seasonWeek(today)));
 
   // Ennen tavoitteen lukitusta HP:t lasketaan esikatseluna nykyisistä lupauksista (sama kaava kuin lukituksessa),
   // jotta monsterin ja taistelun näkee jo testitilassa.
-  const hpLocked = monsterList.length === 11 && monsterList.every((m) => m.hp != null);
-  const hpPreview = !hpLocked && monsterList.length === 11;
+  const hpLocked = monsterList.length === BOSS_WEEK && monsterList.every((m) => m.hp != null);
+  const hpPreview = !hpLocked && monsterList.length === BOSS_WEEK;
   if (hpPreview) {
     const total = heroList.filter((h) => h.pledge_locked_at).reduce((a, h) => a + Number(h.pledge_hours ?? 0), 0);
     const preview = seasonHp(total);
-    monsterList = monsterList.map((m) => ({ ...m, hp: m.week === 11 ? preview.boss : preview.monsters[m.week - 1] }));
+    monsterList = monsterList.map((m) => ({ ...m, hp: m.week === BOSS_WEEK ? preview.boss : preview.monsters[m.week - 1] }));
   }
   // Tulevat monsterit pysyvät salassa myös ylläpitäjältä (testitilassa "tänään" voi olla ennen paljastusta).
   const byWeek = new Map(monsterList.map((m) => [m.week, m.week > week ? { ...m, name: null, description: null, weakness: null, image_path: null, parts: null } : m]));
@@ -98,7 +98,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     requiredByWeek[w] = requiredForSeal(participants, periods, w, today);
     if (w < week) pledgeBonusesByWeek[w] = participants.filter((u) => pledgeStatus(u, w).kept).length;
   }
-  const ledgerInput = { monsterHp: monsterList.filter((m) => m.week <= 10).map((m) => m.hp!), bossHp: byWeek.get(11)!.hp!, events, requiredByWeek, pledgeBonusesByWeek };
+  const ledgerInput = { monsterHp: monsterList.filter((m) => m.week <= MONSTER_WEEKS).map((m) => m.hp!), bossHp: byWeek.get(BOSS_WEEK)!.hp!, events, requiredByWeek, pledgeBonusesByWeek };
   const ledger = computeLedger(ledgerInput, week, true);
   return { ...base, hpLocked, hpPreview, required: requiredByWeek[week], ledger, events, ledgerInput };
 }

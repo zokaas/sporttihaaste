@@ -9,7 +9,7 @@ const body = IBM_Plex_Sans({ subsets: ['latin', 'latin-ext'], weight: ['400', '5
 
 export const metadata: Metadata = {
   title: 'Monsterijahti',
-  description: 'Ystävyyden voimalla kymmentä monsteria ja loppupomoa vastaan.',
+  description: 'Ystävyyden voimalla yhtätoista monsteria ja loppupomoa vastaan.',
   manifest: '/manifest.webmanifest',
   appleWebApp: { capable: true, title: 'Monsterijahti', statusBarStyle: 'black-translucent' },
 };

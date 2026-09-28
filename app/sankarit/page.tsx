@@ -3,7 +3,7 @@ import Nav from '@/components/Nav';
 import { requireHero } from '@/lib/page';
 import { avatarUrl } from '@/lib/supabase/client';
 import { heroStats, rankByPledges, upcomingCelebrations } from '@/lib/stats';
-import { addDays, formatDay, seasonWeek, weekRange } from '@/lib/season';
+import { addDays, formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { isSickOn } from '@/lib/weekly';
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +25,7 @@ export default async function Sankarit({ searchParams }: { searchParams: { tab?:
     : tab === 'askeleet' ? [...stats].sort((a, c) => c.stepDays - a.stepDays || c.longestStreak - a.longestStreak)
     : rankByPledges(stats);
 
-  const inSeason = seasonWeek(b.today) >= 1 && seasonWeek(b.today) <= 11;
+  const inSeason = seasonWeek(b.today) >= 1 && seasonWeek(b.today) <= BOSS_WEEK;
   const { start, end } = weekRange(b.week);
   const days: string[] = [];
   for (let d = start; d <= end && d <= b.today; d = addDays(d, 1)) days.push(d);

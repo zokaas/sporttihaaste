@@ -51,7 +51,7 @@ export default function Saannot() {
 
       <section className="card">
         <h2 className="display">Lyhyesti</h2>
-        <p style={{ margin: 0 }}>Kausi kestää 1.10.–20.12. Joka viikko vastassa on uusi monsteri, ja viimeisellä viikolla loppupomo. Treenit ovat iskuja: jokainen kirjattu treeni vähentää monsterin HP:ta.</p>
+        <p style={{ margin: 0 }}>Kausi kestää 1.10.–20.12. Ensimmäinen monsteri paljastuu to 1.10., ja sen jälkeen uusi joka maanantai: yhteensä 11 monsteria ja viimeisellä viikolla loppupomo. Seuraavaa pääsee lyömään vasta, kun edellinen on tuhottu. Treenit ovat iskuja: jokainen kirjattu treeni vähentää monsterin HP:ta.</p>
         <p style={{ margin: 0 }}>Monsteri kaatuu, kun sen HP on nollassa <strong>ja</strong> sinetti on täynnä eli jokainen terve sankari on lyönyt sitä vähintään yhdellä treenillä.</p>
         <p style={{ margin: 0 }}>Jos sinetti jää sunnuntaina vajaaksi, padottu vahinko menetetään ja monsteri jää rästiin 1 HP:lla.</p>
       </section>
@@ -99,7 +99,7 @@ export default function Saannot() {
         <h2 className="display">Lupaus</h2>
         <p style={{ margin: 0 }}>Lupaat, montako tuntia treenaat viikossa. Lupaukseen lasketaan vahinko ilman bonuksia jaettuna sadalla: tunti uintia on 2 h, tunti joogaa 0,5 h.</p>
         <p style={{ margin: 0 }}>Pidetty lupaus tuo +{PLEDGE_BONUS} pottiin, kun viikko lukittuu. Tulostaulun ykkönen on se, joka pitää lupauksensa useimmin.</p>
-        <p className="muted small" style={{ margin: 0 }}>Viikko 1 kestää 11 päivää (to 1.10.–su 11.10.), joten sen tavoite on lupaus × 11/7. Sairaspäivät pienentävät tavoitetta.</p>
+        <p className="muted small" style={{ margin: 0 }}>Viikko 1 kestää 4 päivää (to 1.10.–su 4.10.), joten sen tavoite on lupaus × 4/7. Sairaspäivät pienentävät tavoitetta.</p>
       </section>
 
       <section className="card">

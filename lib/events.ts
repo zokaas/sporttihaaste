@@ -3,10 +3,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadBattle } from './battle';
 import { sendOnce } from './push';
 import { testDay, today } from './today';
+import { BOSS_WEEK } from './season';
 
 type Battle = Awaited<ReturnType<typeof loadBattle>>;
 
-const nameOf = (b: Battle, week: number) => b.monsters.get(week)?.name ?? (week === 11 ? 'Loppupomo' : `Viikon ${week} monsteri`);
+const nameOf = (b: Battle, week: number) => b.monsters.get(week)?.name ?? (week === BOSS_WEEK ? 'Loppupomo' : `Viikon ${week} monsteri`);
 
 /** Iskun jälkeen: kaatuiko monsteri, ja puuttuuko sinetistä enää yksi. Testitilassa ei lähetetä mitään. */
 export async function afterHit(supabase: SupabaseClient) {
@@ -44,7 +45,7 @@ export async function announceReveal(supabase: SupabaseClient, b: Battle) {
   const m = b.monsters.get(b.week);
   if (!m?.name) return;
   await sendOnce(supabase, `reveal-${b.week}`, {
-    title: b.week === 11 ? `🔥 Loppupomo heräsi: ${m.name}` : `👁️ Uusi monsteri: ${m.name}`,
+    title: b.week === BOSS_WEEK ? `🔥 Loppupomo heräsi: ${m.name}` : `👁️ Uusi monsteri: ${m.name}`,
     body: m.weakness ? `Heikkous: ${m.weakness} (+50 %). Viikko ${b.week} alkoi.` : `Viikko ${b.week} alkoi.`,
   });
 }

@@ -23,7 +23,7 @@ export function daysInWeek(week: number) {
 }
 
 /**
- * Viikon lupaustavoite tunteina. Pidennetyllä viikolla 1 (11 pv) tavoite kasvaa samassa suhteessa kuin HP.
+ * Viikon lupaustavoite tunteina. Lyhyellä viikolla 1 (to–su, 4 pv) tavoite on lupaus × 4/7.
  * Sairaspäivät vähennetään, ja tulos pyöristetään lähimpään puoleen tuntiin (vrt. adjustedPledge).
  */
 export function weekPledgeTarget(pledge: number, week: number, sickDays: number) {

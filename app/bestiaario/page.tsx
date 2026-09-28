@@ -4,7 +4,7 @@ import BossShadow from '@/components/BossShadow';
 import { requireHero } from '@/lib/page';
 import { monsterImageUrl } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
-import { formatDay, weekRange } from '@/lib/season';
+import { formatDay, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import { weaknessesOf } from '@/lib/trio';
 
 export const dynamic = 'force-dynamic';
@@ -18,8 +18,8 @@ export default async function Bestiaario() {
   const name = (id: string) => b.heroes.find((h) => h.id === id)?.hero_name ?? 'Partio';
   const killed = new Map((b.ledger?.killed ?? []).map((k) => [k.week, k.killedAt]));
   const alive = new Map((b.ledger?.alive ?? []).map((f) => [f.week, f]));
-  const boss = b.monsters.get(11);
-  const bossRevealed = b.week >= 11 && boss?.name;
+  const boss = b.monsters.get(BOSS_WEEK);
+  const bossRevealed = b.week >= BOSS_WEEK && boss?.name;
 
   return (
     <>
@@ -27,7 +27,7 @@ export default async function Bestiaario() {
       <h1 className="display">Bestiaario</h1>
 
       <BossShadow>
-        <span className="pill" style={{ background: 'var(--blood)', alignSelf: 'flex-start' }}>Loppupomo · {formatDay(weekRange(11).start)}</span>
+        <span className="pill" style={{ background: 'var(--blood)', alignSelf: 'flex-start' }}>Loppupomo · {formatDay(weekRange(BOSS_WEEK).start)}</span>
         <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>{bossRevealed ? boss!.name : '???'}</h2>
         <span className="small" style={{ color: '#c9c1b4' }}>
           {boss?.hp ? `${fmt(boss.hp)} HP. ` : ''}Potti {fmt(b.ledger?.pot ?? 0)} / {fmt(b.ledger?.potCap ?? 0)} vähennetään sen HP:sta. Viimeinen isku vaatii kaikki sankarit yhdessä.
@@ -36,7 +36,7 @@ export default async function Bestiaario() {
 
       <section className="card">
         <ul className="people">
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((w) => {
+          {Array.from({ length: MONSTER_WEEKS }, (_, i) => i + 1).map((w) => {
             const m = b.monsters.get(w);
             const img = monsterImageUrl(m?.image_path);
             const k = killed.get(w);
