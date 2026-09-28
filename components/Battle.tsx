@@ -14,6 +14,8 @@ import RecapCard from '@/components/RecapCard';
 import QuickStep from '@/components/QuickStep';
 import { stageParts, weaknessesOf } from '@/lib/trio';
 import Hint from '@/components/Hint';
+import TodayCard from '@/components/TodayCard';
+import { isSickOn } from '@/lib/weekly';
 
 type BattleData = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -129,19 +131,21 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           {week === BOSS_WEEK ? <p style={{ margin: 0 }}>Kausi on voitettu. Treenit kerryttävät vielä lupauksia ja tilastoja kauden loppuun.</p>
             : potFull ? <p style={{ margin: 0 }}>💰 Potti on täynnä, eli loppupomon HP puolittuu. Iskut kerryttävät silti lupauksia, tilastoja ja kunniamerkkejä.</p>
             : <p style={{ margin: 0 }}>Kaikki tämän viikon iskut menevät pottiin loppupomoa vastaan.</p>}
-          {nextReveal ? <p className="muted small" style={{ margin: 0 }}>Seuraava monsteri paljastuu {nextReveal} klo 00.00.</p> : null}
         </section>
       )}
 
-      {target && target.week < week ? (
-        <section className="card threat">
-          <Hint id="backlog-wait" title={<strong style={{ color: 'var(--gold)' }}>{week === BOSS_WEEK ? 'Loppupomo odottaa rästien takana.' : `${nameOf(week)} odottaa rästien takana.`}</strong>}>Iskut osuvat ensin vanhimpaan rästiin, ja vasta sen kaaduttua seuraavaan.</Hint>
-          {overdue >= 2 ? <p style={{ margin: 0 }}>Rästejä on {overdue}. Vauhti ei riitä: tarvitaan yhteistreenejä ja heikkousbonuksia.</p> : null}
+      {teaser ? (
+        <section className="card teaser">
+          <svg className="teaser-shadow" viewBox="0 0 390 300" aria-hidden="true">
+            <path d="M70 300 C80 215 125 170 158 156 C140 120 126 76 104 30 C146 60 166 100 176 138 C186 134 204 134 214 138 C224 100 244 60 286 30 C264 76 250 120 232 156 C265 170 310 215 320 300 Z" fill="#050303" />
+            <ellipse cx="180" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
+            <ellipse cx="210" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
+          </svg>
+          <div style={{ minWidth: 0 }}>
+            <span className="stage-week">{week + 1 === BOSS_WEEK ? 'Loppupomo' : `Viikko ${week + 1}`} · paljastuu {nextReveal}</span>
+            <p className="teaser-text">“{teaser}”</p>
+          </div>
         </section>
-      ) : null}
-
-      {seasonWeek(data.today) >= 1 && seasonWeek(data.today) <= BOSS_WEEK ? (
-        <QuickStep day={data.today} stepped={data.steps.some((s) => s.user_id === userId && s.day === data.today)} />
       ) : null}
 
       {target && !missing.length && required.length ? (
@@ -164,31 +168,25 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         </section>
       ) : null}
 
-      {teaser ? (
-        <section className="card teaser">
-          <svg className="teaser-shadow" viewBox="0 0 390 300" aria-hidden="true">
-            <path d="M70 300 C80 215 125 170 158 156 C140 120 126 76 104 30 C146 60 166 100 176 138 C186 134 204 134 214 138 C224 100 244 60 286 30 C264 76 250 120 232 156 C265 170 310 215 320 300 Z" fill="#050303" />
-            <ellipse cx="180" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
-            <ellipse cx="210" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
-          </svg>
-          <div style={{ minWidth: 0 }}>
-            <span className="stage-week">{week + 1 === BOSS_WEEK ? 'Loppupomo' : `Viikko ${week + 1}`} · paljastuu {nextReveal}</span>
-            <p className="teaser-text">“{teaser}”</p>
-          </div>
+      {seasonWeek(data.today) >= 1 && seasonWeek(data.today) <= BOSS_WEEK ? (
+        isSickOn(data.periods, userId, data.today)
+          ? <p className="note" style={{ margin: 0 }}>🤒 Olet merkinnyt itsesi kipeäksi tänään, joten askelia ei tarvita. Parane pian!</p>
+          : <QuickStep day={data.today} stepped={data.steps.some((s) => s.user_id === userId && s.day === data.today)} />
+      ) : null}
+
+      <TodayCard b={data} showNextReveal={!teaser} />
+
+      {backlog.length || (target && target.week < week) ? (
+        <section className={`card${target && target.week < week ? ' threat' : ''}`}>
+          <Hint id="backlog" title={<h2 className="display">Rästit</h2>}>Vanhin rästi ottaa iskut ensin, ja vasta sen kaaduttua voima siirtyy seuraavaan.{target && target.week < week ? ` ${week === BOSS_WEEK ? 'Loppupomo' : nameOf(week)} odottaa rästien takana.` : ''}</Hint>
+          {ledger.alive.filter((f) => f.week < week).map((f) => <p key={f.week} style={{ margin: 0 }}>{nameOf(f.week)}: {(() => { const v = sealView(f, required); return v.dam ? `${fmt(v.hp)} HP, sinettirajalla` : `${fmt(v.hp)} HP`; })()}</p>)}
+          {overdue >= 2 ? <p style={{ margin: 0, color: 'var(--gold)' }}>Rästejä on {overdue}. Vauhti ei riitä: tarvitaan yhteistreenejä ja heikkousbonuksia.</p> : null}
         </section>
       ) : null}
 
-      <div className="stat-row">
-        <Link href="/bestiaario" className="stat rowlink"><span className="muted small">Kaatuneet</span><strong>{ledger.killed.filter((k) => k.week <= MONSTER_WEEKS).length}/{MONSTER_WEEKS}</strong></Link>
+      <div className="stat-row" style={{ gridTemplateColumns: '1fr' }}>
         <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{potFull ? `💰 ${fmt(ledger.potCap)}` : fmt(ledger.pot)}</strong><span className="muted small">{potFull ? 'täynnä' : `katto ${fmt(ledger.potCap)}`}</span></div>
       </div>
-
-      {backlog.length ? (
-        <section className="card">
-          <Hint id="backlog" className="muted small" title={<h2 className="display">Rästit</h2>}>Vanhin rästi ottaa iskut ensin, ja sen jälkeen ylijäämä siirtyy seuraavaan.</Hint>
-          {backlog.map((f) => <p key={f.week} style={{ margin: 0 }}>{nameOf(f.week)}: {(() => { const v = sealView(f, required); return v.dam ? `${fmt(v.hp)} HP, sinettirajalla` : `${fmt(v.hp)} HP`; })()}</p>)}
-        </section>
-      ) : null}
 
       <section className="card">
         <div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>

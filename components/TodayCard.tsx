@@ -6,7 +6,7 @@ import { weaknessesOf } from '@/lib/trio';
 import { avatarUrl } from '@/lib/supabase/client';
 
 /** Tänään: viikon heikkous, päivän juhlapäivä (tai seuraava) ja päivän megamarssitilanne. */
-export default function TodayCard({ b }: { b: Battle }) {
+export default function TodayCard({ b, showNextReveal = true }: { b: Battle; showNextReveal?: boolean }) {
   const weakness = weaknessesOf(b.monsters.get(b.week)).join(', ');
   const celebrations = upcomingCelebrations(b, 60);
   const todays = celebrations.filter((c) => c.day === b.today);
@@ -22,7 +22,7 @@ export default function TodayCard({ b }: { b: Battle }) {
   return (
     <section className="card">
       <h2 className="display">Tänään {formatDay(b.today)}</h2>
-      <div className="row"><span aria-hidden="true">{b.week < BOSS_WEEK ? '👁️' : '🏁'}</span><span className="muted">{b.week < BOSS_WEEK ? <>Seuraava monsteri paljastuu <strong style={{ color: 'var(--text)' }}>{formatDay(weekRange(b.week + 1).start)} klo 00.00</strong></> : <>Kausi päättyy <strong style={{ color: 'var(--text)' }}>{formatDay(weekRange(BOSS_WEEK).end)} klo 23.59</strong></>}</span></div>
+      {showNextReveal ? <div className="row"><span aria-hidden="true">{b.week < BOSS_WEEK ? '👁️' : '🏁'}</span><span className="muted">{b.week < BOSS_WEEK ? <>Seuraava monsteri paljastuu <strong style={{ color: 'var(--text)' }}>{formatDay(weekRange(b.week + 1).start)} klo 00.00</strong></> : <>Kausi päättyy <strong style={{ color: 'var(--text)' }}>{formatDay(weekRange(BOSS_WEEK).end)} klo 23.59</strong></>}</span></div> : null}
       {weakness ? <div className="row"><span aria-hidden="true">🎯</span><span>Viikon heikkous: <strong>{weakness}</strong> (+50 %)</span></div> : null}
       {todays.length ? (
         <div className="row"><span aria-hidden="true">🎉</span><span><strong>{todays.map((c) => `${c.name} (${c.kind})`).join(', ')}</strong>: kaikkien iskut tänään +50 %!</span></div>
