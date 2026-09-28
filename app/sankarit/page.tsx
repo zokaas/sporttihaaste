@@ -42,16 +42,17 @@ export default async function Sankarit({ searchParams }: { searchParams: { tab?:
           <h2 className="display">Porukan viikko {b.week}</h2>
           {days.length ? (
             <>
-              <strong className="small">Askelkuittaukset</strong>
               <div className="grid-days" style={{ gridTemplateColumns: `repeat(${Math.min(days.length, 7)}, minmax(0, 1fr))` }}>
                 {days.map((d) => {
                   const healthy = b.participants.filter((u) => !isSickOn(b.periods, u, d));
-                  const count = b.steps.filter((s) => s.day === d).length;
+                  const stepped = healthy.filter((u) => b.steps.some((s) => s.user_id === u && s.day === d)).length;
+                  const trained = new Set(b.hits.filter((h) => h.trained_on === d).map((h) => h.user_id)).size;
                   const patrol = b.patrols.some((p) => p.day === d);
                   return (
-                    <div key={d} className={`cell${patrol ? ' full' : ''}`} title={formatDay(d)}>
+                    <div key={d} className={`cell${patrol ? ' full' : ''}`} title={`${formatDay(d)}: ${trained} treenasi, askeleet ${stepped}/${healthy.length}`}>
                       <div>{formatDay(d).split(' ')[0]}</div>
-                      <div>{patrol ? '⭐' : `${count}/${healthy.length}`}</div>
+                      <div>⚔️{trained}</div>
+                      <div>{patrol ? '⭐' : healthy.length ? `👣${stepped}/${healthy.length}` : '🤒'}</div>
                     </div>
                   );
                 })}
@@ -67,12 +68,18 @@ export default async function Sankarit({ searchParams }: { searchParams: { tab?:
                       {days.map((d) => {
                         const done = b.steps.some((s) => s.user_id === u && s.day === d);
                         const sick = isSickOn(b.periods, u, d);
-                        return <td key={d} title={formatDay(d)}>{done ? '✓' : sick ? '🤒' : '·'}</td>;
+                        const trained = b.hits.some((h) => h.user_id === u && h.trained_on === d);
+                        return (
+                          <td key={d} title={`${formatDay(d)}${trained ? ' · treeni' : ''}${done ? ' · askeleet' : ''}${sick ? ' · kipeä' : ''}`}>
+                            <span className={`mcell${trained ? ' trained' : ''}`}>{sick && !trained && !done ? '🤒' : done ? '✓' : trained ? '' : '·'}</span>
+                          </td>
+                        );
                       })}
                     </tr>
                   ))}
                 </tbody>
               </table>
+              <p className="muted small" style={{ margin: 0 }}><span className="mcell trained legend">&nbsp;</span> treenasi · ✓ askeleet · 🤒 kipeä</p>
             </>
           ) : null}
           <div className="stat-row">
