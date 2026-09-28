@@ -29,7 +29,6 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
   const [withIds, setWithIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [done, setDone] = useState<number | null>(null);
 
   const sport = sports.find((s) => s.name === sportName);
   const celebrating = celebrations[day] ?? [];
@@ -46,10 +45,8 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
     const res = await logHit({ day, sport: sport.name, minutes, companions: withIds });
     setBusy(false);
     if (!res.ok) return setError(res.error);
-    setDone(res.damage);
-    setSportName('');
-    setWithIds([]);
-    setMinutes(60);
+    // Etusivulla isku näkyy lentävänä lukuna ja HP-palkki laskee.
+    router.push(`/?isku=${res.damage}`);
     router.refresh();
   }
 
@@ -113,7 +110,6 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
 
       <button className="btn" type="button" disabled={busy || !sport} onClick={submit}>{busy ? 'Tallennetaan…' : preview ? `Lyö ${preview.damage}` : 'Valitse laji'}</button>
       {error ? <p className="error" role="alert" style={{ margin: 0 }}>{error}</p> : null}
-      {done !== null && !error ? <p className="ok" role="status" style={{ margin: 0 }}>Osuma! {done} vahinkoa kirjattu.</p> : null}
     </section>
   );
 }

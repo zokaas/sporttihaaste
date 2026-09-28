@@ -14,7 +14,7 @@ import TodayCard from '@/components/TodayCard';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Home({ searchParams }: { searchParams: { esikatselu?: string } }) {
+export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/kirjaudu');
@@ -33,6 +33,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   return (
     <>
       <Nav current="/" />
+      {battle ? <Battle data={battle} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} /> : null}
       <div className="row" style={{ alignItems: 'center' }}>
         {img ? <Link href={`/sankari/${user.id}`}><img className="avatar" src={img} alt="Oma profiili" width={56} height={56} /></Link> : null}
         <div className="grow">
@@ -41,7 +42,6 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
         </div>
       </div>
 
-      {battle ? <Battle data={battle} /> : null}
       {battle ? <TodayCard b={battle} /> : null}
       {battle ? <MyWeek {...myWeekProps(battle, user.id)} /> : null}
       {battle ? null : (

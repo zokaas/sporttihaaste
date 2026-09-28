@@ -56,7 +56,7 @@ export default function MyWeek(p: Props) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <strong>Askeleet <span className="muted small">(+50 / päivä, kaikki terveet samana päivänä: partio +250)</span></strong>
+        <strong>Askeleet <span className="muted small">(10 000 askelta = +50, kaikki terveet samana päivänä: partio +250)</span></strong>
         <div className="chips">
           {p.days.map((d) => (
             <button

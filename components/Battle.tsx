@@ -3,13 +3,14 @@ import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import type { loadBattle } from '@/lib/battle';
 import { formatDay, weekRange } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
-import MonsterFx from '@/components/MonsterFx';
+import MonsterStage from '@/components/MonsterStage';
+import KillNotice from '@/components/KillNotice';
 
 type BattleData = Awaited<ReturnType<typeof loadBattle>>;
 
 const fmt = (n: number) => n.toLocaleString('fi-FI');
 
-export default function Battle({ data }: { data: BattleData }) {
+export default function Battle({ data, ownHit = null }: { data: BattleData; ownHit?: number | null }) {
   const { week, ledger, monsters, heroes, participants, required, sickNow } = data;
   const { end } = weekRange(week);
 
@@ -26,12 +27,13 @@ export default function Battle({ data }: { data: BattleData }) {
   const backlog = ledger.alive.slice(1);
   const heroById = new Map(heroes.map((h) => [h.id, h]));
 
+  const killedNames = ledger.killed.map((k) => monsters.get(k.week)?.name ?? `Viikon ${k.week} monsteri`);
+
   return (
     <>
+      <KillNotice killed={ledger.killed.length} names={killedNames} />
       {target ? (
-        <MonsterFx week={target.week} hp={target.padded ? 0 : target.hp} killed={ledger.killed.length}>
-          <MonsterCard data={data} fighter={target} current={week} />
-        </MonsterFx>
+        <MonsterCard data={data} fighter={target} current={week} ownHit={ownHit} />
       ) : (
         <section className="card">
           <h2 className="display">Viikon monsteri on kaatunut!</h2>
@@ -90,41 +92,31 @@ export default function Battle({ data }: { data: BattleData }) {
   );
 }
 
-function MonsterCard({ data, fighter, current }: { data: BattleData; fighter: NonNullable<BattleData['ledger']>['alive'][number]; current: number }) {
+function MonsterCard({ data, fighter, current, ownHit }: { data: BattleData; fighter: NonNullable<BattleData['ledger']>['alive'][number]; current: number; ownHit: number | null }) {
   const m = data.monsters.get(fighter.week);
-  const maxHp = m?.hp ?? 1;
-  const hp = fighter.padded ? 0 : fighter.hp;
-  const img = monsterImageUrl(m?.image_path);
   const title = m?.name ?? (fighter.week === 11 ? 'Loppupomo' : `Viikon ${fighter.week} monsteri`);
-
-  const info = (
-    <>
-      {fighter.week < current ? <span className="pill" style={{ background: 'var(--blood)', alignSelf: 'flex-start' }}>Rästi viikolta {fighter.week}</span> : null}
-      <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>{title}</h2>
-      {m?.weakness ? <span className="pill" style={{ alignSelf: 'flex-start' }}>Heikkous: {m.weakness} +50 %</span> : null}
-      <div className="hpbar" role="meter" aria-label="Monsterin HP" aria-valuemin={0} aria-valuemax={maxHp} aria-valuenow={hp}>
-        <span style={{ width: `${Math.max(0, Math.min(100, (hp / maxHp) * 100))}%` }} />
-      </div>
-      <span className="small" style={{ color: '#c9c1b4' }}>{fmt(hp)} / {fmt(maxHp)} HP</span>
-      {fighter.padded ? (
-        <span className="small" style={{ color: 'var(--blood-text)', fontWeight: 600 }}>
-          HP on loppu, mutta {fmt(fighter.padded)} vahinkoa on padottuna. Täyttäkää sinetti ennen sunnuntaita, tai padottu vahinko menetetään.
-        </span>
-      ) : null}
-    </>
-  );
-
   return (
     <>
-      {img ? (
-        <section className="boss" aria-label={title}>
-          <img src={img} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div className="shade">{info}</div>
-        </section>
-      ) : (
-        <BossShadow>{info}</BossShadow>
-      )}
-      {m?.description ? <p style={{ margin: 0 }}>{m.description}</p> : null}
+      <MonsterStage
+        week={fighter.week}
+        title={title}
+        image={monsterImageUrl(m?.image_path)}
+        weakness={m?.weakness ?? null}
+        hp={fighter.padded ? 0 : fighter.hp}
+        maxHp={m?.hp ?? 1}
+        padded={fighter.padded}
+        backlog={fighter.week < current}
+        revealed={Boolean(m?.name)}
+        href={`/monsteri/${fighter.week}`}
+        ownHit={ownHit}
+        effects
+      />
+      {m?.description ? <p className="narrator">{m.description}</p> : null}
+      {fighter.padded ? (
+        <p className="note" style={{ margin: 0, borderLeft: '3px solid var(--gold)' }}>
+          HP on loppu, mutta {fmt(fighter.padded)} vahinkoa on padottuna kilpeen. Täyttäkää sinetti ennen sunnuntaita, tai padottu vahinko menetetään.
+        </p>
+      ) : null}
     </>
   );
 }
