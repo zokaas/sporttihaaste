@@ -10,6 +10,7 @@ import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
 import { addDays, seasonWeek, weekRange, AFTER_SEASON, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import { today, testOffsetMs } from '@/lib/today';
+import { currentUser } from '@/lib/auth';
 import { announceReveal } from '@/lib/events';
 import Nav from '@/components/Nav';
 import Hint from '@/components/Hint';
@@ -18,7 +19,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string; krit?: string; finaali?: string } }) {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await currentUser();
   if (!user) redirect('/kirjaudu');
 
   const week = seasonWeek(today());

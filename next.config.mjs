@@ -5,8 +5,9 @@ const required = ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY'];
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: { remotePatterns: [{ protocol: 'https', hostname: '*.supabase.co' }] },
-  // Selain ei näytä välimuistista vanhaa sivua: iskut, askeleet ja ylläpidon muutokset näkyvät heti.
-  experimental: { staleTimes: { dynamic: 0 } },
+  // Välilehtien välillä selain käyttää enintään 30 s vanhaa sivua, joten siirtymät ovat heti valmiita.
+  // Omat kirjaukset päivittävät sivun heti (revalidatePath / router.refresh).
+  experimental: { staleTimes: { dynamic: 30 } },
 };
 
 export default function config(phase) {

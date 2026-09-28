@@ -23,7 +23,10 @@ async function refreshSession(request: NextRequest) {
       },
     },
   });
-  const { data: { user } } = await supabase.auth.getUser();
+  // getSession lukee istunnon evästeestä eikä tee verkkokutsua (paitsi vanhentuneen tokenin uusimiseksi).
+  // Tässä se riittää ohjaukseen; sivut ja toiminnot tarkistavat käyttäjän aina Supabasesta (getUser).
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   const path = request.nextUrl.pathname;
   // Ajastettu muistutus kutsuu ilman kirjautumista; reitti tarkistaa oman salaisuutensa (CRON_SECRET).
   const open = path.startsWith('/kirjaudu') || path.startsWith('/auth') || path.startsWith('/api/cron/');
