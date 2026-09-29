@@ -68,7 +68,7 @@ function write(key: string, value: string) {
   try { localStorage.setItem(key, value); } catch { /* ei tallennusta */ }
 }
 
-const TAUNT_MS = 15000; // sama kuin .stage-taunt.fades häivytyksen loppu
+const TAUNT_MS = 12000; // sama kuin .stage-taunt.fades häivytyksen loppu
 
 export default function MonsterStage(p: Props) {
   const state = stateOf(p.hp, p.maxHp, p.padded, Boolean(p.dead));
