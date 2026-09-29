@@ -119,14 +119,14 @@ export function weeklyPace(totalPledgeHours: number) {
  * HP viikoille 1–11 ja loppupomolle (viikko 12). Pelkät lupaukset ja askeleet eivät riitä:
  * viikko 1 kestää vain to–su (4 pv), joten sen HP on 4/7 × 1,2 × vauhti: kaatuu, kun porukka pitää lupauksensa
  * ja tekee vähän päälle, eikä jää roikkumaan rästiksi toiselle viikolle.
- * Viikot 2–11 kasvavat 1,05 → 1,15 × vauhti, loppupomo 1,5 × vauhti (potti vähentää enintään puolet).
+ * Viikot 2–11 kasvavat 1,05 → 1,15 × vauhti, loppupomo 1,5 × vauhti (koko potti vähentää sitä).
  */
 export function seasonHp(totalPledgeHours: number) {
   const pace = weeklyPace(totalPledgeHours);
   const monsters: number[] = [round500((4 / 7) * 1.2 * pace)];
   for (let i = 0; i < MONSTER_WEEKS - 1; i++) monsters.push(round500(pace * (1.05 + (0.1 * i) / (MONSTER_WEEKS - 2))));
   const boss = round500(1.5 * pace);
-  return { pace: Math.round(pace), monsters, boss, potCap: Math.floor(boss / 2) };
+  return { pace: Math.round(pace), monsters, boss };
 }
 
 // ---------- Kauden kirjanpito ----------
@@ -159,7 +159,6 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
   const done: Fighter[] = [];
   let pot = 0;
   let lostToSeal = 0;
-  const potCap = Math.floor(input.bossHp / 2);
 
   const sealFull = (f: Fighter, week: number) =>
     (input.requiredByWeek[week] ?? []).every((u) => f.hitters.has(u));
@@ -174,8 +173,9 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
   for (let w = 1; w <= Math.min(uptoWeek, BOSS_WEEK); w++) {
     if (w <= MONSTER_WEEKS) queue.push({ week: w, hp: input.monsterHp[w - 1], hitters: new Set() });
     else {
-      const boss: Fighter = { week: BOSS_WEEK, hp: input.bossHp - Math.min(pot, potCap), hitters: new Set(), boss: true };
-      pot -= Math.min(pot, potCap);
+      // Koko potti iskee loppupomoon sen herätessä; kattoa ei ole. Jos potti ylittää HP:n, loput odottaa sinettiä.
+      const boss: Fighter = { week: BOSS_WEEK, hp: input.bossHp - pot, hitters: new Set(), boss: true };
+      pot = 0;
       queue.push(boss);
     }
 
@@ -230,7 +230,6 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
 
   return {
     pot,
-    potCap,
     lostToSeal,
     alive: queue.map((f) => ({ week: f.week, hp: Math.max(1, f.hp), padded: f.hp <= 0 ? -f.hp : 0, hitters: [...f.hitters] })),
     killed: done.map((f) => ({ week: f.week, killedAt: f.killedAt })),
