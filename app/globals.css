@@ -514,3 +514,11 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 
 /* Vierityksen sulavuus: näkyvistä poistunut näyttämö ei animoi, ja pitkät kortit piirretään vasta tarvittaessa */
 .stage.is-offscreen *, .stage.is-offscreen *::before, .stage.is-offscreen *::after { animation-play-state: paused !important; }
+
+/* Pato: sinettiä odottava voima */
+.dam-lock { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-radius: 14px; background: rgba(212, 160, 60, 0.12); border: 1px solid rgba(212, 160, 60, 0.4); }
+.dam-lock > div { display: flex; flex-direction: column; gap: 2px; }
+.dam-lock-icon { font-size: 26px; animation: lock-pulse 2.2s ease-in-out infinite; }
+.dam-lock-amount { font-size: 18px; color: var(--gold); }
+@keyframes lock-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+.strike-toast-detail { font-size: 13px; color: #e8ddd3; }

@@ -3,8 +3,15 @@ import { useEffect, useLayoutEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
 const key = (path: string) => `mj_scroll_${path}`;
-const load = (path: string) => { try { return Number(sessionStorage.getItem(key(path)) ?? 0); } catch { return 0; } };
-const save = (path: string, y: number) => { try { sessionStorage.setItem(key(path), String(Math.round(y))); } catch { /* ei tallennusta */ } };
+// Taistelunäkymä avautuu ylhäältä, jos siellä ei ole käyty hetkeen: tilanne on ehtinyt muuttua.
+const EXPIRES: Record<string, number> = { '/': 10 * 60_000 };
+const load = (path: string) => {
+  try {
+    const [y, at] = (sessionStorage.getItem(key(path)) ?? '0').split('|').map(Number);
+    return EXPIRES[path] && at && Date.now() - at > EXPIRES[path] ? 0 : y || 0;
+  } catch { return 0; }
+};
+const save = (path: string, y: number) => { try { sessionStorage.setItem(key(path), `${Math.round(y)}|${Date.now()}`); } catch { /* ei tallennusta */ } };
 
 /**
  * Jokainen sivu muistaa vierityskohtansa (selaimen välilehden ajan), kuten sovelluksen välilehdet:
@@ -14,6 +21,8 @@ const save = (path: string, y: number) => { try { sessionStorage.setItem(key(pat
  * - Jos sisältö on vielä latautumassa, odotetaan enintään hetki; oma kosketus keskeyttää odotuksen.
  * - Kohta tallennetaan vasta, kun vieritys pysähtyy, ja linkkiä napautettaessa: ei jokaisella ruudulla.
  * - Juuri kirjatun treenin jälkeen (?isku=) taistelunäkymä avautuu ylhäältä, jotta isku näkyy.
+ * - Taistelunäkymä avautuu ylhäältä myös, jos siellä ei ole käyty yli 10 minuuttiin.
+ * - Jo avoimen välilehden napautus liu'uttaa sivun alkuun (kuten puhelinsovelluksissa).
  */
 export default function ScrollMemory() {
   const path = usePathname();
@@ -57,6 +66,10 @@ export default function ScrollMemory() {
     const onClick = (e: MouseEvent) => {
       const a = (e.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
       if (!a || a.target === '_blank' || a.origin !== window.location.origin) return;
+      if (a.pathname === path && a.closest('.tabbar')) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
       save(path, window.scrollY);
       if (a.pathname !== path) navigating = true;
     };

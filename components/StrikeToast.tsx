@@ -9,7 +9,7 @@ const fmt = (n: number) => n.toLocaleString('fi-FI');
  * Pieni iskuikkuna ruudun yläreunassa: monsteri ottaa kirjauksen vastaan (HP laskee, luku lentää, repliikki)
  * ilman että sivu vierittyy mihinkään. Sulkeutuu itsestään; napautus vie taistelunäkymään.
  */
-export default function StrikeToast({ strike, damage, label, onDone }: { strike: NonNullable<StrikeSummary>; damage: number; label: string; onDone: () => void }) {
+export default function StrikeToast({ strike, damage, label, detail, onDone }: { strike: NonNullable<StrikeSummary>; damage: number; label: string; detail?: string; onDone: () => void }) {
   const [phase, setPhase] = useState<'in' | 'hit' | 'out'>('in');
   // Sulkemisfunktio viitteenä, jotta sivun päivittyminen taustalla ei käynnistä ajastimia uudelleen.
   const done = useRef(onDone);
@@ -33,6 +33,7 @@ export default function StrikeToast({ strike, damage, label, onDone }: { strike:
       </div>
       <div className="strike-toast-body">
         <span className="strike-toast-label">{label}</span>
+        {detail ? <span className="strike-toast-detail">{detail}</span> : null}
         <strong>{strike.name}</strong>
         <div className="hpbar"><span style={{ width: `${pct(phase === 'in' ? before : strike.hp)}%` }} /></div>
         <span className="muted small">{fmt(strike.hp)} / {fmt(strike.maxHp)} HP</span>

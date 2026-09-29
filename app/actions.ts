@@ -8,6 +8,7 @@ import { loadBattle } from '@/lib/battle';
 import { sendPush } from '@/lib/push';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
 import { strikeSummary, type StrikeSummary } from '@/lib/strike';
+import { sealView } from '@/lib/rules';
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -101,10 +102,12 @@ export async function nudgeMissing(): Promise<Result & { sent?: number }> {
 
   const sender = b.heroes.find((h) => h.id === user.id)?.hero_name ?? 'Sankari';
   const monster = b.monsters.get(target.week)?.name ?? 'Monsteri';
+  // Sama pato kuin etusivun kortissa: sinettirajan alle kertynyt voima.
+  const dam = sealView(target, b.required).dam;
   const sent = await sendPush(supabase, {
     title: '⏳ Sinetti odottaa sinua',
-    body: target.padded
-      ? `${sender} muistuttaa: ${monster} on jo sinettirajalla. Tarvitaan vain sinun iskusi, niin se kaatuu!`
+    body: dam
+      ? `${sender} muistuttaa: ${dam.toLocaleString('fi-FI')} voimaa odottaa sinua! ${monster} on sinettirajalla ja kaatuu heti, kun lyöt. Muuten pato menetetään sunnuntaina.`
       : `${sender} muistuttaa: ${monster} kaatuu vasta, kun jokainen on lyönyt. Sinun iskusi puuttuu.`,
   }, missing);
   return { ok: true, sent };
@@ -145,4 +148,11 @@ export async function deleteMessage(id: number): Promise<Result> {
   if (error) return { ok: false, error: error.message };
   revalidatePath('/viestit');
   return { ok: true };
+}
+
+/** Nykyisen vastustajan tilanne iskuikkunaa varten (esim. kun kaveri lyö ja sovellus on auki). */
+export async function currentStrike(): Promise<StrikeSummary> {
+  const { supabase, user } = await me();
+  if (!user) return null;
+  return strikeSummary(supabase, today()).catch(() => null);
 }

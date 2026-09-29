@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toggleSickDay, toggleStep } from '@/app/actions';
+import { showStrike } from '@/components/StrikeToastHost';
+import { STEP_DAY_DAMAGE } from '@/lib/rules';
 import { formatDay } from '@/lib/season';
 import Hint from '@/components/Hint';
 
@@ -38,6 +40,14 @@ export default function MyWeek(p: Props) {
     setBusy(false);
     if (!res.ok) setError(res.error ?? 'Jokin meni pieleen.');
     router.refresh();
+  }
+
+  // Tämän päivän kuittaus näyttää iskuikkunan kuten Lyö-valikko; menneiden päivien jälkikuittaus on hiljainen.
+  async function stepDay(day: string, on: boolean) {
+    const live = on && day === today;
+    const res = await toggleStep(day, on, live);
+    if (res.ok && live && res.strike) showStrike({ strike: res.strike, damage: STEP_DAY_DAMAGE, label: '👣 Askeleet!' });
+    return res;
   }
 
   const pct = p.target > 0 ? Math.min(100, (p.hours / p.target) * 100) : 100;
@@ -97,7 +107,7 @@ export default function MyWeek(p: Props) {
                 aria-pressed={d.stepped}
                 aria-label={`${formatDay(d.day)}: ${d.sick ? 'sairaspäivä' : d.stepped ? 'askeleet kuitattu' : d.future ? 'tulossa' : 'ei kuitattu'}${d.patrol ? ', megamarssi' : ''}`}
                 disabled={d.future || d.sick || busy}
-                onClick={() => run(() => toggleStep(d.day, !d.stepped))}
+                onClick={() => run(() => stepDay(d.day, !d.stepped))}
               >
                 <span>{wd}</span>
                 <b>{d.sick ? '🤒' : d.patrol ? '⭐' : d.stepped ? '✓' : date.replace(/\.$/, '').split('.')[0]}</b>
