@@ -23,7 +23,7 @@ export default async function Kirjaa() {
   if (days.length === 0) {
     return (
       <>
-        <Link href="/" className="muted">← Takaisin</Link>
+        <Link href="/" className="muted tap">← Takaisin</Link>
         <section className="card">
           <h1 className="display">Kirjaa treeni</h1>
           <p style={{ margin: 0 }}>{now < SEASON_START ? `Kausi alkaa ${formatDay(SEASON_START)} Silloin voit kirjata ensimmäiset iskut.` : 'Kausi on päättynyt.'}</p>
@@ -53,7 +53,7 @@ export default async function Kirjaa() {
 
   return (
     <>
-      <Link href="/" className="muted">← Takaisin</Link>
+      <Link href="/" className="muted tap">← Takaisin</Link>
       <h1 className="display">Kirjaa treeni</h1>
       <HitForm
         days={days}

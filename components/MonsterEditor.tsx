@@ -184,7 +184,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
           <textarea className="input" rows={3} style={{ padding: 12 }} value={m.description ?? ''} onChange={(e) => setM({ ...m, description: e.target.value })} />
         </label>
         <label className="field">
-          Arvoitus (näkyy kaikille edellisen viikon perjantaista alkaen)
+          {m.week === 1 ? 'Arvoitus (näkyy etusivulla ennen kauden alkua, ma 28.9. alkaen)' : 'Arvoitus (näkyy kaikille edellisen viikon perjantaista alkaen)'}
           <textarea className="input" rows={2} style={{ padding: 12 }} placeholder="Esim. Ensi viikolla vastaan tulee jotain, mikä pelkää palloja…" value={m.teaser ?? ''} onChange={(e) => setM({ ...m, teaser: e.target.value })} />
         </label>
         <label className="field">

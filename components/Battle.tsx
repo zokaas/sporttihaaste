@@ -232,7 +232,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
             ))}
           </ul>
         ) : <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla. Ole ensimmäinen!</p>}
-        {recap ? <Link href={`/raportti/${recap.week}`} className="muted small">Viikon {recap.week} raportti →</Link> : null}
+        {recap ? <Link href={`/raportti/${recap.week}`} className="muted small tap">Viikon {recap.week} raportti →</Link> : null}
       </section>
     </>
   );
