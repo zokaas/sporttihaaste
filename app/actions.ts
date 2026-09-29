@@ -54,6 +54,7 @@ export async function toggleSickDay(day: string, sick: boolean, continuing = fal
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   const now = today();
   if (!loggableDays(now).includes(day)) return { ok: false, error: 'Sairaspäivän voi merkitä vain kuluvalle viikolle, ei tulevaisuuteen.' };
+  if (seasonWeek(day) < 1) return { ok: false, error: 'Portinvartijan päivänä sairautta ei tarvitse merkitä: sinettiä ei ole.' };
   const { data } = await supabase.from('sick_periods').select('id, starts_on, ends_on').eq('user_id', user.id);
   const covering = (data ?? []).filter((x) => x.starts_on <= day && (x.ends_on === null || x.ends_on >= day));
 

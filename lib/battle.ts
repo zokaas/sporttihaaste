@@ -3,7 +3,8 @@ import { activeWeaknesses, type MonsterPart } from './trio';
 import { computeLedger, pledgeHours, seasonHp, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, type Sport, type Weakness, type LedgerEvent } from './rules';
 import { loadSports } from './sports';
 import { testSkipPast } from './today';
-import { addDays, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from './season';
+import { addDays, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_START } from './season';
+import { gateResult, type GateRow } from './gate';
 import { patrolDays, pledgeForWeek, requiredForSeal, sickDaysBetween, isSickOn, weekPledgeTarget, type SickPeriod } from './weekly';
 
 export type Hero = {
@@ -52,7 +53,7 @@ export function hoursInWeek(hits: Hit[], userId: string, week: number, sports: S
 
 /** Lataa kauden tilanteen ja laskee sen kirjauksista. Kuluva viikko on vielä auki. */
 export async function loadBattle(supabase: SupabaseClient, today: string) {
-  const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }, sports] = await Promise.all([
+  const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }, sports, { data: gateRow }] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at'),
     // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot. Haetaan rinnakkain.
     supabase.from('monsters').select('week, hp, name, description, weakness, image_path, parts, taunt_half, taunt_low, teaser, boss_whisper, hit_lines, hit_crit, taunt_full').order('week'),
@@ -62,6 +63,8 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     supabase.from('sick_periods').select('user_id, starts_on, ends_on'),
     supabase.from('pledge_changes').select('user_id, from_week, hours'),
     loadSports(supabase),
+    // Portinvartija (migraatio 027). Ilman taulua käytetään oletuksia.
+    supabase.from('gate').select('name, description, image_path, hp, taunt').eq('id', 1).maybeSingle(),
   ]);
   const heroList = (heroes ?? []) as Hero[];
   let monsterList = (monsters ?? []) as PublicMonster[];
@@ -103,7 +106,13 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
 
   const patrols = patrolDays(stepList, participants, periods);
   const sickNow = participants.filter((u) => isSickOn(periods, u, today));
-  const base = { week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
+  // Portinvartija: kauden alettua sen jäljelle jäänyt HP lisätään viikon 1 monsterille ja ylijäämä on potissa.
+  const gate = gateResult((gateRow ?? null) as GateRow | null, hitList, stepList);
+  const gateCarry = today >= SEASON_START;
+  const week1 = byWeek.get(1);
+  if (gateCarry && gate.left && week1?.hp != null) byWeek.set(1, { ...week1, hp: week1.hp + gate.left });
+
+  const base = { gate, week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
 
   if (!hpLocked && !hpPreview) return { ...base, hpLocked, hpPreview, required: participants, ledger: null, events: [] as LedgerEvent[], ledgerInput: null };
 
@@ -118,7 +127,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     requiredByWeek[w] = requiredForSeal(participants, periods, w, today);
     if (w < week) pledgeBonusesByWeek[w] = participants.filter((u) => pledgeStatus(u, w).kept).length;
   }
-  const monsterHp = monsterList.filter((m) => m.week <= MONSTER_WEEKS).map((m) => m.hp!);
+  const monsterHp = monsterList.filter((m) => m.week <= MONSTER_WEEKS).map((m) => (m.week === 1 && gateCarry ? m.hp! + gate.left : m.hp!));
   // Testitila: ylläpitäjä voi kaataa aiemmat viikot automaattisesti, jotta tulevan viikon näkymän näkee
   // ilman kaikkien sankarien iskuja. Keinotekoiset kaadot eivät näy iskuina eivätkä viimeisinä iskuina.
   const testKills: LedgerEvent[] = [];
@@ -128,7 +137,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
       testKills.push({ week: w, at: Date.parse(`${weekRange(w).start}T00:00:00Z`), userId: 'testi', damage: monsterHp[w - 1], isTraining: true });
     }
   }
-  const ledgerInput = { monsterHp, bossHp: byWeek.get(BOSS_WEEK)!.hp!, events: [...testKills, ...events], requiredByWeek, pledgeBonusesByWeek };
+  const ledgerInput = { monsterHp, bossHp: byWeek.get(BOSS_WEEK)!.hp!, events: [...testKills, ...events], requiredByWeek, pledgeBonusesByWeek, startPot: gateCarry ? gate.surplus : 0 };
   const ledger = computeLedger(ledgerInput, week, true);
   return { ...base, hpLocked, hpPreview, required: requiredByWeek[week], ledger, events, ledgerInput };
 }

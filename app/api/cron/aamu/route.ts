@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { sendPush, type PushPayload } from '@/lib/push';
 import { fridayReminders } from '@/lib/reminders';
 import { helsinkiHour, QUIET_END } from '@/lib/quiet';
-import { helsinkiToday, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
+import { helsinkiToday, seasonWeek, weekRange, BOSS_WEEK, GATE_DAY } from '@/lib/season';
 
 export const dynamic = 'force-dynamic';
 // Ajastus lukee aina tuoreen tilanteen: Supabase-hakuja ei tallenneta Next.js:n välimuistiin.
@@ -72,6 +72,15 @@ export async function GET(request: Request) {
         body: m.weakness ? `Heikkous: ${m.weakness} (+50 %). Viikko ${week} alkoi.` : `Viikko ${week} alkoi.`,
       });
     }
+  }
+
+  // 3b. Portinvartija herää ke 30.9. (kauden avaava yhden päivän taistelu)
+  if (day === GATE_DAY && (await once('reveal-gate'))) {
+    const { data: g } = await supabase.from('gate').select('name').eq('id', 1).maybeSingle();
+    result.portinvartija = await sendPush(supabase, {
+      title: `🗝️ ${g?.name || 'Portinvartija'} vartioi porttia`,
+      body: 'Kaatakaa se tänään ennen keskiyötä, niin portti kauteen aukeaa. Treenit ja askeleet lyövät.',
+    });
   }
 
   // 4. Perjantain oma viikkomuistutus

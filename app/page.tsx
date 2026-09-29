@@ -8,7 +8,8 @@ import { seasonFinale } from '@/lib/finale';
 import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
-import { helsinkiMs, seasonWeek, AFTER_SEASON, BOSS_WEEK, SEASON_START } from '@/lib/season';
+import { helsinkiMs, seasonWeek, AFTER_SEASON, BOSS_WEEK, GATE_DAY, SEASON_START } from '@/lib/season';
+import GateBattle from '@/components/GateBattle';
 import Countdown from '@/components/Countdown';
 import { today, testOffsetMs } from '@/lib/today';
 import { currentUser } from '@/lib/auth';
@@ -25,11 +26,13 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   if (!user) redirect('/kirjaudu');
 
   const week = seasonWeek(today());
+  // Portinvartijan päivä (ke 30.9.): yhden päivän taistelu ennen kauden alkua.
+  const gateDay = today() === GATE_DAY;
   const [{ data: me }, { data: heroes }, maybeBattle, { data: firstMonster }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at').order('created_at'),
     // Kauden aikana taistelu haetaan samaan aikaan profiilin kanssa.
-    week >= 1 ? loadBattle(supabase, today()) : Promise.resolve(null),
+    week >= 1 || gateDay ? loadBattle(supabase, today()) : Promise.resolve(null),
     // Ennen kautta: ensimmäisen monsterin arvoitus (näkymä paljastaa sen 3 pv ennen paljastusta).
     week < 1 ? supabase.from('monsters_public').select('teaser').eq('week', 1).maybeSingle() : Promise.resolve({ data: null }),
   ]);
@@ -38,7 +41,8 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   const img = avatarUrl(me.avatar_path);
   // Ylläpitäjä voi katsoa taistelunäkymää ennen kauden alkua osoitteella /?esikatselu=1.
   const inSeason = (week >= 1 && week <= BOSS_WEEK) || (me.is_admin && searchParams.esikatselu === '1');
-  const battle = maybeBattle ?? (inSeason ? await loadBattle(supabase, today()) : null);
+  const gateBattle = gateDay ? maybeBattle : null;
+  const battle = (week >= 1 ? maybeBattle : null) ?? (inSeason ? await loadBattle(supabase, today()) : null);
   // Paljastusilmoitus tarkistetaan vain viikon kahtena ensimmäisenä päivänä, ei jokaisella latauksella.
 
   // Kauden jälkeen: loppugaala. Ylläpitäjä voi esikatsella sitä osoitteella /?finaali=1.
@@ -67,6 +71,17 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   return (
     <>
       <Nav current="/" />
+      {gateBattle ? (
+        <GateBattle
+          gate={gateBattle.gate}
+          hits={gateBattle.hits.filter((h) => h.trained_on === GATE_DAY)}
+          names={new Map(gateBattle.heroes.map((h) => [h.id, h.hero_name ?? '']))}
+          stepped={gateBattle.steps.filter((x) => x.day === GATE_DAY).length}
+          ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null}
+          crit={searchParams.krit === '1'}
+          offsetMs={testOffsetMs()}
+        />
+      ) : null}
       <div className="row" style={{ alignItems: 'center' }}>
         {img ? <img className="avatar" src={img} alt="" width={56} height={56} /> : null}
         <div className="grow">

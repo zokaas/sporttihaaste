@@ -55,6 +55,7 @@ export default async function Saannot() {
 
       <section className="card">
         <h2 className="display">Lyhyesti</h2>
+        <p style={{ margin: 0 }}>Ennen kautta, ke 30.9., porttia vartioi portinvartija. Se kaadetaan yhdessä päivässä treeneillä ja askeleilla ilman sinettiä. Jos se jää henkiin, jäljelle jäänyt HP siirtyy torstain monsterille; jos se kaatuu, ylijäämä menee pottiin. Keskiviikon treenit eivät kerry viikon 1 lupaukseen.</p>
         <p style={{ margin: 0 }}>Kausi kestää 1.10.–20.12. Ensimmäinen monsteri paljastuu to 1.10., ja sen jälkeen uusi joka maanantai: yhteensä 11 monsteria ja viimeisellä viikolla loppupomo. Seuraavaa pääsee lyömään vasta, kun edellinen on tuhottu. Treenit ovat iskuja: jokainen kirjattu treeni vähentää monsterin HP:ta.</p>
         <p style={{ margin: 0 }}>Monsteri kaatuu, kun sen HP loppuu <strong>ja</strong> sinetti on täynnä eli jokainen terve sankari on lyönyt sitä vähintään yhdellä treenillä. Siihen asti monsterille jää 10 HP jokaista puuttuvaa sankaria kohden.</p>
         <p style={{ margin: 0 }}>Jos sinetti jää sunnuntaina vajaaksi, sinettirajan yli mennyt voima menetetään ja monsteri jää rästiin.</p>

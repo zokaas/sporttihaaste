@@ -156,6 +156,7 @@ export interface LedgerInput {
   events: LedgerEvent[];
   requiredByWeek: Record<number, string[]>; // terveet osallistujat viikolla
   pledgeBonusesByWeek: Record<number, number>; // pidettyjen lupausten määrä
+  startPot?: number; // portinvartijan ylijäämä, joka on jo potissa kauden alkaessa
 }
 
 interface Fighter { week: number; hp: number; hitters: Set<string>; killedAt?: number; boss?: boolean }
@@ -167,7 +168,7 @@ interface Fighter { week: number; hp: number; hitters: Set<string>; killedAt?: n
 export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen = false) {
   const queue: Fighter[] = [];
   const done: Fighter[] = [];
-  let pot = 0;
+  let pot = input.startPot ?? 0; // portinvartijan ylijäämä
   let lostToSeal = 0;
 
   const sealFull = (f: Fighter, week: number) =>
