@@ -12,6 +12,8 @@ import { loadBattle } from '@/lib/battle';
 import { weekRecap } from '@/lib/stats';
 import { today } from '@/lib/today';
 import { fridayReminders } from '@/lib/reminders';
+import { sendOrQueue } from '@/lib/push';
+import { isQuietHour } from '@/lib/quiet';
 import ConfirmButton from '@/components/ConfirmButton';
 import ClearLocalState from '@/components/ClearLocalState';
 import MonsterEditor, { type Monster } from '@/components/MonsterEditor';
@@ -115,6 +117,19 @@ async function testFridayReminder() {
   redirect(`/yllapito?push=${encodeURIComponent(res.skipped ?? `Perjantain muistutus lähetetty itsellesi (${res.sent} laitteeseen).`)}`);
 }
 
+/** Varjojen ääni: ilmoitus kaikille sankareille ilman lähettäjän nimeä (hiljaisina tunteina aamulla klo 9). */
+async function shadowBroadcast(form: FormData) {
+  'use server';
+  const supabase = await requireAdmin();
+  const title = String(form.get('title') ?? '').trim().slice(0, 60) || '👁️ Jokin heräsi';
+  const body = String(form.get('body') ?? '').trim().slice(0, 200);
+  if (!body) redirect(`/yllapito?push=${encodeURIComponent('Kirjoita viesti ennen lähettämistä.')}#varjot`);
+  const { data: heroes } = await supabase.from('profiles').select('id').not('pledge_locked_at', 'is', null);
+  const quiet = isQuietHour();
+  const sent = await sendOrQueue(supabase, { title, body, url: '/' }, (heroes ?? []).map((h) => h.id));
+  redirect(`/yllapito?push=${encodeURIComponent(quiet ? 'Varjojen ääni jonossa: nyt on hiljaiset tunnit, joten se lähtee aamulla klo 9.' : `Varjojen ääni lähti ${sent} laitteeseen.`)}#varjot`);
+}
+
 export default async function Yllapito({ searchParams }: { searchParams: { push?: string; testi?: string; tavoite?: string; nollaa?: string; nakyvyys?: string } }) {
   const supabase = await requireAdmin();
   const battle = await loadBattle(supabase, today());
@@ -205,8 +220,24 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
         </ul>
         <form action={sendTestPush}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Lähetä testi-ilmoitus kaikille</button></form>
         <form action={testFridayReminder}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Kokeile perjantain muistutusta (vain itsellesi)</button></form>
-        <Hint id="admin-friday">Perjantain muistutus lähtee automaattisesti pe klo 9 (talviaikana klo 8) niille, joilta puuttuu lupauksen tunteja, isku sinettiin tai askelkuittauksia.</Hint>
+        <Hint id="admin-friday">Perjantain muistutus lähtee automaattisesti pe klo 9 niille, joilta puuttuu lupauksen tunteja, isku sinettiin tai askelkuittauksia.</Hint>
         {searchParams.push ? <p className="note" role="status" style={{ margin: 0 }}>{searchParams.push}</p> : null}
+      </section>
+
+      <section className="card" id="varjot">
+        <h2 className="display">👁️ Varjojen ääni</h2>
+        <p className="muted small" style={{ margin: 0 }}>Ilmoitus kaikille sankareille ilman lähettäjän nimeä, kuin se tulisi pimeydestä. Ei näy Viestit-sivulla. Klo 22–09 lähetetty lähtee aamulla klo 9.</p>
+        <form action={shadowBroadcast} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <label className="field">
+            Otsikko
+            <input className="input" name="title" maxLength={60} defaultValue="👁️ Jokin heräsi" />
+          </label>
+          <label className="field">
+            Viesti (enintään 200 merkkiä)
+            <textarea className="input" name="body" rows={6} maxLength={200} style={{ padding: 12 }} defaultValue="Kaikki kymmenen sankaria ovat nyt kasassa. Pimeydessä jokin nosti päänsä. Se kuuli nimenne ja tietää, että olette tulossa. Torstaina klo 00.00 se astuu esiin. Oletteko valmiita? 🩸" />
+          </label>
+          <ConfirmButton className="btn" message="Lähetetäänkö varjojen ääni kaikille sankareille?">Lähetä kaikille</ConfirmButton>
+        </form>
       </section>
 
       <section className="card">
