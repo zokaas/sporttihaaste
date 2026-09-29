@@ -19,11 +19,17 @@ assert.equal(uinti.bonuses[0].label, 'Heikkous: Uinti');
 assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Kestävyys', sport: 'Juoksu', groupSize: 1, celebration: false, weakness: 'Uinti' }).pct, 0);
 // Lajiryhmä toimii kuten ennen, ja laji + ryhmä samassa kaksikossa ei tuplaa bonusta
 assert.equal(hitDamage({ minutes: 60, sportValue: 200, category: 'Kestävyys', sport: 'Uinti', groupSize: 1, celebration: false, weakness: ['Uinti', 'Kestävyys'] }).pct, 50);
-// Erikoisheikkous: mamun tai lapsen kanssa, vain kun kirjaaja merkitsee sen
-import { FAMILY_WEAKNESS } from './rules.ts';
-assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', sport: 'Sali', groupSize: 1, celebration: false, weakness: FAMILY_WEAKNESS, withFamily: true }).pct, 50);
-assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', sport: 'Sali', groupSize: 1, celebration: false, weakness: FAMILY_WEAKNESS }).pct, 0);
-assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', sport: 'Sali', groupSize: 1, celebration: false, weakness: 'Uinti', withFamily: true }).pct, 0, 'merkintä ei anna bonusta muulla viikolla');
+// Erikoisheikkoudet: bonus vain, kun kirjaaja merkitsee juuri viikon erikoisheikkouden
+import { FAMILY_WEAKNESS, SPECIAL_WEAKNESSES, specialOf } from './rules.ts';
+const sali = { minutes: 60, sportValue: 100, category: 'Voimailu' as const, sport: 'Sali', groupSize: 1, celebration: false };
+for (const w of Object.keys(SPECIAL_WEAKNESSES)) {
+  assert.equal(hitDamage({ ...sali, weakness: w, special: w }).pct, 50, w);
+  assert.equal(hitDamage({ ...sali, weakness: w }).pct, 0, `${w} ilman merkintää`);
+}
+assert.equal(hitDamage({ ...sali, weakness: 'Urheilija on nainen', special: FAMILY_WEAKNESS }).pct, 0, 'väärä merkintä ei anna bonusta');
+assert.equal(hitDamage({ ...sali, weakness: 'Uinti', special: FAMILY_WEAKNESS }).pct, 0, 'merkintä ei anna bonusta muulla viikolla');
+assert.equal(specialOf(['Kestävyys', 'Urheilija on nainen']), 'Urheilija on nainen');
+assert.equal(specialOf(['Kestävyys']), null);
 // Uinti 30 min yksin = 100
 assert.equal(hitDamage({ minutes: 30, sportValue: 200, category: 'Kestävyys', groupSize: 1, celebration: false, weakness: null }).damage, 100);
 // Lupaukseen: 1 h uintia = 2 h, 2 h golfia = 1 h

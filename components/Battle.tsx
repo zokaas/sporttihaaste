@@ -76,7 +76,6 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const potBeforeBoss = week === BOSS_WEEK && data.ledgerInput ? computeLedger(data.ledgerInput, MONSTER_WEEKS).pot : 0;
   const recap = week >= 2 ? weekRecap(data, week - 1) : null;
   const overdue = ledger.alive.filter((f) => f.week < week).length;
-  const nextReveal = week < BOSS_WEEK ? formatDay(weekRange(week + 1).start) : null;
   // Ennakkoarvoitus: perjantaista alkaen varjo ja vihje seuraavasta monsterista.
   const teaser = week < BOSS_WEEK && data.today >= addDays(weekRange(week).end, -2)
     ? monsters.get(week + 1)?.teaser || (week + 1 === BOSS_WEEK ? 'Maa tärisee. Jokin valtava heräilee unestaan…' : 'Jotain liikkuu varjoissa. Se tietää jo nimesi…')
@@ -157,7 +156,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
             <ellipse cx="210" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
           </svg>
           <div style={{ minWidth: 0 }}>
-            <span className="stage-week">{week + 1 === BOSS_WEEK ? 'Loppupomo' : `Viikko ${week + 1}`} · paljastuu {nextReveal}</span>
+            <span className="stage-week">{week + 1 === BOSS_WEEK ? 'Loppupomo' : 'Seuraava monsteri'}</span>
             <p className="teaser-text">“{teaser}”</p>
           </div>
         </section>

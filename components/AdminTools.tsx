@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminLogHit } from '@/app/kirjaa/actions';
+import { SPECIAL_WEAKNESSES } from '@/lib/rules';
 import { adminDeleteHit, adminDeleteSick, adminSetSick } from '@/app/yllapito/korjaukset/actions';
 
 type Hero = { id: string; name: string };
@@ -41,6 +42,7 @@ export function AdminHitForm({ heroes, sports, min, max }: { heroes: Hero[]; spo
   const [sport, setSport] = useState(sports[0]);
   const [minutes, setMinutes] = useState(60);
   const [companions, setCompanions] = useState<string[]>([]);
+  const [special, setSpecial] = useState('');
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <label className="field">Sankari
@@ -65,7 +67,14 @@ export function AdminHitForm({ heroes, sports, min, max }: { heroes: Hero[]; spo
           ))}
         </div>
       </fieldset>
-      <button type="button" className="btn" disabled={busy} onClick={() => run(() => adminLogHit({ userId, day, sport, minutes, companions }), 'Isku kirjattu.')}>Kirjaa sankarin puolesta</button>
+      {/* Bonus annetaan vain, jos valittu erikoisheikkous on sen viikon heikkous. */}
+      <label className="field">Erikoisheikkous
+        <select className="input" value={special} onChange={(e) => setSpecial(e.target.value)}>
+          <option value="">Ei merkintää</option>
+          {Object.entries(SPECIAL_WEAKNESSES).map(([name, x]) => <option key={name} value={name}>{x.check}</option>)}
+        </select>
+      </label>
+      <button type="button" className="btn" disabled={busy} onClick={() => run(() => adminLogHit({ userId, day, sport, minutes, companions, special: special || null }), 'Isku kirjattu.')}>Kirjaa sankarin puolesta</button>
       <Msg msg={msg} />
     </div>
   );

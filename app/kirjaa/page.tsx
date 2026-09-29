@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl } from '@/lib/supabase/client';
-import { type Category } from '@/lib/rules';
+import { SPECIAL_WEAKNESSES, type Category } from '@/lib/rules';
 import { activeSports, loadSports } from '@/lib/sports';
 import { formatDay, loggableDays, monthDay, seasonWeek, weekRange, SEASON_START } from '@/lib/season';
 import { today } from '@/lib/today';
@@ -80,7 +80,7 @@ export default async function Kirjaa() {
                     {formatDay(h.trained_on)}
                     {h.bonus_pct ? ` · bonus +${h.bonus_pct} %` : ''}
                     {h.companions.length ? ` · mukana ${h.companions.map((id: string) => names.get(id)).filter(Boolean).join(', ')}` : ''}
-                    {h.with_family ? ' · mamun tai lapsen kanssa' : ''}
+                    {h.special && SPECIAL_WEAKNESSES[h.special] ? ` · ${SPECIAL_WEAKNESSES[h.special].log}` : h.with_family ? ' · mamun tai lapsen kanssa' : ''}
                   </div>
                 </div>
                 <DeleteHitButton id={h.id} />
