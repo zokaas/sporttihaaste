@@ -117,6 +117,7 @@ export default async function Saannot() {
         <p style={{ margin: 0 }}>Viestit-sivulla (📣) voit lähettää porukalle viestin, enintään {MESSAGES_PER_DAY} päivässä ja 200 merkkiä. Ilmoitus viestistä menee kaikille, myös sinulle itsellesi.</p>
         <p style={{ margin: 0 }}><strong>Hiljaiset tunnit klo {QUIET_START}–{String(QUIET_END).padStart(2, '0')}.</strong> Yöllä ei tule yhtään ilmoitusta: silloin syntyvät ilmoitukset ja viestit lähtevät aamulla klo {QUIET_END}.</p>
         <ul className="rules-list">
+          <li><strong>👁️ Portinvartija</strong>: ke 30.9. klo {QUIET_END} muistutus, jos portti on vielä kiinni, ja ilmoitus kun se kaatuu.</li>
           <li><strong>👁️ Uusi monsteri</strong>: to 1.10. ja sen jälkeen joka maanantai klo {QUIET_END}.</li>
           <li><strong>⚔️ Perjantaimuistutus</strong>: pe klo {QUIET_END}, vain jos sinulta puuttuu vielä jotain (lupauksen tunnit, isku sinettiin tai askelkuittauksia).</li>
           <li><strong>💀 Monsteri kaatui</strong> ja <strong>⭐ Megamarssi</strong>: heti kaikille.</li>

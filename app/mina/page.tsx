@@ -6,7 +6,7 @@ import DeleteHitButton from '@/components/DeleteHitButton';
 import { requireHero } from '@/lib/page';
 import { avatarUrl } from '@/lib/supabase/client';
 import { myWeekProps } from '@/lib/myweek';
-import { formatDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
+import { formatDay, isGateDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +31,7 @@ export default async function Mina() {
       {inSeason ? <MyWeek {...myWeekProps(b, user.id)} /> : (
         <section className="card">
           <h2 className="display">Minun viikkoni</h2>
-          <p style={{ margin: 0 }}>Kausi alkaa to 1.10. Silloin täällä näkyy enemmän dataa.</p>
+          <p style={{ margin: 0 }}>{isGateDay(b.today) ? 'Portti aukesi etuajassa: Sauronin silmä on kaadettava ke klo 23.59 mennessä. Kirjaa treenit ja askeleet Lyö-napista. Viikkodata alkaa to 1.10.' : 'Kausi alkaa to 1.10. Silloin täällä näkyy enemmän dataa.'}</p>
         </section>
       )}
 

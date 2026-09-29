@@ -98,14 +98,14 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
           </g>
         </svg>
         <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span className="stage-week">Ensimmäinen vastus · to 1.10. klo 00.00</span>
+          <span className="stage-week">{gateDay ? 'Portin takana · to 1.10. klo 00.00' : 'Ensimmäinen vastus · to 1.10. klo 00.00'}</span>
           <p className="teaser-text">“{(firstMonster as { teaser?: string | null } | null)?.teaser || 'Jotain liikkuu varjoissa. Se on jo matkalla, ja se tietää nimesi…'}”</p>
           <Countdown endMs={helsinkiMs(SEASON_START, '00:00:00')} offsetMs={testOffsetMs()} title="Aikaa ensimmäisen monsterin paljastumiseen" done="Se on täällä!" suffix="paljastukseen" />
         </div>
       </section>
       <BossShadow>
         <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>Se odottaa</h2>
-        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kausi alkaa torstaina 1.10. Joka maanantai sen jälkeen nousee uusi vastus. Loppupomo herää 14.12., ja se on vahvempi kuin yksikään kauden monstereista.</p>
+        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>{gateDay ? 'Portin takana ensimmäinen monsteri astuu esiin torstaina 1.10.' : 'Kausi alkaa torstaina 1.10.'} Joka maanantai sen jälkeen nousee uusi vastus. Loppupomo herää 14.12., ja se on vahvempi kuin yksikään kauden monstereista.</p>
       </BossShadow>
 
       <section className="card">
