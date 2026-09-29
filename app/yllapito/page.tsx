@@ -297,7 +297,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
             </tbody>
           </table>
         </div>
-        <Hint id="admin-lock" className="muted">Pottikatto on puolet loppupomon HP:sta. Lukitse tavoite, kun kaikki ovat ilmoittautuneet. Lukituksen voi tehdä uudelleen, jos joku ilmoittautuu myöhässä.</Hint>
+        <Hint id="admin-lock" className="muted">Koko potti iskee loppupomoon, kattoa ei ole. Lukitse tavoite, kun kaikki ovat ilmoittautuneet. Lukituksen voi tehdä uudelleen, jos joku ilmoittautuu myöhässä.</Hint>
         <form action={lockSeason}><button className="btn" type="submit">{season?.hp_locked_at ? 'Laske ja lukitse uudelleen' : 'Lukitse tavoite'}</button></form>
         {searchParams.tavoite ? <p className={`note${searchParams.tavoite.startsWith('Lukitus epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.tavoite}</p> : null}
       </section>

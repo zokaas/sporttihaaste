@@ -10,7 +10,7 @@ import { monsterImageUrl } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
 import { formatDay, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import { weaknessesOf } from '@/lib/trio';
-import { sealView, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE } from '@/lib/rules';
+import { computeLedger, sealView, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE } from '@/lib/rules';
 import SeasonChart from '@/components/SeasonChart';
 import { seasonWeek } from '@/lib/season';
 
@@ -39,7 +39,7 @@ export default async function Bestiaario() {
         <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>{bossRevealed ? boss!.name : '???'}</h2>
         <span className="small" style={{ color: '#c9c1b4' }}>
           {bossRevealed
-            ? `${boss?.hp ? `${fmt(boss.hp)} HP. ` : ''}Potti ${fmt(Math.min(b.ledger?.pot ?? 0, b.ledger?.potCap ?? 0))} / ${fmt(b.ledger?.potCap ?? 0)} vähennettiin sen HP:sta. Se kaatuu kuten muutkin: HP nollaan ja sinetti täyteen.`
+            ? `${boss?.hp ? `${fmt(boss.hp)} HP. ` : ''}Potti ${fmt(b.ledgerInput ? computeLedger(b.ledgerInput, MONSTER_WEEKS).pot : 0)} vähennettiin sen HP:sta. Se kaatuu kuten muutkin: HP nollaan ja sinetti täyteen.`
             : `${bossStirring(b.week)} Olette säästäneet sitä vastaan ${fmt(b.ledger?.pot ?? 0)} voimaa. Kaikki säästetty iskee heti, kun se herää.`}
         </span>
       </BossShadow>

@@ -19,6 +19,11 @@ assert.equal(uinti.bonuses[0].label, 'Heikkous: Uinti');
 assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Kestävyys', sport: 'Juoksu', groupSize: 1, celebration: false, weakness: 'Uinti' }).pct, 0);
 // Lajiryhmä toimii kuten ennen, ja laji + ryhmä samassa kaksikossa ei tuplaa bonusta
 assert.equal(hitDamage({ minutes: 60, sportValue: 200, category: 'Kestävyys', sport: 'Uinti', groupSize: 1, celebration: false, weakness: ['Uinti', 'Kestävyys'] }).pct, 50);
+// Erikoisheikkous: mamun tai lapsen kanssa, vain kun kirjaaja merkitsee sen
+import { FAMILY_WEAKNESS } from './rules.ts';
+assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', sport: 'Sali', groupSize: 1, celebration: false, weakness: FAMILY_WEAKNESS, withFamily: true }).pct, 50);
+assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', sport: 'Sali', groupSize: 1, celebration: false, weakness: FAMILY_WEAKNESS }).pct, 0);
+assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', sport: 'Sali', groupSize: 1, celebration: false, weakness: 'Uinti', withFamily: true }).pct, 0, 'merkintä ei anna bonusta muulla viikolla');
 // Uinti 30 min yksin = 100
 assert.equal(hitDamage({ minutes: 30, sportValue: 200, category: 'Kestävyys', groupSize: 1, celebration: false, weakness: null }).damage, 100);
 // Lupaukseen: 1 h uintia = 2 h, 2 h golfia = 1 h
@@ -37,7 +42,6 @@ assert.equal(seasonHp(38.5).monsters[0], 4500); // kauden lupauksilla (38,5 h, v
 assert.equal(hp.monsters[1], 7500); // 1,05 × vauhti
 assert.equal(hp.monsters[10], 8500); // 1,15 × vauhti
 assert.equal(hp.boss, 11000);
-assert.equal(hp.potCap, 5500);
 // Pelkät lupaukset ja askeleet eivät riitä yhdenkään monsterin kaatamiseen viikossa
 for (const m of hp.monsters.slice(1)) assert.ok(m > hp.pace);
 
@@ -78,11 +82,15 @@ assert.equal(r.pot, 220);
 r = computeLedger({ ...base, events: [ev(1, 1, 'a', 900), ev(1, 2, 'b', 50, false), ev(1, 3, 'c', 200)] }, 1);
 assert.equal(r.killed.length, 0);
 
-// 6) Loppupomo: potti vähentää (katto puolet), kaatuu kuten muut: HP nollaan ja sinetti täyteen
+// 6) Loppupomo: koko potti vähentää sen HP:ta (ei kattoa), kaatuu kuten muut: HP nollaan ja sinetti täyteen
+const smallPot = [] as ReturnType<typeof ev>[];
+for (let w = 1; w <= 11; w++) users.forEach((u, i) => smallPot.push(ev(w, i, u, u === 'c' ? 1100 : 10)));
+r = computeLedger({ ...base, events: [...smallPot, ev(12, 1, 'a', 10), ev(12, 2, 'b', 10)] }, 12, true);
+assert.equal(r.alive[0].hp, 4000 - 11 * 120 - 20, 'koko potti (11 × 120) vähennettiin');
 const allKilled = [] as ReturnType<typeof ev>[];
 for (let w = 1; w <= 11; w++) users.forEach((u, i) => allKilled.push(ev(w, i, u, u === 'c' ? 2000 : 10)));
 r = computeLedger({ ...base, events: [...allKilled, ev(12, 1, 'a', 10), ev(12, 2, 'b', 10)] }, 12, true);
-assert.equal(r.alive[0].hp, 2000 - 20, 'potti vähensi puolet 4 000 HP:sta');
+assert.equal(r.alive[0].padded, 11 * 1020 - 4000 + 20, 'potti suurempi kuin HP: ylijäämä odottaa sinettiä');
 r = computeLedger({ ...base, events: [...allKilled, ev(12, 1, 'a', 2000), ev(12, 2, 'b', 10)] }, 12, true);
 assert.equal(r.alive.length, 1, 'sinetistä puuttuu c');
 r = computeLedger({ ...base, events: [...allKilled, ev(12, 1, 'a', 2000), ev(12, 2, 'b', 10), ev(12, 3, 'c', 10)] }, 12);

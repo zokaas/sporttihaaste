@@ -73,10 +73,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
     ...data.hits.filter((h) => h.user_id !== userId && seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, name: heroById.get(h.user_id)?.hero_name ?? 'Sankari', kind: 'hit' as const, damage: h.damage })),
     ...data.steps.filter((s) => s.user_id !== userId && seasonWeek(s.day) === week).map((s) => ({ at: s.created_at, name: heroById.get(s.user_id)?.hero_name ?? 'Sankari', kind: 'step' as const, damage: STEP_DAY_DAMAGE })),
   ];
-  const potBeforeBoss = week === BOSS_WEEK && data.ledgerInput ? Math.min(computeLedger(data.ledgerInput, MONSTER_WEEKS).pot, ledger.potCap) : 0;
+  const potBeforeBoss = week === BOSS_WEEK && data.ledgerInput ? computeLedger(data.ledgerInput, MONSTER_WEEKS).pot : 0;
   const recap = week >= 2 ? weekRecap(data, week - 1) : null;
-  // Loppupomon HP (ja siitä johdettu pottikatto) pysyy salassa, kunnes se herää.
-  const potFull = week === BOSS_WEEK && ledger.pot >= ledger.potCap && ledger.potCap > 0;
   const overdue = ledger.alive.filter((f) => f.week < week).length;
   const nextReveal = week < BOSS_WEEK ? formatDay(weekRange(week + 1).start) : null;
   // Ennakkoarvoitus: perjantaista alkaen varjo ja vihje seuraavasta monsterista.
@@ -140,7 +138,6 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         <section className="card">
           <h2 className="display">{week === BOSS_WEEK ? 'Loppupomo on kaatunut!' : 'Viikon monsteri on kaatunut!'}</h2>
           {week === BOSS_WEEK ? <p style={{ margin: 0 }}>Kausi on voitettu. Treenit kerryttävät vielä lupauksia ja tilastoja kauden loppuun.</p>
-            : potFull ? <p style={{ margin: 0 }}>💰 Potti on täynnä, eli loppupomon HP puolittuu. Iskut kerryttävät silti lupauksia, tilastoja ja kunniamerkkejä.</p>
             : <p style={{ margin: 0 }}>Kaikki tämän viikon iskut menevät pottiin loppupomoa vastaan.</p>}
           {week < BOSS_WEEK ? (
             <blockquote className="boss-whisper">
@@ -221,7 +218,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       ) : null}
 
       <div className="stat-row" style={{ gridTemplateColumns: '1fr' }}>
-        <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{potFull ? `💰 ${fmt(ledger.potCap)}` : fmt(ledger.pot)}</strong><span className="muted small">{potFull ? 'täynnä' : week === BOSS_WEEK ? `katto ${fmt(ledger.potCap)}` : 'kasvaa loppupomoa vastaan'}</span></div>
+        <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{fmt(week === BOSS_WEEK ? potBeforeBoss : ledger.pot)}</strong><span className="muted small">{week === BOSS_WEEK ? 'iski loppupomoon sen herätessä' : 'kasvaa loppupomoa vastaan, ei kattoa'}</span></div>
       </div>
 
       <section className="card">
