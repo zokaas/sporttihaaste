@@ -12,6 +12,13 @@ assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Muu', groupSiz
 // Kolmikko: heikkousbonus, jos laji osuu minkä tahansa osan heikkouteen
 assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Palloilu', groupSize: 1, celebration: false, weakness: ['Voimailu', 'Palloilu'] }).pct, 50);
 assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Muu', groupSize: 1, celebration: false, weakness: ['Voimailu', 'Palloilu'] }).pct, 0);
+// Yksittäisen lajin heikkous: vain juuri se laji saa bonuksen, ei muu saman ryhmän laji
+const uinti = hitDamage({ minutes: 60, sportValue: 200, category: 'Kestävyys', sport: 'Uinti', groupSize: 1, celebration: false, weakness: 'Uinti' });
+assert.equal(uinti.pct, 50);
+assert.equal(uinti.bonuses[0].label, 'Heikkous: Uinti');
+assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Kestävyys', sport: 'Juoksu', groupSize: 1, celebration: false, weakness: 'Uinti' }).pct, 0);
+// Lajiryhmä toimii kuten ennen, ja laji + ryhmä samassa kaksikossa ei tuplaa bonusta
+assert.equal(hitDamage({ minutes: 60, sportValue: 200, category: 'Kestävyys', sport: 'Uinti', groupSize: 1, celebration: false, weakness: ['Uinti', 'Kestävyys'] }).pct, 50);
 // Uinti 30 min yksin = 100
 assert.equal(hitDamage({ minutes: 30, sportValue: 200, category: 'Kestävyys', groupSize: 1, celebration: false, weakness: null }).damage, 100);
 // Lupaukseen: 1 h uintia = 2 h, 2 h golfia = 1 h
@@ -25,7 +32,8 @@ assert.equal(adjustedPledge(4, 7), 0);
 const hp = seasonHp(45);
 assert.equal(hp.pace, 7250);
 assert.equal(hp.monsters.length, 11);
-assert.equal(hp.monsters[0], 8500); // Willa 1,2 × vauhti
+assert.equal(hp.monsters[0], 5000); // viikko 1: 4/7 × 1,2 × vauhti (to–su)
+assert.equal(seasonHp(38.5).monsters[0], 4500); // kauden lupauksilla (38,5 h, vauhti 6 600)
 assert.equal(hp.monsters[1], 7500); // 1,05 × vauhti
 assert.equal(hp.monsters[10], 8500); // 1,15 × vauhti
 assert.equal(hp.boss, 11000);

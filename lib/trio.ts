@@ -1,7 +1,7 @@
-// Monsterikolmikko: kolme osaa jakavat viikon HP:n tasan ja kaatuvat järjestyksessä.
-import type { Category } from './rules';
+// Moniosainen monsteri (kaksikko tai kolmikko): osat jakavat viikon HP:n tasan ja kaatuvat järjestyksessä.
+import type { Weakness } from './rules';
 
-export type MonsterPart = { name: string; description?: string | null; weakness?: Category | null; image_path?: string | null };
+export type MonsterPart = { name: string; description?: string | null; weakness?: Weakness | null; image_path?: string | null };
 
 /** Osien HP:t: tasajako, jakojäännös viimeiselle. */
 export function partHps(total: number, count: number) {
@@ -27,8 +27,8 @@ export function partStates(total: number, hpLeft: number, count: number, killed:
 }
 
 /** Viikon heikkoudet: kolmikolla kaikkien osien, muuten monsterin oma. */
-export function weaknessesOf(m: { weakness?: Category | null; parts?: MonsterPart[] | null } | null | undefined): Category[] {
-  if (m?.parts?.length) return [...new Set(m.parts.map((p) => p.weakness).filter(Boolean) as Category[])];
+export function weaknessesOf(m: { weakness?: Weakness | null; parts?: MonsterPart[] | null } | null | undefined): Weakness[] {
+  if (m?.parts?.length) return [...new Set(m.parts.map((p) => p.weakness).filter(Boolean) as Weakness[])];
   return m?.weakness ? [m.weakness] : [];
 }
 
@@ -43,3 +43,6 @@ export function stageParts(
   const states = partStates(m.hp, hpLeft, m.parts.length, killed);
   return m.parts.map((part, i) => ({ name: part.name, image: image(part.image_path), ...states[i] }));
 }
+
+/** "Kaksikko" tai "Kolmikko" osien määrän mukaan. */
+export const groupName = (n: number) => (n === 2 ? 'Kaksikko' : n === 3 ? 'Kolmikko' : `${n} osaa`);

@@ -46,8 +46,19 @@ export interface HitInput {
   category: Category;
   groupSize: number; // kirjaaja + merkityt seuralaiset
   celebration: boolean; // nimi- tai syntymäpäivä jollakulla
-  weakness: Category | Category[] | null; // viikon monsterin heikkous (kolmikolla useampi)
+  /** Viikon monsterin heikkous: lajiryhmä (esim. "Kestävyys") tai yksittäinen laji (esim. "Uinti"). Moniosaisella useampi. */
+  weakness: Weakness | Weakness[] | null;
   participants?: number; // ilmoittautuneiden määrä ("kaikki yhdessä"), oletus 10
+  sport?: string; // lajin nimi: osuuko yksittäisen lajin heikkouteen
+}
+
+/** Heikkous on joko lajiryhmä tai yksittäisen lajin nimi. */
+export type Weakness = Category | string;
+
+/** Osuuko laji heikkouteen: juuri tämä laji tai sen lajiryhmä. Palauttaa osuman nimen. */
+export function weaknessHit(weaknesses: Weakness[], category: Category, sport?: string) {
+  if (sport && weaknesses.includes(sport)) return sport;
+  return weaknesses.includes(category) ? category : null;
 }
 
 export function hitDamage(h: HitInput) {
@@ -58,7 +69,8 @@ export function hitDamage(h: HitInput) {
   else if (h.groupSize >= 3) bonuses.push({ label: `Yhdessä (${h.groupSize} henkeä)`, pct: 50 });
   if (h.celebration) bonuses.push({ label: 'Juhlapäivä', pct: 50 });
   const weaknesses = Array.isArray(h.weakness) ? h.weakness : h.weakness ? [h.weakness] : [];
-  if (weaknesses.includes(h.category)) bonuses.push({ label: `Heikkous: ${h.category}`, pct: 50 });
+  const hit = weaknessHit(weaknesses, h.category, h.sport);
+  if (hit) bonuses.push({ label: `Heikkous: ${hit}`, pct: 50 });
   const pct = Math.min(BONUS_CAP_PCT, bonuses.reduce((a, b) => a + b.pct, 0));
   return { base, bonuses, pct, damage: Math.round(base * (1 + pct / 100)) };
 }
@@ -85,12 +97,13 @@ export function weeklyPace(totalPledgeHours: number) {
 
 /**
  * HP viikoille 1–11 ja loppupomolle (viikko 12). Pelkät lupaukset ja askeleet eivät riitä:
- * viikko 1 (Willa) on 1,2 × vauhti mutta kestää vain to–su, joten se jatkuu rästinä viikolle 2.
+ * viikko 1 kestää vain to–su (4 pv), joten sen HP on 4/7 × 1,2 × vauhti: kaatuu, kun porukka pitää lupauksensa
+ * ja tekee vähän päälle, eikä jää roikkumaan rästiksi toiselle viikolle.
  * Viikot 2–11 kasvavat 1,05 → 1,15 × vauhti, loppupomo 1,5 × vauhti (potti vähentää enintään puolet).
  */
 export function seasonHp(totalPledgeHours: number) {
   const pace = weeklyPace(totalPledgeHours);
-  const monsters: number[] = [round500(1.2 * pace)];
+  const monsters: number[] = [round500((4 / 7) * 1.2 * pace)];
   for (let i = 0; i < MONSTER_WEEKS - 1; i++) monsters.push(round500(pace * (1.05 + (0.1 * i) / (MONSTER_WEEKS - 2))));
   const boss = round500(1.5 * pace);
   return { pace: Math.round(pace), monsters, boss, potCap: Math.floor(boss / 2) };

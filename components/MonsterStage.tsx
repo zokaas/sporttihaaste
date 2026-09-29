@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Countdown from '@/components/Countdown';
+import { groupName } from '@/lib/trio';
 import { resizedImage } from '@/lib/supabase/client';
 
 export type StagePart = { name: string; image: string | null; hp: number; left: number; dead: boolean };
@@ -221,13 +222,13 @@ export default function MonsterStage(p: Props) {
       <div className="stage-info">
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
         {parts ? (
-          <div className="stage-parts" aria-label={`Kolmikko: ${deadParts}/${parts.length} kaatunut`}>
+          <div className="stage-parts" aria-label={`${groupName(parts.length)}: ${deadParts}/${parts.length} kaatunut`}>
             {parts.map((x) => (
               <span key={x.name} className={`stage-part${x.dead ? ' dead' : ''}${x === front && !p.dead ? ' front' : ''}`} title={`${x.name}${x.dead ? ' – kaatunut' : ''}`}>
                 {x.image ? <img src={x.image} alt="" /> : <b>{x.name.slice(0, 1)}</b>}
               </span>
             ))}
-            <span className="stage-parts-label">Kolmikko {deadParts}/{parts.length}</span>
+            <span className="stage-parts-label">{groupName(parts.length)} {deadParts}/{parts.length}</span>
           </div>
         ) : null}
         <h2 className="display stage-title">{title}</h2>

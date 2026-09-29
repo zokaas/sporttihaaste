@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { navVisibility } from '@/lib/nav';
 import Nav from '@/components/Nav';
 import BossShadow from '@/components/BossShadow';
+import { groupName } from '@/lib/trio';
 import { bossGrowth, bossStirring } from '@/lib/boss';
 import { requireHero } from '@/lib/page';
 import { monsterImageUrl } from '@/lib/supabase/client';
@@ -76,7 +77,7 @@ export default async function Bestiaario() {
                   <div className="who">{future ? '???' : <Link className="tap" href={`/monsteri/${w}`}>{m?.name ?? `Viikon ${w} monsteri`}</Link>}</div>
                   <div className="facts">
                     Viikko {w} · {formatDay(start)}
-                    {m?.parts?.length && !future ? ' · kolmikko' : ''}
+                    {m?.parts?.length && !future ? ` · ${groupName(m.parts.length).toLowerCase()}` : ''}
                     {weaknessesOf(m).length && !future ? ` · heikkous ${weaknessesOf(m).join(', ')}` : ''}
                   </div>
                   <div className="facts">
