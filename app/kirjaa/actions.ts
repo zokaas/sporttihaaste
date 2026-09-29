@@ -48,17 +48,18 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
     withFamily,
     participants: healthy,
   });
-  return { result, companions, withFamily, allTogether: healthy >= 2 && groupSize >= healthy } as const;
+  return { result, companions, withFamily, weaknessHit: result.bonuses.some((b) => b.label.startsWith('Heikkous')), allTogether: healthy >= 2 && groupSize >= healthy } as const;
 }
 
-export async function logHit(input: HitInput): Promise<Result> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
-  const hit = await computeHit(input, user.id);
-  if ('error' in hit) return { ok: false, error: hit.error! };
-  const { error } = await supabase.from('hits').insert({
-    user_id: user.id,
+type Computed = Exclude<Awaited<ReturnType<typeof computeHit>>, { error: string }>;
+
+/**
+ * Tallentaa iskun. with_family (migraatio 024) lähetetään vain merkittynä ja weakness_hit (migraatio 025)
+ * vain osuessa; jos 025 on ajamatta, tallennetaan ilman sitä, jotta kirjaus toimii silti.
+ */
+async function insertHit(supabase: ReturnType<typeof createClient>, userId: string, input: HitInput, hit: Computed) {
+  const row = {
+    user_id: userId,
     trained_on: input.day,
     sport: input.sport,
     minutes: input.minutes,
@@ -67,9 +68,22 @@ export async function logHit(input: HitInput): Promise<Result> {
     bonus_pct: hit.result.pct,
     damage: hit.result.damage,
     all_together: hit.allTogether,
-    // Sarake tulee migraatiossa 024; lähetetään vain merkittynä, jotta tavallinen kirjaus toimii ilman sitä.
     ...(hit.withFamily ? { with_family: true } : {}),
-  });
+  };
+  if (hit.weaknessHit) {
+    const { error } = await supabase.from('hits').insert({ ...row, weakness_hit: true });
+    if (!error || !error.message.includes('weakness_hit')) return error;
+  }
+  return (await supabase.from('hits').insert(row)).error;
+}
+
+export async function logHit(input: HitInput): Promise<Result> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
+  const hit = await computeHit(input, user.id);
+  if ('error' in hit) return { ok: false, error: hit.error! };
+  const error = await insertHit(supabase, user.id, input, hit);
   if (error) return { ok: false, error: error.message.includes('with_family') ? 'Mamu/lapsi-merkintä vaatii tietokantapäivityksen (migraatio 024). Kerro ylläpidolle.' : error.message };
   await afterHit(supabase).catch(() => {});
   revalidatePath('/', 'layout');
@@ -97,17 +111,7 @@ export async function adminLogHit(input: HitInput & { userId: string }): Promise
   if (!me?.is_admin) return { ok: false, error: 'Vain ylläpitäjä.' };
   const hit = await computeHit(input, input.userId, true);
   if ('error' in hit) return { ok: false, error: hit.error! };
-  const { error } = await supabase.from('hits').insert({
-    user_id: input.userId,
-    trained_on: input.day,
-    sport: input.sport,
-    minutes: input.minutes,
-    companions: hit.companions,
-    base: hit.result.base,
-    bonus_pct: hit.result.pct,
-    damage: hit.result.damage,
-    all_together: hit.allTogether,
-  });
+  const error = await insertHit(supabase, input.userId, input, hit);
   if (error) return { ok: false, error: error.message };
   revalidatePath('/', 'layout');
   return { ok: true, damage: hit.result.damage, pct: hit.result.pct };

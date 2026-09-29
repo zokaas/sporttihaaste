@@ -7,7 +7,7 @@ import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
 import { STEP_DAY_DAMAGE, sealView } from '@/lib/rules';
 import { formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
-import { groupName, stageParts, weaknessesOf } from '@/lib/trio';
+import { activeWeaknesses, groupName, stageParts } from '@/lib/trio';
 import Hint from '@/components/Hint';
 
 export const dynamic = 'force-dynamic';
@@ -28,7 +28,8 @@ export default async function Monsteri({ params }: { params: { week: string } })
   const blow = finalBlows(b)[week];
   const heroName = (id: string) => b.heroes.find((h) => h.id === id)?.hero_name ?? 'Megamarssi';
   const { start, end } = weekRange(week);
-  const weak = weaknessesOf(m).join(', ');
+  // Kaatuneella ei näytetä heikkoutta; elossa olevalla vain vuorossa olevan osan heikkous (kuten taistelussa).
+  const weak = killed ? '' : activeWeaknesses(m, view ? view.hp : m?.hp ?? 0).join(', ');
   const parts = stageParts(m, killed ? 0 : view?.hp ?? m?.hp ?? 0, Boolean(killed), monsterImageUrl);
 
   // Vahinko monsterin viikolla (iskut + askeleet) sankareittain

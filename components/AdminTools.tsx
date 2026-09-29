@@ -41,6 +41,7 @@ export function AdminHitForm({ heroes, sports, min, max }: { heroes: Hero[]; spo
   const [sport, setSport] = useState(sports[0]);
   const [minutes, setMinutes] = useState(60);
   const [companions, setCompanions] = useState<string[]>([]);
+  const [withFamily, setWithFamily] = useState(false);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <label className="field">Sankari
@@ -65,7 +66,12 @@ export function AdminHitForm({ heroes, sports, min, max }: { heroes: Hero[]; spo
           ))}
         </div>
       </fieldset>
-      <button type="button" className="btn" disabled={busy} onClick={() => run(() => adminLogHit({ userId, day, sport, minutes, companions }), 'Isku kirjattu.')}>Kirjaa sankarin puolesta</button>
+      {/* Bonus annetaan vain, jos päivän viikon heikkous on "Urheilu mamun tai lapsen kanssa". */}
+      <label className="family-check">
+        <input type="checkbox" checked={withFamily} onChange={(e) => setWithFamily(e.target.checked)} />
+        <span><strong>Urheili mamun tai lapsen kanssa</strong><span className="muted small">Vaikuttaa vain, jos se on sen viikon heikkous</span></span>
+      </label>
+      <button type="button" className="btn" disabled={busy} onClick={() => run(() => adminLogHit({ userId, day, sport, minutes, companions, withFamily }), 'Isku kirjattu.')}>Kirjaa sankarin puolesta</button>
       <Msg msg={msg} />
     </div>
   );

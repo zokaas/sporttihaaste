@@ -1,9 +1,7 @@
 // Kauden loppugaala: lopputulos, pokaalikaappi, kauden luvut, kunniamerkit ja oma kausi.
 import type { Battle } from './stats';
 import { finalBlows, heroStats } from './stats';
-import { weaknessHit } from './rules';
 import { BOSS_WEEK, seasonWeek } from './season';
-import { weaknessesOf } from './trio';
 
 export type FinaleHero = { id: string; name: string; avatar: string | null };
 export type Award = { icon: string; title: string; detail: string; winners: FinaleHero[]; value: number; unit: string };
@@ -47,12 +45,9 @@ export function seasonFinale(b: Battle, userId: string, avatarUrl: (p: string | 
   for (const h of b.hits) if (h.companions.length) for (const id of [h.user_id, ...h.companions]) together.add(`${id}|${h.trained_on}`);
   const togetherCount = (id: string) => [...together].filter((k) => k.startsWith(`${id}|`)).length;
 
-  const category = (sport: string) => b.sports.find((s) => s.name === sport)?.category;
+  // Heikkousosumat: iskut, jotka oikeasti saivat heikkousbonuksen (tallennettu iskuun kirjaushetkellä).
   const weaknessHits = new Map<string, number>();
-  for (const h of b.hits) {
-    const c = category(h.sport);
-    if (c && weaknessHit(weaknessesOf(b.monsters.get(seasonWeek(h.trained_on))), c, h.sport)) weaknessHits.set(h.user_id, (weaknessHits.get(h.user_id) ?? 0) + 1);
-  }
+  for (const h of b.hits) if (h.weakness_hit) weaknessHits.set(h.user_id, (weaknessHits.get(h.user_id) ?? 0) + 1);
 
   const defs: { icon: string; title: string; detail: string; unit: string; value: (id: string) => number }[] = [
     { icon: '🏆', title: 'MVP', detail: 'Eniten voimaa koko kaudella', unit: 'voimaa', value: (id) => byId.get(id)?.damage ?? 0 },

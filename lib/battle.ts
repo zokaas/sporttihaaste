@@ -33,7 +33,14 @@ export type PublicMonster = {
   taunt_full?: string | null;
 };
 
-type Hit = { id: number; user_id: string; trained_on: string; sport: string; minutes: number; damage: number; bonus_pct: number; all_together: boolean; companions: string[]; created_at: string };
+type Hit = { id: number; user_id: string; trained_on: string; sport: string; minutes: number; damage: number; bonus_pct: number; all_together: boolean; companions: string[]; created_at: string; weakness_hit?: boolean };
+
+const HIT_COLS = 'id, user_id, trained_on, sport, minutes, damage, bonus_pct, all_together, companions, created_at';
+/** Iskut; weakness_hit (migraatio 025) mukaan, jos sarake on jo olemassa. */
+async function loadHits(supabase: SupabaseClient) {
+  const withFlag = await supabase.from('hits').select(`${HIT_COLS}, weakness_hit`);
+  return withFlag.error ? supabase.from('hits').select(HIT_COLS) : withFlag;
+}
 type Step = { user_id: string; day: string; created_at: string };
 type PledgeChange = { user_id: string; from_week: number; hours: number };
 
@@ -50,7 +57,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot. Haetaan rinnakkain.
     supabase.from('monsters').select('week, hp, name, description, weakness, image_path, parts, taunt_half, taunt_low, teaser, boss_whisper, hit_lines, hit_crit, taunt_full').order('week'),
     supabase.from('monsters_public').select('*').order('week'),
-    supabase.from('hits').select('id, user_id, trained_on, sport, minutes, damage, bonus_pct, all_together, companions, created_at'),
+    loadHits(supabase),
     supabase.from('step_days').select('user_id, day, created_at'),
     supabase.from('sick_periods').select('user_id, starts_on, ends_on'),
     supabase.from('pledge_changes').select('user_id, from_week, hours'),
