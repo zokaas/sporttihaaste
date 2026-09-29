@@ -18,9 +18,6 @@ export async function afterHit(supabase: SupabaseClient) {
     if (!k.killedAt || k.killedAt < Date.now() - 15 * 60_000) continue;
     await sendOnce(supabase, `kill-${k.week}`, { title: `💀 ${nameOf(b, k.week)} kaatui!`, body: 'Sinetti täyttyi ja voima riitti. Katso, kuka löi viimeisen iskun.' });
   }
-  if (b.ledger.potCap > 0 && b.ledger.pot >= b.ledger.potCap && b.week < BOSS_WEEK) {
-    await sendOnce(supabase, 'pot-full', { title: '💰 Potti on täynnä!', body: 'Loppupomon HP puolittuu. Iskut kerryttävät silti lupauksia, tilastoja ja kunniamerkkejä.' });
-  }
   const target = b.ledger.alive[0];
   if (!target) return;
   const missing = b.required.filter((id) => !target.hitters.includes(id));
@@ -40,15 +37,4 @@ export async function afterStep(supabase: SupabaseClient, day: string) {
   const b = await loadBattle(supabase, today());
   if (!b.hpLocked || !b.patrols.some((p) => p.day === day)) return;
   await sendOnce(supabase, `patrol-${day}`, { title: '⭐ Megamarssi!', body: 'Kaikki terveet kuittasivat askeleensa. +250 voimaa monsterille.' });
-}
-
-/** Viikon monsterin paljastus: ensimmäinen sovelluksen avaus uudella viikolla lähettää ilmoituksen kaikille. */
-export async function announceReveal(supabase: SupabaseClient, b: Battle) {
-  if (testDay() || !b.hpLocked) return;
-  const m = b.monsters.get(b.week);
-  if (!m?.name) return;
-  await sendOnce(supabase, `reveal-${b.week}`, {
-    title: b.week === BOSS_WEEK ? `🔥 Loppupomo heräsi: ${m.name}` : `👁️ Uusi monsteri: ${m.name}`,
-    body: m.weakness ? `Heikkous: ${m.weakness} (+50 %). Viikko ${b.week} alkoi.` : `Viikko ${b.week} alkoi.`,
-  });
 }

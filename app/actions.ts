@@ -5,7 +5,8 @@ import { addDays, loggableDays, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
 import { afterStep } from '@/lib/events';
 import { loadBattle } from '@/lib/battle';
-import { sendPush } from '@/lib/push';
+import { sendOrQueue, sendPush } from '@/lib/push';
+import { isQuietHour } from '@/lib/quiet';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
 import { strikeSummary, type StrikeSummary } from '@/lib/strike';
 import { sealView } from '@/lib/rules';
@@ -104,7 +105,7 @@ export async function nudgeMissing(): Promise<Result & { sent?: number }> {
   const monster = b.monsters.get(target.week)?.name ?? 'Monsteri';
   // Sama pato kuin etusivun kortissa: sinettirajan alle kertynyt voima.
   const dam = sealView(target, b.required).dam;
-  const sent = await sendPush(supabase, {
+  const sent = await sendOrQueue(supabase, {
     title: '⏳ Sinetti odottaa sinua',
     body: dam
       ? `${sender} muistuttaa: ${dam.toLocaleString('fi-FI')} voimaa odottaa sinua! ${monster} on sinettirajalla ja kaatuu heti, kun lyöt. Muuten pato menetetään sunnuntaina.`
@@ -113,18 +114,17 @@ export async function nudgeMissing(): Promise<Result & { sent?: number }> {
   return { ok: true, sent };
 }
 
-/** Viesti porukalle: push kaikille muille ja näkyy Viestit-sivulla. Tietokanta rajaa yhteen päivässä (ylläpito rajatta). */
+/** Viesti porukalle: push kaikille (myös lähettäjälle) ja näkyy Viestit-sivulla. Tietokanta rajaa kahteen päivässä (ylläpito rajatta). */
 export async function sendMessage(text: string): Promise<Result & { sent?: number; queued?: boolean }> {
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   const body = text.trim().replace(/\s+\n/g, '\n');
   if (!body) return { ok: false, error: 'Kirjoita viesti.' };
   if (body.length > 200) return { ok: false, error: 'Viesti on liian pitkä (enintään 200 merkkiä).' };
-  // Hiljaiset tunnit klo 22–07: viesti tallentuu, mutta push lähtee vasta aamun ajastuksella.
-  const hour = Number(new Intl.DateTimeFormat('fi-FI', { timeZone: 'Europe/Helsinki', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
-  const quiet = hour >= 22 || hour < 7;
+  // Hiljaiset tunnit klo 22–09: viesti tallentuu, mutta push lähtee vasta aamun ajastuksella klo 9.
+  const quiet = isQuietHour();
   const { error } = await supabase.from('messages').insert({ sender: user.id, body, pushed_at: quiet ? null : new Date().toISOString() });
-  if (error) return { ok: false, error: error.message.includes('messages') ? 'Viestejä ei voi vielä lähettää. Ylläpitäjän pitää ajaa migraatiot 011 ja 012.' : error.message };
+  if (error) return { ok: false, error: error.message.includes('messages') ? 'Viestejä ei voi vielä lähettää. Ylläpitäjän pitää ajaa migraatiot 011, 012 ja 019.' : error.message };
   if (quiet) {
     revalidatePath('/viestit');
     return { ok: true, sent: 0, queued: true };
@@ -134,8 +134,9 @@ export async function sendMessage(text: string): Promise<Result & { sent?: numbe
     supabase.from('profiles').select('hero_name').eq('id', user.id).single(),
     supabase.from('profiles').select('id').not('pledge_locked_at', 'is', null),
   ]);
-  const others = (heroes ?? []).map((h) => h.id).filter((id) => id !== user.id);
-  const sent = await sendPush(supabase, { title: `📣 ${sender?.hero_name ?? 'Sankari'}`, body, url: '/viestit' }, others);
+  // Ilmoitus menee kaikille, myös lähettäjälle (näkee, että viesti lähti perille).
+  const everyone = (heroes ?? []).map((h) => h.id);
+  const sent = await sendPush(supabase, { title: `📣 ${sender?.hero_name ?? 'Sankari'}`, body, url: '/viestit' }, everyone);
   revalidatePath('/viestit');
   return { ok: true, sent };
 }

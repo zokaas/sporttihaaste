@@ -1,4 +1,6 @@
 import Nav from '@/components/Nav';
+import { MESSAGES_PER_DAY } from '@/lib/messages';
+import { QUIET_END, QUIET_START } from '@/lib/quiet';
 import { SPORTS, hitDamage, type Category, BONUS_CAP_PCT, STEP_GOAL, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, PLEDGE_BONUS } from '@/lib/rules';
 
 const CATEGORIES: Category[] = ['Kestävyys', 'Voimailu', 'Palloilu', 'Muu'];
@@ -36,9 +38,10 @@ const FAQ: [string, string][] = [
   ['Kirjasin väärin. Miten korjaan?', 'Poista isku Kirjaa treeni -sivulla ja kirjaa uudelleen. Sekin onnistuu vain kuluvan viikon aikana.'],
   ['Sairastuin. Mitä teen?', 'Merkitse Minä-sivun päivärivin alle 🤒 ne päivät, joina olit kipeä (kuluvalta viikolta). Jos merkitset tämän päivän, voit valita jatkuuko sairaus: silloin tulevat päivät merkitään itsestään, kunnes painat Olen taas terve. Jokainen sairaspäivä pienentää viikon lupausta 1/7:lla, yksikin sairaspäivä vapauttaa sen viikon sinetistä, ja megamarssiin riittävät terveet.'],
   ['Mitä askelkuittaus tarkoittaa?', `Kuittaa päivä, jona kävelit vähintään ${STEP_GOAL.toLocaleString('fi-FI')} askelta. Jokainen kuitattu päivä tuo ${STEP_DAY_DAMAGE} voimaa, mutta askeleet eivät täytä sinettiä.`],
-  ['Miksi monsterin HP jää 10, 20 tai 30:een?', 'Sinetti on kesken: jokainen puuttuva sankari pitää monsterille 10 HP. Ylimenevä voima säästyy, ja monsteri kaatuu heti, kun viimeinenkin puuttuva lyö.'],
+  ['Miksi monsterin HP jää 10, 20 tai 30:een?', 'Sinetti on kesken: jokainen puuttuva sankari pitää monsterille 10 HP. Ylimenevä voima kertyy patoon (näkyy etusivulla 🔒), ja monsteri kaatuu heti, kun viimeinenkin puuttuva lyö: silloin pato siirtyy eteenpäin. Jos sinetti jää sunnuntaina vajaaksi, pato menetetään.'],
   ['Mitä rästi tarkoittaa?', 'Monsteri, joka jäi viikolla eloon. Se jatkaa seuraavalla viikolla, ja vanhin monsteri ottaa iskut aina ensin.'],
   ['Voinko muuttaa lupaustani?', 'Et. Lupaus lukittuu ke 30.9. ja pysyy samana koko kauden. Jos sairastut, merkitse itsesi kipeäksi Minä-sivulla: viikon tavoite pienenee sairaspäivien verran.'],
+  ['Miksi en saa ilmoituksia?', 'Salli ilmoitukset Minä-sivulla. iPhonessa sovellus pitää ensin lisätä kotinäytölle (Jaa → Lisää Koti-valikkoon) ja avata sieltä. Yöllä klo 22–09 ilmoituksia ei tule, vaan ne lähtevät aamulla klo 9.'],
   ['Mihin ylimääräinen voima menee?', `Kun viikon monsteri on kaatunut, loput iskut menevät pottiin. Potti iskee loppupomoon sen herätessä.`],
 ];
 
@@ -104,6 +107,20 @@ export default function Saannot() {
       <section className="card">
         <h2 className="display">Loppupomo</h2>
         <p style={{ margin: 0 }}>Loppupomo herää ma 14.12. Se on vahvempi kuin yksikään kauden monstereista, ja vain koko porukka yhdessä voi sen kaataa. Potti iskee siihen sen herätessä. Muuta siitä ei tiedetä ennen kuin se nousee. Loppupomo kaatuu samoin kuin muut monsterit: HP nollaan ja sinetti täyteen. Jos rästejä on vielä jäljellä, ne pitää kaataa ensin.</p>
+      </section>
+
+      <section className="card">
+        <h2 className="display">Viestit ja ilmoitukset</h2>
+        <p style={{ margin: 0 }}>Viestit-sivulla (📣) voit lähettää porukalle viestin, enintään {MESSAGES_PER_DAY} päivässä ja 200 merkkiä. Ilmoitus viestistä menee kaikille, myös sinulle itsellesi.</p>
+        <p style={{ margin: 0 }}><strong>Hiljaiset tunnit klo {QUIET_START}–{String(QUIET_END).padStart(2, '0')}.</strong> Yöllä ei tule yhtään ilmoitusta: silloin syntyvät ilmoitukset ja viestit lähtevät aamulla klo {QUIET_END}.</p>
+        <ul className="rules-list">
+          <li><strong>👁️ Uusi monsteri</strong>: to 1.10. ja sen jälkeen joka maanantai klo {QUIET_END}.</li>
+          <li><strong>⚔️ Perjantaimuistutus</strong>: pe klo {QUIET_END}, vain jos sinulta puuttuu vielä jotain (lupauksen tunnit, isku sinettiin tai askelkuittauksia).</li>
+          <li><strong>💀 Monsteri kaatui</strong> ja <strong>⭐ Megamarssi</strong>: heti kaikille.</li>
+          <li><strong>⚔️ Vain sinä puutut sinetistä</strong>: heti sille, jonka isku viimeisenä puuttuu.</li>
+          <li><strong>⏳ Sinetti odottaa sinua</strong>: kun joku painaa Muistuta puuttuvia (kukin voi muistuttaa kerran kolmessa tunnissa).</li>
+        </ul>
+        <p className="muted small" style={{ margin: 0 }}>Kun sovellus on auki, näet muiden iskut ja askeleet heti pienenä iskuikkunana ruudun yläreunassa.</p>
       </section>
 
       <section className="card">

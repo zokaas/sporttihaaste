@@ -1,6 +1,7 @@
 import 'server-only';
 import webpush from 'web-push';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { isQuietHour } from './quiet';
 
 export type PushPayload = { title: string; body: string; url?: string };
 
@@ -23,9 +24,21 @@ export async function sendPush(supabase: SupabaseClient, payload: PushPayload, u
   return results.filter((r) => r.status === 'fulfilled').length;
 }
 
-/** Lähettää ilmoituksen vain, jos samaa avainta ei ole jo lähetetty. */
+/**
+ * Lähettää heti, paitsi hiljaisina tunteina (klo 22–09): silloin ilmoitus menee jonoon ja lähtee
+ * aamun ajastuksella klo 9. Jos jonoon ei voi kirjoittaa (migraatio 018 ajamatta), lähetetään heti.
+ */
+export async function sendOrQueue(supabase: SupabaseClient, payload: PushPayload, userIds: string[] | null = null) {
+  if (isQuietHour()) {
+    const { error } = await supabase.from('push_queue').insert({ payload, user_ids: userIds });
+    if (!error) return 0;
+  }
+  return sendPush(supabase, payload, userIds);
+}
+
+/** Lähettää ilmoituksen vain, jos samaa avainta ei ole jo lähetetty (hiljaisina tunteina jonoon). */
 export async function sendOnce(supabase: SupabaseClient, key: string, payload: PushPayload, userIds: string[] | null = null) {
   const { data: claimed } = await supabase.rpc('claim_notification', { k: key });
   if (!claimed) return 0;
-  return sendPush(supabase, payload, userIds);
+  return sendOrQueue(supabase, payload, userIds);
 }

@@ -522,3 +522,8 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .dam-lock-amount { font-size: 18px; color: var(--gold); }
 @keyframes lock-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 .strike-toast-detail { font-size: 13px; color: #e8ddd3; }
+
+/* Viestisivun sivutus */
+.pager { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pager .btn { min-height: 44px; }
+.rules-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
