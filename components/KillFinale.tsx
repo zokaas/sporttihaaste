@@ -3,18 +3,29 @@ import { useEffect, useState } from 'react';
 
 type Kill = { week: number; name: string; image: string | null; images?: string[]; blow: string | null };
 
+type Options = {
+  /** Muistin avain: montako kaatoa on jo nähty (portinvartijalla oma). */
+  storageKey?: string;
+  /** Näytetäänkö ruutu myös ensimmäisellä käynnillä (portinvartija: kaatuminen näytetään aina kerran). */
+  showFirst?: boolean;
+  /** Yläotsikko ja selitys (oletus: viikko ja sinettiteksti). */
+  label?: string;
+  note?: string;
+};
+
 /** Iso kaatumisruutu, kun monstereita on kaatunut edellisen käynnin jälkeen. Napautus sulkee. */
-export default function KillFinale({ killed, kills }: { killed: number; kills: Kill[] }) {
+export default function KillFinale({ killed, kills, storageKey = 'mj_killed', showFirst = false, label, note }: { killed: number; kills: Kill[] } & Options) {
   const [fresh, setFresh] = useState<Kill[]>([]);
   useEffect(() => {
     try {
-      const last = localStorage.getItem('mj_killed');
+      const stored = localStorage.getItem(storageKey);
+      const last = stored ?? (showFirst ? '0' : null);
       if (last !== null && killed > Number(last)) setFresh(kills.slice(Number(last)));
-      localStorage.setItem('mj_killed', String(killed));
+      localStorage.setItem(storageKey, String(killed));
     } catch {
       // Selaimen tallennus ei ole käytettävissä.
     }
-  }, [killed, kills]);
+  }, [killed, kills, storageKey, showFirst]);
   if (!fresh.length) return null;
   const k = fresh[fresh.length - 1];
   return (
@@ -31,11 +42,11 @@ export default function KillFinale({ killed, kills }: { killed: number; kills: K
         </div>
       </div>
       <div className="finale-text">
-        <span>Viikko {k.week}</span>
+        <span>{label ?? `Viikko ${k.week}`}</span>
         <strong className="display">{fresh.map((x) => x.name).join(' ja ')}</strong>
         <em>KAATUI</em>
         {k.blow ? <p>Viimeinen isku: {k.blow}</p> : null}
-        <p className="muted small">Sinetti täyttyi ja monsteri kaatui. Ylijäämävoima jatkaa seuraavaan monsteriin tai pottiin.</p>
+        <p className="muted small">{note ?? 'Sinetti täyttyi ja monsteri kaatui. Ylijäämävoima jatkaa seuraavaan monsteriin tai pottiin.'}</p>
         <button type="button" className="btn btn-ghost">Jatka taistelua</button>
       </div>
     </div>

@@ -105,6 +105,16 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         </p>
       ) : null}
       <KillFinale killed={ledger.killed.length} kills={kills} />
+      {week === 1 && (data.gate.dealt > 0 || data.gate.left > 0) ? (
+        // Portinvartijan (29.–30.9.) tulos: selittää viikon 1 monsterin lisä-HP:n tai potin ylijäämän.
+        <section className={`card gate-result${data.gate.killed ? '' : ' threat'}`}>
+          <p style={{ margin: 0 }}>
+            {data.gate.killed
+              ? <>👁️ <strong>{data.gate.name} kaatui portilla.</strong> {data.gate.surplus ? `Ylijäämä ${fmt(data.gate.surplus)} voimaa on potissa loppupomoa vastaan.` : 'Portti aukesi täsmälleen.'}</>
+              : <>👁️ <strong>{data.gate.name} selvisi.</strong> Sen jäljelle jäänyt {fmt(data.gate.left)} HP siirtyi viikon 1 monsterille: {nameOf(1)}.</>}
+          </p>
+        </section>
+      ) : null}
       {target ? <AwaySummary events={awayEvents} skip={ownHit != null} strike={{ name: nameOf(target.week), image: monsterImageUrl(targetMonster?.image_path), hp: view!.hp, maxHp: targetMonster?.hp ?? 1, reaction: hitReaction(targetMonster?.hit_lines, targetMonster?.hit_crit, false) }} /> : null}
       {recap ? <RecapPrompt week={recap.week}><RecapCard r={recap} /></RecapPrompt> : null}
 
