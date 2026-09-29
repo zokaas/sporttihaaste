@@ -7,7 +7,7 @@ import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
 import { STEP_DAY_DAMAGE, sealView } from '@/lib/rules';
 import { formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
-import { stageParts, weaknessesOf } from '@/lib/trio';
+import { groupName, stageParts, weaknessesOf } from '@/lib/trio';
 import Hint from '@/components/Hint';
 
 export const dynamic = 'force-dynamic';
@@ -59,7 +59,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
 
       {parts && m?.parts ? (
         <section className="card">
-          <Hint id="trio" title={<h2 className="display">Kolmikko</h2>}>Kolme osaa jakavat viikon HP:n tasan ja kaatuvat järjestyksessä. Viimeinen kaatuu vasta, kun sinetti on täynnä.</Hint>
+          <Hint id="trio" title={<h2 className="display">{groupName(m!.parts!.length)}</h2>}>Osat jakavat viikon HP:n tasan ja kaatuvat järjestyksessä. Viimeinen kaatuu vasta, kun sinetti on täynnä.</Hint>
           <ul className="people">
             {m.parts.map((part, i) => (
               <li key={i} style={parts[i].dead ? { opacity: 0.6 } : undefined}>

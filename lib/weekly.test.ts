@@ -52,4 +52,7 @@ assert.deepEqual(partStates(5000, 3000, 3, false).map((p) => [p.left, p.dead]), 
 assert.deepEqual(partStates(5000, 0, 3, false).map((p) => p.dead), [true, true, false]);
 assert.deepEqual(partStates(5000, 0, 3, true).map((p) => p.dead), [true, true, true]);
 assert.deepEqual(weaknessesOf({ parts: [{ name: 'a', weakness: 'Voimailu' }, { name: 'b', weakness: 'Voimailu' }, { name: 'c', weakness: 'Muu' }] }), ['Voimailu', 'Muu']);
-console.log('Kolmikkotestit menivät läpi.');
+// Kaksikko: 7 500 HP → 2 × 3 750; 4 000 vahinkoa → ensimmäinen kaatunut, toisesta 250 pois
+assert.deepEqual(partHps(7500, 2), [3750, 3750]);
+assert.deepEqual(partStates(7500, 3500, 2, false).map((p) => [p.left, p.dead]), [[0, true], [3500, false]]);
+console.log('Kolmikko- ja kaksikkotestit menivät läpi.');

@@ -11,6 +11,7 @@ export type Monster = {
   description: string | null;
   weakness: string | null;
   hp: number | null;
+  hp_manual?: boolean;
   image_path: string | null;
   revealed_at: string | null;
   parts: Part[] | null;
@@ -45,6 +46,19 @@ function MonsterRow({ monster }: { monster: Monster }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const revealed = m.revealed_at ? new Date(m.revealed_at) : null;
+  const isRevealed = Boolean(revealed && revealed.getTime() <= Date.now());
+  const [hpInput, setHpInput] = useState(m.hp != null ? String(m.hp) : '');
+  const partWord = (n: number) => (n === 2 ? 'kaksikko' : 'kolmikko');
+  // Osien määrä: 0 = yksi monsteri, 2 = kaksikko, 3 = kolmikko. Olemassa olevat osat säilyvät.
+  function setPartCount(n: number) {
+    const cur = m.parts ?? [];
+    setM({ ...m, parts: n ? Array.from({ length: n }, (_, i) => cur[i] ?? emptyPart()) : null });
+  }
+  async function saveHp() {
+    const hp = Math.round(Number(hpInput));
+    if (!Number.isFinite(hp) || hp < 100) return setMsg({ ok: false, text: 'Anna HP (vähintään 100).' });
+    await save({ hp, hp_manual: true });
+  }
   const img = monsterImageUrl(m.image_path);
 
   async function save(patch: Partial<Monster>) {
@@ -127,22 +141,40 @@ function MonsterRow({ monster }: { monster: Monster }) {
     <details className="monster-row">
       <summary>
         <strong>Vko {m.week}</strong> {m.name ?? <span className="muted">nimeämättä</span>}
-        {m.parts ? <span className="muted small"> · kolmikko</span> : null}
+        {m.parts ? <span className="muted small"> · {partWord(m.parts.length)}</span> : null}
+        {m.hp ? <span className="muted small"> · {m.hp.toLocaleString('fi-FI')} HP</span> : null}
         {!m.weakness && !m.parts && m.week !== BOSS_WEEK ? <span className="error small"> · heikkous puuttuu</span> : null}
         {!m.image_path ? <span className="error small"> · kuva puuttuu</span> : null}
       </summary>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 12 }}>
+        {isRevealed ? (
+          <p className="muted small" style={{ margin: 0 }}>HP {m.hp?.toLocaleString('fi-FI') ?? '–'} · lukittu, koska monsteri on jo paljastunut.</p>
+        ) : (
+          <div className="field">
+            HP (voi muuttaa, kunnes monsteri paljastuu)
+            <div className="row" style={{ gap: 8 }}>
+              <input className="input grow" style={{ minWidth: 0 }} type="number" inputMode="numeric" min={100} step={100} value={hpInput} onChange={(e) => setHpInput(e.target.value)} />
+              <button type="button" className="btn btn-ghost" style={{ flex: '0 0 auto', paddingInline: 16 }} disabled={busy || hpInput === String(m.hp ?? '')} onClick={saveHp}>Tallenna</button>
+            </div>
+            {parts && Number(hpInput) > 0 ? <span className="muted small">{parts.length} × {Math.round(Number(hpInput) / parts.length).toLocaleString('fi-FI')} HP</span> : null}
+            {m.hp_manual ? <span className="muted small">Asetettu käsin: uudelleenlukitus ei muuta tätä.</span> : null}
+          </div>
+        )}
         {m.week !== BOSS_WEEK ? (
-          <label className="row" style={{ alignItems: 'center', gap: 8 }}>
-            <input type="checkbox" checked={Boolean(parts)} onChange={(e) => setM({ ...m, parts: e.target.checked ? [emptyPart(), emptyPart(), emptyPart()] : null })} />
-            Monsterikolmikko (kolme osaa, HP tasan)
+          <label className="field">
+            Monsterin muoto
+            <select className="input" value={parts?.length ?? 0} onChange={(e) => setPartCount(Number(e.target.value))}>
+              <option value={0}>Yksi monsteri</option>
+              <option value={2}>Kaksikko (kaksi osaa, HP tasan)</option>
+              <option value={3}>Kolmikko (kolme osaa, HP tasan)</option>
+            </select>
           </label>
         ) : null}
         {parts ? parts.map((part, i) => {
           const src = monsterImageUrl(part.image_path);
           return (
             <fieldset key={i} className="card" style={{ margin: 0, gap: 10 }}>
-              <legend className="small muted">Osa {i + 1}{i === 2 ? ' (kaatuu viimeisenä, kun sinetti täyttyy)' : ''}</legend>
+              <legend className="small muted">Osa {i + 1}{i === parts.length - 1 ? ' (kaatuu viimeisenä, kun sinetti täyttyy)' : ''}</legend>
               {src ? <img src={src} alt="" style={{ width: '100%', borderRadius: 14 }} /> : null}
               <label className="btn btn-ghost" style={{ minHeight: 44 }}>
                 {src ? 'Vaihda kuva' : 'Lataa kuva'}

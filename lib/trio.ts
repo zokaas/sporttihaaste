@@ -1,4 +1,4 @@
-// Monsterikolmikko: kolme osaa jakavat viikon HP:n tasan ja kaatuvat järjestyksessä.
+// Moniosainen monsteri (kaksikko tai kolmikko): osat jakavat viikon HP:n tasan ja kaatuvat järjestyksessä.
 import type { Category } from './rules';
 
 export type MonsterPart = { name: string; description?: string | null; weakness?: Category | null; image_path?: string | null };
@@ -43,3 +43,6 @@ export function stageParts(
   const states = partStates(m.hp, hpLeft, m.parts.length, killed);
   return m.parts.map((part, i) => ({ name: part.name, image: image(part.image_path), ...states[i] }));
 }
+
+/** "Kaksikko" tai "Kolmikko" osien määrän mukaan. */
+export const groupName = (n: number) => (n === 2 ? 'Kaksikko' : n === 3 ? 'Kolmikko' : `${n} osaa`);
