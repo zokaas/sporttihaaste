@@ -368,7 +368,7 @@ details.companions[open] { padding-bottom: 12px; }
 .mcell { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 8px; }
 .mcell.trained { background: var(--ember-fill); color: var(--light); }
 .mcell.legend { width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; }
-.stage-taunt { position: absolute; z-index: 3; top: 52px; left: 16px; max-width: 72%; padding: 10px 14px; border-radius: 16px 16px 16px 4px; background: rgba(242, 234, 224, 0.94); color: #1c1715; font: italic 600 14px/1.35 var(--font-body), sans-serif; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); animation: taunt-in 0.5s ease-out both; }
+.stage-taunt { position: relative; z-index: 3; max-width: 88%; margin-bottom: 4px; padding: 10px 14px; border-radius: 4px 16px 16px 16px; background: rgba(242, 234, 224, 0.94); color: #1c1715; font: italic 600 14px/1.35 var(--font-body), sans-serif; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); animation: taunt-in 0.5s ease-out both; }
 @keyframes taunt-in { from { opacity: 0; transform: translateY(-6px) scale(0.96); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .stage-taunt { animation: none; } }
 .card.teaser { flex-direction: row; align-items: center; gap: 14px; background: radial-gradient(ellipse at 20% 50%, #2a1512, var(--surface) 70%); }

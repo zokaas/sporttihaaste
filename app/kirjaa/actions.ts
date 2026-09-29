@@ -5,7 +5,7 @@ import { hitDamage, type Category } from '@/lib/rules';
 import { loadSports } from '@/lib/sports';
 import { loggableDays, monthDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
-import { monsterOfWeek } from '@/lib/battle';
+import { currentWeaknesses, loadBattle } from '@/lib/battle';
 import { afterHit } from '@/lib/events';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
 
@@ -22,9 +22,9 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
   if (anyDay ? w < 1 || w > BOSS_WEEK || input.day > today() : !loggableDays(today()).includes(input.day)) return { error: 'Päivälle ei voi enää kirjata. Valitse kuluvan viikon päivä.' } as const;
   if (!Number.isInteger(input.minutes) || input.minutes < 15 || input.minutes > 600) return { error: 'Keston pitää olla 15 min – 10 h.' } as const;
 
-  const [{ data: heroes }, monster, { data: sick }] = await Promise.all([
+  const [{ data: heroes }, battle, { data: sick }] = await Promise.all([
     supabase.from('profiles').select('id, pledge_locked_at, birthday, name_day'),
-    monsterOfWeek(supabase, seasonWeek(input.day)),
+    loadBattle(supabase, today()),
     supabase.from('sick_periods').select('user_id, starts_on, ends_on'),
   ]);
   const ids = new Set((heroes ?? []).filter((h) => h.pledge_locked_at).map((h) => h.id));
@@ -40,7 +40,7 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
     category: sport.category,
     groupSize,
     celebration,
-    weakness: monster.weaknesses,
+    weakness: currentWeaknesses(battle, seasonWeek(input.day)),
     sport: sport.name,
     participants: healthy,
   });

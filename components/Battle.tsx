@@ -14,7 +14,7 @@ import LiveRefresh from '@/components/LiveRefresh';
 import AwaySummary, { type AwayEvent } from '@/components/AwaySummary';
 import RecapPrompt from '@/components/RecapPrompt';
 import RecapCard from '@/components/RecapCard';
-import { stageParts, weaknessesOf } from '@/lib/trio';
+import { activeWeaknesses, stageParts } from '@/lib/trio';
 import Hint from '@/components/Hint';
 import TodayCard from '@/components/TodayCard';
 import { isSickOn } from '@/lib/weekly';
@@ -116,7 +116,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           week={target.week}
           title={nameOf(target.week)}
           image={monsterImageUrl(monsters.get(target.week)?.image_path)}
-          weakness={weaknessesOf(monsters.get(target.week)).join(', ') || null}
+          weakness={activeWeaknesses(monsters.get(target.week), view!.hp).join(', ') || null}
           parts={stageParts(monsters.get(target.week), view!.hp, false, monsterImageUrl)}
           hp={view!.hp}
           maxHp={monsters.get(target.week)?.hp ?? 1}

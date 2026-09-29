@@ -216,10 +216,10 @@ export default function MonsterStage(p: Props) {
         </div>
       ) : null}
 
-      {reply && p.hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status">“{p.hitLine}”</div>
-        : p.taunt && !p.dead ? <div key="taunt" className="stage-taunt" role="note">“{p.taunt}”</div> : null}
-
       <div className="stage-info">
+        {/* Puhekupla nimen yläpuolella, jotta se ei peitä kuvan kasvoja (ne ovat yleensä kuvan yläosassa). */}
+        {reply && p.hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status">“{p.hitLine}”</div>
+          : p.taunt && !p.dead ? <div key="taunt" className="stage-taunt" role="note">“{p.taunt}”</div> : null}
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
         {parts ? (
           <div className="stage-parts" aria-label={`${groupName(parts.length)}: ${deadParts}/${parts.length} kaatunut`}>
@@ -255,7 +255,7 @@ export default function MonsterStage(p: Props) {
 
       {partFall ? (
         <div className="stage-reveal part-fall" aria-live="polite">
-          <span>Kolmikosta kaatui</span>
+          <span>{parts?.length === 2 ? 'Kaksikosta' : 'Kolmikosta'} kaatui</span>
           <strong className="display">{partFall}</strong>
         </div>
       ) : null}
