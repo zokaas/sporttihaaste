@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 import webpush from 'web-push';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl } from '@/lib/supabase/client';
-import { seasonHp } from '@/lib/rules';
+import { CATEGORIES, SPORT_VALUES, seasonHp, type Category } from '@/lib/rules';
 import { loadBattle } from '@/lib/battle';
 import { weekRecap } from '@/lib/stats';
 import { today } from '@/lib/today';
@@ -130,7 +130,34 @@ async function shadowBroadcast(form: FormData) {
   redirect(`/yllapito?push=${encodeURIComponent(quiet ? 'Varjojen ääni jonossa: nyt on hiljaiset tunnit, joten se lähtee aamulla klo 9.' : `Varjojen ääni lähti ${sent} laitteeseen.`)}#varjot`);
 }
 
-export default async function Yllapito({ searchParams }: { searchParams: { push?: string; testi?: string; tavoite?: string; nollaa?: string; nakyvyys?: string } }) {
+/** Uusi laji kaikkien lajilistaan. Nimeä ja arvoa ei voi muuttaa jälkikäteen, jotta vanhat iskut pysyvät oikein. */
+async function addSport(form: FormData) {
+  'use server';
+  const supabase = await requireAdmin();
+  const name = String(form.get('name') ?? '').trim().replace(/\s+/g, ' ').slice(0, 40);
+  const value = Number(form.get('value'));
+  const category = String(form.get('category')) as Category;
+  const back = (msg: string) => redirect(`/yllapito?laji=${encodeURIComponent(msg)}#lajit`);
+  if (name.length < 2) back('Anna lajille nimi.');
+  if (!SPORT_VALUES.includes(value as 50) || !CATEGORIES.includes(category)) back('Valitse ryhmä ja arvo.');
+  const { error } = await supabase.from('sports').insert({ name, value, category });
+  if (error) back(error.code === '23505' ? `${name} on jo listalla.` : `Lisäys epäonnistui: ${error.message}`);
+  revalidatePath('/', 'layout');
+  back(`${name} lisätty. Se näkyy nyt kaikilla.`);
+}
+
+/** Piilotettu laji jää vanhoihin iskuihin, mutta sille ei voi kirjata uusia. */
+async function setSportActive(form: FormData) {
+  'use server';
+  const supabase = await requireAdmin();
+  const name = String(form.get('name'));
+  const active = form.get('active') === '1';
+  const { error } = await supabase.from('sports').update({ active }).eq('name', name);
+  revalidatePath('/', 'layout');
+  redirect(`/yllapito?laji=${encodeURIComponent(error ? `Muutos epäonnistui: ${error.message}` : `${name} ${active ? 'palautettu listalle' : 'piilotettu'}.`)}#lajit`);
+}
+
+export default async function Yllapito({ searchParams }: { searchParams: { push?: string; testi?: string; tavoite?: string; nollaa?: string; nakyvyys?: string; laji?: string } }) {
   const supabase = await requireAdmin();
   const battle = await loadBattle(supabase, today());
   const lastRecap = battle.week >= 2 ? weekRecap(battle, battle.week - 1) : null;
@@ -271,7 +298,51 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
       <section className="card">
         <h2 className="display">Monsterit</h2>
         <Hint id="admin-monsters" className="muted">Nimi, kuvaus, heikkous ja kuva näkyvät muille vasta monsterin viikon alkaessa (viikko 1: to 1.10., muut maanantaisin klo 00.00).</Hint>
-        <MonsterEditor monsters={(monsters ?? []) as Monster[]} />
+        <MonsterEditor monsters={(monsters ?? []) as Monster[]} sports={battle.sports.filter((x) => x.active)} />
+      </section>
+
+      <section className="card" id="lajit">
+        <h2 className="display">Lajit</h2>
+        <p className="muted small" style={{ margin: 0 }}>Uusi laji näkyy heti kaikilla kirjauksessa, säännöissä ja heikkouksissa. Nimeä ja arvoa ei voi muuttaa jälkikäteen. Laji ei myöskään poistu, mutta sen voi piilottaa: vanhat iskut säilyvät.</p>
+        <form action={addSport} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <label className="field">
+            Nimi
+            <input className="input" name="name" minLength={2} maxLength={40} required placeholder="esim. Kuntonyrkkeily" />
+          </label>
+          <div className="row" style={{ gap: 10 }}>
+            <label className="field grow">
+              Ryhmä
+              <select className="input" name="category" defaultValue="Kestävyys">
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+            <label className="field grow">
+              Voimaa / h
+              <select className="input" name="value" defaultValue="100">
+                <option value="100">100 (tavallinen)</option>
+                <option value="200">200 (raskas)</option>
+                <option value="50">50 (kevyt)</option>
+              </select>
+            </label>
+          </div>
+          <ConfirmButton className="btn" message="Lisätäänkö laji? Nimeä ja arvoa ei voi muuttaa jälkikäteen.">Lisää laji</ConfirmButton>
+        </form>
+        {searchParams.laji ? <p className={`note${/epäonnistui|jo listalla|Anna|Valitse/.test(searchParams.laji) ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.laji}</p> : null}
+        <ul className="people">
+          {battle.sports.map((x) => (
+            <li key={x.name} style={x.active ? undefined : { opacity: 0.55 }}>
+              <div className="grow" style={{ minWidth: 0 }}>
+                <div className="who">{x.name}{x.active ? '' : ' (piilotettu)'}</div>
+                <div className="facts">{x.category} · {x.value} / h</div>
+              </div>
+              <form action={setSportActive}>
+                <input type="hidden" name="name" value={x.name} />
+                <input type="hidden" name="active" value={x.active ? '0' : '1'} />
+                <button className="btn btn-ghost" type="submit" style={{ flex: '0 0 auto' }}>{x.active ? 'Piilota' : 'Palauta'}</button>
+              </form>
+            </li>
+          ))}
+        </ul>
       </section>
     </>
   );

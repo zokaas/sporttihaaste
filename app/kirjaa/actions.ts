@@ -1,7 +1,8 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { SPORTS, hitDamage, type Category } from '@/lib/rules';
+import { hitDamage, type Category } from '@/lib/rules';
+import { loadSports } from '@/lib/sports';
 import { loggableDays, monthDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
 import { monsterOfWeek } from '@/lib/battle';
@@ -14,7 +15,8 @@ type Result = { ok: true; damage: number; pct?: number } | { ok: false; error: s
 /** Laskee iskun samoilla säännöillä kuin esikatselu. Käytetään sekä esikatselussa että tallennuksessa. */
 async function computeHit(input: HitInput, userId: string, anyDay = false) {
   const supabase = createClient();
-  const sport = SPORTS.find((s) => s.name === input.sport);
+  // Piilotetulle lajille ei voi kirjata uutta iskua, mutta ylläpidon korjaus (anyDay) voi käyttää sitä.
+  const sport = (await loadSports(supabase)).find((s) => s.name === input.sport && (s.active || anyDay));
   if (!sport) return { error: 'Valitse laji.' } as const;
   const w = seasonWeek(input.day);
   if (anyDay ? w < 1 || w > BOSS_WEEK || input.day > today() : !loggableDays(today()).includes(input.day)) return { error: 'Päivälle ei voi enää kirjata. Valitse kuluvan viikon päivä.' } as const;

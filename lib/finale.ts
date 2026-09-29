@@ -1,7 +1,7 @@
 // Kauden loppugaala: lopputulos, pokaalikaappi, kauden luvut, kunniamerkit ja oma kausi.
 import type { Battle } from './stats';
 import { finalBlows, heroStats } from './stats';
-import { SPORTS, weaknessHit } from './rules';
+import { weaknessHit } from './rules';
 import { BOSS_WEEK, seasonWeek } from './season';
 import { weaknessesOf } from './trio';
 
@@ -47,7 +47,7 @@ export function seasonFinale(b: Battle, userId: string, avatarUrl: (p: string | 
   for (const h of b.hits) if (h.companions.length) for (const id of [h.user_id, ...h.companions]) together.add(`${id}|${h.trained_on}`);
   const togetherCount = (id: string) => [...together].filter((k) => k.startsWith(`${id}|`)).length;
 
-  const category = (sport: string) => SPORTS.find((s) => s.name === sport)?.category;
+  const category = (sport: string) => b.sports.find((s) => s.name === sport)?.category;
   const weaknessHits = new Map<string, number>();
   for (const h of b.hits) {
     const c = category(h.sport);

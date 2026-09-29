@@ -1,10 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient, monsterImageUrl } from '@/lib/supabase/client';
 import { BOSS_WEEK } from '@/lib/season';
 import { bossWhisper } from '@/lib/boss';
-import { SPORTS } from '@/lib/rules';
+import { CATEGORIES, SPORTS, type Sport } from '@/lib/rules';
 
 export type Monster = {
   week: number;
@@ -28,19 +28,21 @@ export type Monster = {
 type Part = { name: string; description: string | null; weakness: string | null; image_path: string | null };
 const emptyPart = (): Part => ({ name: '', description: null, weakness: null, image_path: null });
 
-const WEAKNESSES = ['Kestävyys', 'Voimailu', 'Palloilu', 'Muu'];
+/** Lajilista tietokannasta (ylläpidon lisäämät mukana). */
+const SportsContext = createContext<Sport[]>(SPORTS);
 
 /** Heikkousvaihtoehdot: koko lajiryhmä tai yksittäinen laji. */
 function WeaknessOptions() {
+  const sports = useContext(SportsContext);
   return (
     <>
       <option value="">Ei heikkoutta</option>
       <optgroup label="Lajiryhmä (kaikki ryhmän lajit)">
-        {WEAKNESSES.map((w) => <option key={w} value={w}>{w}</option>)}
+        {CATEGORIES.map((w) => <option key={w} value={w}>{w}</option>)}
       </optgroup>
-      {WEAKNESSES.map((c) => (
+      {CATEGORIES.map((c) => (
         <optgroup key={c} label={`Yksittäinen laji: ${c}`}>
-          {SPORTS.filter((s) => s.category === c).map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
+          {sports.filter((s) => s.category === c).map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
         </optgroup>
       ))}
     </>
@@ -292,6 +294,10 @@ function MonsterRow({ monster }: { monster: Monster }) {
   );
 }
 
-export default function MonsterEditor({ monsters }: { monsters: Monster[] }) {
-  return <div style={{ display: 'flex', flexDirection: 'column' }}>{monsters.map((m) => <MonsterRow key={m.week} monster={m} />)}</div>;
+export default function MonsterEditor({ monsters, sports }: { monsters: Monster[]; sports: Sport[] }) {
+  return (
+    <SportsContext.Provider value={sports}>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>{monsters.map((m) => <MonsterRow key={m.week} monster={m} />)}</div>
+    </SportsContext.Provider>
+  );
 }

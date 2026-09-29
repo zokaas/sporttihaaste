@@ -88,14 +88,13 @@ assert.equal(r.alive.length, 1, 'sinetistä puuttuu c');
 r = computeLedger({ ...base, events: [...allKilled, ev(12, 1, 'a', 2000), ev(12, 2, 'b', 10), ev(12, 3, 'c', 10)] }, 12);
 assert.equal(r.alive.length, 0, 'pomo kaatuu ilman yhteistreeniä');
 
-// Tietokannan lajilista (migraatio 007, sport_value) vastaa sovelluksen lajeja ja arvoja
+// Tietokannan lajilista (migraatio 023, taulu sports) sisältää sovelluksen lajit samoilla arvoilla ja ryhmillä
 import { SPORTS } from './rules.ts';
-const sql = readFileSync(new URL('../supabase/migrations/007_tarkistukset.sql', import.meta.url), 'utf8');
-const block = (v: number) => sql.split('\n').join(' ').match(new RegExp(`(?:in \\(([^)]*)\\)|= '([^']*)') then ${v}`))!;
+const sql = readFileSync(new URL('../supabase/migrations/023_lajit.sql', import.meta.url), 'utf8');
 for (const sp of SPORTS) {
-  const m = block(sp.value);
-  assert.ok((m[1] ?? `'${m[2]}'`).includes(`'${sp.name}'`), `${sp.name} puuttuu tietokannan lajilistasta arvolla ${sp.value}`);
+  assert.ok(sql.includes(`('${sp.name}', ${sp.value}, '${sp.category}')`), `${sp.name} puuttuu tietokannan lajilistasta arvolla ${sp.value}`);
 }
+assert.equal(new Set(SPORTS.map((s) => s.name)).size, SPORTS.length, 'lajin nimi on listalla kahdesti');
 
 console.log('Kaikki sääntötestit menivät läpi.');
 
