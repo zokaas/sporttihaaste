@@ -46,13 +46,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fi" className={`${display.variable} ${body.variable}`}>
+    <html lang="fi" className={`${display.variable} ${body.variable}`} style={{ backgroundColor: '#0E0C0B', colorScheme: 'dark' }}>
       <head>
         {/* Tumma tausta heti ennen tyylitiedoston latautumista: ei valkoista välähdystä käynnistyksessä. */}
         <meta name="color-scheme" content="dark" />
         <style dangerouslySetInnerHTML={{ __html: 'html,body{background:#0E0C0B;color-scheme:dark}' }} />
       </head>
-      <body>
+      <body style={{ backgroundColor: '#0E0C0B' }}>
         <BootSplash />
         {testDay() ? <div className="test-banner">Testitila: {formatDay(testDay()!)} · <a href="/yllapito">lopeta</a></div> : null}
         <main className="app">{children}</main>
