@@ -85,12 +85,13 @@ export function weeklyPace(totalPledgeHours: number) {
 
 /**
  * HP viikoille 1–11 ja loppupomolle (viikko 12). Pelkät lupaukset ja askeleet eivät riitä:
- * viikko 1 (Willa) on 1,2 × vauhti mutta kestää vain to–su, joten se jatkuu rästinä viikolle 2.
+ * viikko 1 kestää vain to–su (4 pv), joten sen HP on 4/7 × 1,2 × vauhti: kaatuu, kun porukka pitää lupauksensa
+ * ja tekee vähän päälle, eikä jää roikkumaan rästiksi toiselle viikolle.
  * Viikot 2–11 kasvavat 1,05 → 1,15 × vauhti, loppupomo 1,5 × vauhti (potti vähentää enintään puolet).
  */
 export function seasonHp(totalPledgeHours: number) {
   const pace = weeklyPace(totalPledgeHours);
-  const monsters: number[] = [round500(1.2 * pace)];
+  const monsters: number[] = [round500((4 / 7) * 1.2 * pace)];
   for (let i = 0; i < MONSTER_WEEKS - 1; i++) monsters.push(round500(pace * (1.05 + (0.1 * i) / (MONSTER_WEEKS - 2))));
   const boss = round500(1.5 * pace);
   return { pace: Math.round(pace), monsters, boss, potCap: Math.floor(boss / 2) };

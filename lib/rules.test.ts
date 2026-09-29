@@ -25,7 +25,8 @@ assert.equal(adjustedPledge(4, 7), 0);
 const hp = seasonHp(45);
 assert.equal(hp.pace, 7250);
 assert.equal(hp.monsters.length, 11);
-assert.equal(hp.monsters[0], 8500); // Willa 1,2 × vauhti
+assert.equal(hp.monsters[0], 5000); // viikko 1: 4/7 × 1,2 × vauhti (to–su)
+assert.equal(seasonHp(38.5).monsters[0], 4500); // kauden lupauksilla (38,5 h, vauhti 6 600)
 assert.equal(hp.monsters[1], 7500); // 1,05 × vauhti
 assert.equal(hp.monsters[10], 8500); // 1,15 × vauhti
 assert.equal(hp.boss, 11000);
