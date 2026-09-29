@@ -80,6 +80,7 @@ export default async function Kirjaa() {
                     {formatDay(h.trained_on)}
                     {h.bonus_pct ? ` · bonus +${h.bonus_pct} %` : ''}
                     {h.companions.length ? ` · mukana ${h.companions.map((id: string) => names.get(id)).filter(Boolean).join(', ')}` : ''}
+                    {h.with_family ? ' · 👶👵 lapsen/mummun kanssa' : ''}
                   </div>
                 </div>
                 <DeleteHitButton id={h.id} />

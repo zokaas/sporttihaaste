@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { createClient, monsterImageUrl } from '@/lib/supabase/client';
 import { BOSS_WEEK } from '@/lib/season';
 import { bossWhisper } from '@/lib/boss';
-import { CATEGORIES, SPORTS, type Sport } from '@/lib/rules';
+import { CATEGORIES, FAMILY_WEAKNESS, SPORTS, type Sport } from '@/lib/rules';
 
 export type Monster = {
   week: number;
@@ -39,6 +39,9 @@ function WeaknessOptions() {
       <option value="">Ei heikkoutta</option>
       <optgroup label="Lajiryhmä (kaikki ryhmän lajit)">
         {CATEGORIES.map((w) => <option key={w} value={w}>{w}</option>)}
+      </optgroup>
+      <optgroup label="Erikoisheikkous">
+        <option value={FAMILY_WEAKNESS}>{FAMILY_WEAKNESS} (mikä tahansa laji, kirjaaja merkitsee)</option>
       </optgroup>
       {CATEGORIES.map((c) => (
         <optgroup key={c} label={`Yksittäinen laji: ${c}`}>

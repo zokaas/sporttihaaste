@@ -560,3 +560,8 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .finale-group .finale-img { width: min(28vw, 150px); }
 .avatar-stack { display: inline-flex; flex: 0 0 auto; }
 .avatar-stack .avatar + .avatar { margin-left: -22px; }
+
+/* Kirjaus: lapsi/mummu-heikkouden merkintä */
+.family-check { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; cursor: pointer; }
+.family-check input { width: 24px; height: 24px; flex: 0 0 auto; accent-color: var(--ember-fill); }
+.family-check > span { display: flex; flex-direction: column; gap: 2px; }

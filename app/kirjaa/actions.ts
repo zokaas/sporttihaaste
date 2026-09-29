@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { hitDamage, type Category } from '@/lib/rules';
+import { FAMILY_WEAKNESS, hitDamage, type Category } from '@/lib/rules';
 import { loadSports } from '@/lib/sports';
 import { loggableDays, monthDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
@@ -9,7 +9,7 @@ import { currentWeaknesses, loadBattle } from '@/lib/battle';
 import { afterHit } from '@/lib/events';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
 
-export type HitInput = { day: string; sport: string; minutes: number; companions: string[] };
+export type HitInput = { day: string; sport: string; minutes: number; companions: string[]; withFamily?: boolean };
 type Result = { ok: true; damage: number; pct?: number } | { ok: false; error: string };
 
 /** Laskee iskun samoilla säännöillä kuin esikatselu. Käytetään sekä esikatselussa että tallennuksessa. */
@@ -34,17 +34,21 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
   const md = monthDay(input.day);
   const celebration = (heroes ?? []).some((h) => h.pledge_locked_at && (h.birthday === md || h.name_day === md));
   const groupSize = 1 + companions.length;
+  const weaknesses = currentWeaknesses(battle, seasonWeek(input.day));
+  // Lapsi/mummu-merkintä tallennetaan vain, kun se on viikon heikkous.
+  const withFamily = Boolean(input.withFamily) && weaknesses.includes(FAMILY_WEAKNESS);
   const result = hitDamage({
     minutes: input.minutes,
     sportValue: sport.value,
     category: sport.category,
     groupSize,
     celebration,
-    weakness: currentWeaknesses(battle, seasonWeek(input.day)),
+    weakness: weaknesses,
     sport: sport.name,
+    withFamily,
     participants: healthy,
   });
-  return { result, companions, allTogether: healthy >= 2 && groupSize >= healthy } as const;
+  return { result, companions, withFamily, allTogether: healthy >= 2 && groupSize >= healthy } as const;
 }
 
 export async function logHit(input: HitInput): Promise<Result> {
@@ -63,8 +67,10 @@ export async function logHit(input: HitInput): Promise<Result> {
     bonus_pct: hit.result.pct,
     damage: hit.result.damage,
     all_together: hit.allTogether,
+    // Sarake tulee migraatiossa 024; lähetetään vain merkittynä, jotta tavallinen kirjaus toimii ilman sitä.
+    ...(hit.withFamily ? { with_family: true } : {}),
   });
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: error.message.includes('with_family') ? 'Lapsi/mummu-merkintä vaatii tietokantapäivityksen (migraatio 024). Kerro ylläpidolle.' : error.message };
   await afterHit(supabase).catch(() => {});
   revalidatePath('/', 'layout');
   revalidatePath('/kirjaa');

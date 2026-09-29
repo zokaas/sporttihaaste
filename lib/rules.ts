@@ -65,15 +65,20 @@ export interface HitInput {
   weakness: Weakness | Weakness[] | null;
   participants?: number; // ilmoittautuneiden määrä ("kaikki yhdessä"), oletus 10
   sport?: string; // lajin nimi: osuuko yksittäisen lajin heikkouteen
+  withFamily?: boolean; // treenattu lapsen tai mummun kanssa (erikoisheikkous)
 }
 
-/** Heikkous on joko lajiryhmä tai yksittäisen lajin nimi. */
+/** Heikkous on lajiryhmä, yksittäisen lajin nimi tai erikoisheikkous (FAMILY_WEAKNESS). */
 export type Weakness = Category | string;
 
-/** Osuuko laji heikkouteen: juuri tämä laji tai sen lajiryhmä. Palauttaa osuman nimen. */
-export function weaknessHit(weaknesses: Weakness[], category: Category, sport?: string) {
+/** Erikoisheikkous: mikä tahansa laji lapsen tai mummun kanssa. Kirjaaja merkitsee sen itse. */
+export const FAMILY_WEAKNESS = 'Lapsen tai mummun kanssa';
+
+/** Osuuko isku heikkouteen: juuri tämä laji, sen lajiryhmä tai treeni lapsen/mummun kanssa. Palauttaa osuman nimen. */
+export function weaknessHit(weaknesses: Weakness[], category: Category, sport?: string, withFamily = false) {
   if (sport && weaknesses.includes(sport)) return sport;
-  return weaknesses.includes(category) ? category : null;
+  if (weaknesses.includes(category)) return category;
+  return withFamily && weaknesses.includes(FAMILY_WEAKNESS) ? FAMILY_WEAKNESS : null;
 }
 
 export function hitDamage(h: HitInput) {
@@ -84,7 +89,7 @@ export function hitDamage(h: HitInput) {
   else if (h.groupSize >= 3) bonuses.push({ label: `Yhdessä (${h.groupSize} henkeä)`, pct: 50 });
   if (h.celebration) bonuses.push({ label: 'Juhlapäivä', pct: 50 });
   const weaknesses = Array.isArray(h.weakness) ? h.weakness : h.weakness ? [h.weakness] : [];
-  const hit = weaknessHit(weaknesses, h.category, h.sport);
+  const hit = weaknessHit(weaknesses, h.category, h.sport, h.withFamily);
   if (hit) bonuses.push({ label: `Heikkous: ${hit}`, pct: 50 });
   const pct = Math.min(BONUS_CAP_PCT, bonuses.reduce((a, b) => a + b.pct, 0));
   return { base, bonuses, pct, damage: Math.round(base * (1 + pct / 100)) };

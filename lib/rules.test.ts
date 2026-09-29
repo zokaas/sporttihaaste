@@ -19,6 +19,11 @@ assert.equal(uinti.bonuses[0].label, 'Heikkous: Uinti');
 assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Kestävyys', sport: 'Juoksu', groupSize: 1, celebration: false, weakness: 'Uinti' }).pct, 0);
 // Lajiryhmä toimii kuten ennen, ja laji + ryhmä samassa kaksikossa ei tuplaa bonusta
 assert.equal(hitDamage({ minutes: 60, sportValue: 200, category: 'Kestävyys', sport: 'Uinti', groupSize: 1, celebration: false, weakness: ['Uinti', 'Kestävyys'] }).pct, 50);
+// Erikoisheikkous: lapsen tai mummun kanssa, vain kun kirjaaja merkitsee sen
+import { FAMILY_WEAKNESS } from './rules.ts';
+assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', sport: 'Sali', groupSize: 1, celebration: false, weakness: FAMILY_WEAKNESS, withFamily: true }).pct, 50);
+assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', sport: 'Sali', groupSize: 1, celebration: false, weakness: FAMILY_WEAKNESS }).pct, 0);
+assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', sport: 'Sali', groupSize: 1, celebration: false, weakness: 'Uinti', withFamily: true }).pct, 0, 'merkintä ei anna bonusta muulla viikolla');
 // Uinti 30 min yksin = 100
 assert.equal(hitDamage({ minutes: 30, sportValue: 200, category: 'Kestävyys', groupSize: 1, celebration: false, weakness: null }).damage, 100);
 // Lupaukseen: 1 h uintia = 2 h, 2 h golfia = 1 h
