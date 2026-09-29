@@ -3,7 +3,7 @@ import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import type { loadBattle } from '@/lib/battle';
 import { computeLedger, sealView, STEP_DAY_DAMAGE } from '@/lib/rules';
 import { finalBlows, weekRecap } from '@/lib/stats';
-import { addDays, formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
+import { addDays, formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_START } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
 import { bossWhisper } from '@/lib/boss';
 import { fullTaunt, hitReaction } from '@/lib/taunts';
@@ -94,7 +94,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
     ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, title: `⚔️ ${h.sport} ${h.minutes} min`, by: `${heroById.get(h.user_id)?.hero_name ?? ''}${h.companions.length ? ` + ${h.companions.length} muuta` : ''}`, day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100 })),
     ...[...stepDays].map(([day, v]) => ({ at: v.at, title: '👣 Askeleet', by: v.names.length > 3 ? `${v.names.slice(0, 2).join(', ')} + ${v.names.length - 2} muuta` : v.names.join(', '), day, dmg: v.names.length * 50, crit: false })),
     ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, title: '⭐ Megamarssi', by: 'Koko porukka', day: p.day, dmg: 250, crit: false })),
-  ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 8);
+  ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 6);
 
   return (
     <>
@@ -105,6 +105,16 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         </p>
       ) : null}
       <KillFinale killed={ledger.killed.length} kills={kills} />
+      {data.today === SEASON_START && (data.gate.dealt > 0 || data.gate.left > 0) ? (
+        // Portinvartijan (29.–30.9.) tulos kauden ensimmäisenä päivänä: selittää viikon 1 monsterin lisä-HP:n tai potin ylijäämän.
+        <section className={`card gate-result${data.gate.killed ? '' : ' threat'}`}>
+          <p style={{ margin: 0 }}>
+            {data.gate.killed
+              ? <>👁️ <strong>{data.gate.name} kaatui portilla.</strong> {data.gate.surplus ? `Ylijäämä ${fmt(data.gate.surplus)} voimaa on potissa loppupomoa vastaan.` : 'Portti aukesi täsmälleen.'}</>
+              : <>👁️ <strong>{data.gate.name} selvisi.</strong> Sen jäljelle jäänyt {fmt(data.gate.left)} HP siirtyi viikon 1 monsterille: {nameOf(1)}.</>}
+          </p>
+        </section>
+      ) : null}
       {target ? <AwaySummary events={awayEvents} skip={ownHit != null} strike={{ name: nameOf(target.week), image: monsterImageUrl(targetMonster?.image_path), hp: view!.hp, maxHp: targetMonster?.hp ?? 1, reaction: hitReaction(targetMonster?.hit_lines, targetMonster?.hit_crit, false) }} /> : null}
       {recap ? <RecapPrompt week={recap.week}><RecapCard r={recap} /></RecapPrompt> : null}
 
