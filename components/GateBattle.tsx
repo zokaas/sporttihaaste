@@ -18,7 +18,8 @@ type Props = {
 
 /** Portinvartija ti 29.9.–ke 30.9.: taistelu ennen kauden alkua. Ei sinettiä, kaatuu kun HP loppuu. */
 export default function GateBattle({ gate, hits, names, stepped, ownHit, crit, offsetMs }: Props) {
-  const recent = [...hits].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  // Uusimmat 6 iskua; loput näkyvät yhteismäärässä.
+  const recent = [...hits].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 6);
   return (
     <>
       <MonsterStage
@@ -61,7 +62,7 @@ export default function GateBattle({ gate, hits, names, stepped, ownHit, crit, o
       </section>
       {recent.length ? (
         <section className="card">
-          <h2 className="display">Iskut portille</h2>
+          <h2 className="display">Iskut portille{hits.length > recent.length ? <span className="muted small"> · uusimmat {recent.length}/{hits.length}</span> : null}</h2>
           <ul className="people">
             {recent.map((h, i) => (
               <li key={`${h.user_id}-${h.created_at}-${i}`}>

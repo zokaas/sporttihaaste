@@ -94,7 +94,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
     ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, title: `⚔️ ${h.sport} ${h.minutes} min`, by: `${heroById.get(h.user_id)?.hero_name ?? ''}${h.companions.length ? ` + ${h.companions.length} muuta` : ''}`, day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100 })),
     ...[...stepDays].map(([day, v]) => ({ at: v.at, title: '👣 Askeleet', by: v.names.length > 3 ? `${v.names.slice(0, 2).join(', ')} + ${v.names.length - 2} muuta` : v.names.join(', '), day, dmg: v.names.length * 50, crit: false })),
     ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, title: '⭐ Megamarssi', by: 'Koko porukka', day: p.day, dmg: 250, crit: false })),
-  ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 8);
+  ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 6);
 
   return (
     <>
