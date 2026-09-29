@@ -527,3 +527,19 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .pager .btn { min-height: 44px; }
 .rules-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+
+/* Ennen kautta: ensimmäisen monsterin tiiseri */
+.card.teaser.prelude { border-color: #5a2a1e; box-shadow: 0 0 24px rgba(179, 38, 30, 0.18); }
+.prelude .teaser-shadow { flex-basis: 84px; width: 84px; height: 72px; }
+.prelude-eyes { animation: glow 3.8s ease-in-out infinite; }
+.prelude .countdown { align-self: flex-start; }
+
+/* Mobiili: pienten linkkien ja nappien napautusalue vähintään ~40 px ilman että ulkoasu muuttuu */
+.tap { display: inline-block; padding-block: 10px; margin-block: -10px; }
+.hint-close { position: relative; }
+.hint-close::after { content: ''; position: absolute; inset: -8px; }
+/* Kapeilla puhelimilla (≤ 380 px) päiväruudukko saa enemmän leveyttä */
+@media (max-width: 380px) {
+  .myweek-block { padding: 10px 8px; }
+  .weekstrip { gap: 4px; }
+}

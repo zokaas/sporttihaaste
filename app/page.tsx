@@ -8,7 +8,8 @@ import { seasonFinale } from '@/lib/finale';
 import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
-import { seasonWeek, AFTER_SEASON, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
+import { helsinkiMs, seasonWeek, AFTER_SEASON, BOSS_WEEK, SEASON_START } from '@/lib/season';
+import Countdown from '@/components/Countdown';
 import { today, testOffsetMs } from '@/lib/today';
 import { currentUser } from '@/lib/auth';
 import { navVisibility } from '@/lib/nav';
@@ -24,11 +25,13 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   if (!user) redirect('/kirjaudu');
 
   const week = seasonWeek(today());
-  const [{ data: me }, { data: heroes }, maybeBattle] = await Promise.all([
+  const [{ data: me }, { data: heroes }, maybeBattle, { data: firstMonster }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at').order('created_at'),
     // Kauden aikana taistelu haetaan samaan aikaan profiilin kanssa.
     week >= 1 ? loadBattle(supabase, today()) : Promise.resolve(null),
+    // Ennen kautta: ensimmäisen monsterin arvoitus (näkymä paljastaa sen 3 pv ennen paljastusta).
+    week < 1 ? supabase.from('monsters_public').select('teaser').eq('week', 1).maybeSingle() : Promise.resolve({ data: null }),
   ]);
   if (!me?.hero_name || !me?.pledge_locked_at) redirect('/ilmoittaudu');
   const locked = (heroes ?? []).filter((h) => h.pledge_locked_at);
@@ -71,9 +74,23 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
           <p className="muted" style={{ margin: 0 }}>Lupaus {String(me.pledge_hours).replace('.', ',')} h viikossa</p>
         </div>
       </div>
+      <section className="card teaser prelude" aria-label="Ensimmäinen vastus">
+        <svg className="teaser-shadow" viewBox="0 0 390 300" aria-hidden="true">
+          <path d="M70 300 C80 215 125 170 158 156 C140 120 126 76 104 30 C146 60 166 100 176 138 C186 134 204 134 214 138 C224 100 244 60 286 30 C264 76 250 120 232 156 C265 170 310 215 320 300 Z" fill="#050303" />
+          <g className="prelude-eyes">
+            <ellipse cx="180" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
+            <ellipse cx="210" cy="176" rx="9" ry="3.5" fill="#ff4a2e" />
+          </g>
+        </svg>
+        <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span className="stage-week">Ensimmäinen vastus · to 1.10. klo 00.00</span>
+          <p className="teaser-text">“{(firstMonster as { teaser?: string | null } | null)?.teaser || 'Jotain liikkuu varjoissa. Se on jo matkalla, ja se tietää nimesi…'}”</p>
+          <Countdown endMs={helsinkiMs(SEASON_START, '00:00:00')} offsetMs={testOffsetMs()} title="Aikaa ensimmäisen monsterin paljastumiseen" done="Se on täällä!" suffix="paljastukseen" />
+        </div>
+      </section>
       <BossShadow>
         <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>Se odottaa</h2>
-        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kausi alkaa torstaina 1.10. Ensimmäinen vastus paljastuu silloin. Loppupomo herää 14.12., ja se on vahvempi kuin yksikään kauden monstereista.</p>
+        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kausi alkaa torstaina 1.10. Joka maanantai sen jälkeen nousee uusi vastus. Loppupomo herää 14.12., ja se on vahvempi kuin yksikään kauden monstereista.</p>
       </BossShadow>
 
       <section className="card">

@@ -73,7 +73,7 @@ export default async function Bestiaario() {
                   ? <img className="avatar" src={img} alt="" width={56} height={56} style={k ? { filter: 'grayscale(1)' } : undefined} />
                   : <div className="avatar" style={{ width: 56, height: 56, fontSize: 22 }}>{future ? '?' : k ? '✝' : '!'}</div>}
                 <div className="grow" style={{ minWidth: 0 }}>
-                  <div className="who">{future ? '???' : <Link href={`/monsteri/${w}`}>{m?.name ?? `Viikon ${w} monsteri`}</Link>}</div>
+                  <div className="who">{future ? '???' : <Link className="tap" href={`/monsteri/${w}`}>{m?.name ?? `Viikon ${w} monsteri`}</Link>}</div>
                   <div className="facts">
                     Viikko {w} · {formatDay(start)}
                     {m?.parts?.length && !future ? ' · kolmikko' : ''}
