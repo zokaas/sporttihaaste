@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { sendPush, type PushPayload } from '@/lib/push';
 import { fridayReminders } from '@/lib/reminders';
 import { helsinkiHour, QUIET_END } from '@/lib/quiet';
-import { helsinkiToday, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
+import { helsinkiToday, isGateDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 
 export const dynamic = 'force-dynamic';
 // Ajastus lukee aina tuoreen tilanteen: Supabase-hakuja ei tallenneta Next.js:n välimuistiin.
@@ -70,6 +70,18 @@ export async function GET(request: Request) {
       result.paljastus = await sendPush(supabase, {
         title: week === BOSS_WEEK ? `🔥 Loppupomo heräsi: ${m.name}` : `👁️ Uusi monsteri: ${m.name}`,
         body: m.weakness ? `Heikkous: ${m.weakness} (+50 %). Viikko ${week} alkoi.` : `Viikko ${week} alkoi.`,
+      });
+    }
+  }
+
+  // 3b. Portinvartija (29.–30.9.): aamumuistutus, jos se on vielä pystyssä
+  if (isGateDay(day) && (await once(`gate-${day}`))) {
+    const { data: g } = await supabase.from('gate').select('name').eq('id', 1).maybeSingle();
+    const { data: killed } = await supabase.from('notifications_sent').select('key').eq('key', 'gate-kill').maybeSingle();
+    if (!killed) {
+      result.portinvartija = await sendPush(supabase, {
+        title: `👁️ ${g?.name || 'Sauronin silmä'} vartioi porttia`,
+        body: 'Kaatakaa se ennen ke 30.9. klo 23.59, niin portti kauteen aukeaa. Treenit ja askeleet lyövät.',
       });
     }
   }

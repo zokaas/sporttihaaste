@@ -55,6 +55,7 @@ export default async function Saannot() {
 
       <section className="card">
         <h2 className="display">Lyhyesti</h2>
+        <p style={{ margin: 0 }}>Ennen kautta, ti 29.9.–ke 30.9., porttia vartioi portinvartija Sauronin silmä. Se kaadetaan treeneillä ja askeleilla ilman sinettiä ennen ke klo 23.59. Jos se jää henkiin, jäljelle jäänyt HP siirtyy torstain monsterille; jos se kaatuu, ylijäämä menee pottiin. Ti–ke treenit eivät kerry viikon 1 lupaukseen.</p>
         <p style={{ margin: 0 }}>Kausi kestää 1.10.–20.12. Ensimmäinen monsteri paljastuu to 1.10., ja sen jälkeen uusi joka maanantai: yhteensä 11 monsteria ja viimeisellä viikolla loppupomo. Seuraavaa pääsee lyömään vasta, kun edellinen on tuhottu. Treenit ovat iskuja: jokainen kirjattu treeni vähentää monsterin HP:ta.</p>
         <p style={{ margin: 0 }}>Monsteri kaatuu, kun sen HP loppuu <strong>ja</strong> sinetti on täynnä eli jokainen terve sankari on lyönyt sitä vähintään yhdellä treenillä. Siihen asti monsterille jää 10 HP jokaista puuttuvaa sankaria kohden.</p>
         <p style={{ margin: 0 }}>Jos sinetti jää sunnuntaina vajaaksi, sinettirajan yli mennyt voima menetetään ja monsteri jää rästiin.</p>
@@ -116,6 +117,7 @@ export default async function Saannot() {
         <p style={{ margin: 0 }}>Viestit-sivulla (📣) voit lähettää porukalle viestin, enintään {MESSAGES_PER_DAY} päivässä ja 200 merkkiä. Ilmoitus viestistä menee kaikille, myös sinulle itsellesi.</p>
         <p style={{ margin: 0 }}><strong>Hiljaiset tunnit klo {QUIET_START}–{String(QUIET_END).padStart(2, '0')}.</strong> Yöllä ei tule yhtään ilmoitusta: silloin syntyvät ilmoitukset ja viestit lähtevät aamulla klo {QUIET_END}.</p>
         <ul className="rules-list">
+          <li><strong>👁️ Portinvartija</strong>: ke 30.9. klo {QUIET_END} muistutus, jos portti on vielä kiinni, ja ilmoitus kun se kaatuu.</li>
           <li><strong>👁️ Uusi monsteri</strong>: to 1.10. ja sen jälkeen joka maanantai klo {QUIET_END}.</li>
           <li><strong>⚔️ Perjantaimuistutus</strong>: pe klo {QUIET_END}, vain jos sinulta puuttuu vielä jotain (lupauksen tunnit, isku sinettiin tai askelkuittauksia).</li>
           <li><strong>💀 Monsteri kaatui</strong> ja <strong>⭐ Megamarssi</strong>: heti kaikille.</li>

@@ -8,7 +8,8 @@ import { seasonFinale } from '@/lib/finale';
 import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
-import { helsinkiMs, seasonWeek, AFTER_SEASON, BOSS_WEEK, SEASON_START } from '@/lib/season';
+import { helsinkiMs, isGateDay, seasonWeek, AFTER_SEASON, BOSS_WEEK, SEASON_START } from '@/lib/season';
+import GateBattle from '@/components/GateBattle';
 import Countdown from '@/components/Countdown';
 import { today, testOffsetMs } from '@/lib/today';
 import { currentUser } from '@/lib/auth';
@@ -25,11 +26,13 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   if (!user) redirect('/kirjaudu');
 
   const week = seasonWeek(today());
+  // Portinvartijan taistelu (ti 29.9.–ke 30.9.) ennen kauden alkua.
+  const gateDay = isGateDay(today());
   const [{ data: me }, { data: heroes }, maybeBattle, { data: firstMonster }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at').order('created_at'),
     // Kauden aikana taistelu haetaan samaan aikaan profiilin kanssa.
-    week >= 1 ? loadBattle(supabase, today()) : Promise.resolve(null),
+    week >= 1 || gateDay ? loadBattle(supabase, today()) : Promise.resolve(null),
     // Ennen kautta: ensimmäisen monsterin arvoitus (näkymä paljastaa sen 3 pv ennen paljastusta).
     week < 1 ? supabase.from('monsters_public').select('teaser').eq('week', 1).maybeSingle() : Promise.resolve({ data: null }),
   ]);
@@ -38,7 +41,8 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   const img = avatarUrl(me.avatar_path);
   // Ylläpitäjä voi katsoa taistelunäkymää ennen kauden alkua osoitteella /?esikatselu=1.
   const inSeason = (week >= 1 && week <= BOSS_WEEK) || (me.is_admin && searchParams.esikatselu === '1');
-  const battle = maybeBattle ?? (inSeason ? await loadBattle(supabase, today()) : null);
+  const gateBattle = gateDay ? maybeBattle : null;
+  const battle = (week >= 1 ? maybeBattle : null) ?? (inSeason ? await loadBattle(supabase, today()) : null);
   // Paljastusilmoitus tarkistetaan vain viikon kahtena ensimmäisenä päivänä, ei jokaisella latauksella.
 
   // Kauden jälkeen: loppugaala. Ylläpitäjä voi esikatsella sitä osoitteella /?finaali=1.
@@ -67,6 +71,17 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   return (
     <>
       <Nav current="/" />
+      {gateBattle ? (
+        <GateBattle
+          gate={gateBattle.gate}
+          hits={gateBattle.hits.filter((h) => isGateDay(h.trained_on))}
+          names={new Map(gateBattle.heroes.map((h) => [h.id, h.hero_name ?? '']))}
+          stepped={gateBattle.steps.filter((x) => x.day === today()).length}
+          ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null}
+          crit={searchParams.krit === '1'}
+          offsetMs={testOffsetMs()}
+        />
+      ) : null}
       <div className="row" style={{ alignItems: 'center' }}>
         {img ? <img className="avatar" src={img} alt="" width={56} height={56} /> : null}
         <div className="grow">
@@ -83,14 +98,14 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
           </g>
         </svg>
         <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span className="stage-week">Ensimmäinen vastus · to 1.10. klo 00.00</span>
+          <span className="stage-week">{gateDay ? 'Portin takana · to 1.10. klo 00.00' : 'Ensimmäinen vastus · to 1.10. klo 00.00'}</span>
           <p className="teaser-text">“{(firstMonster as { teaser?: string | null } | null)?.teaser || 'Jotain liikkuu varjoissa. Se on jo matkalla, ja se tietää nimesi…'}”</p>
           <Countdown endMs={helsinkiMs(SEASON_START, '00:00:00')} offsetMs={testOffsetMs()} title="Aikaa ensimmäisen monsterin paljastumiseen" done="Se on täällä!" suffix="paljastukseen" />
         </div>
       </section>
       <BossShadow>
         <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>Se odottaa</h2>
-        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>Kausi alkaa torstaina 1.10. Joka maanantai sen jälkeen nousee uusi vastus. Loppupomo herää 14.12., ja se on vahvempi kuin yksikään kauden monstereista.</p>
+        <p className="small" style={{ margin: 0, color: '#c9c1b4' }}>{gateDay ? 'Portin takana ensimmäinen monsteri astuu esiin torstaina 1.10.' : 'Kausi alkaa torstaina 1.10.'} Joka maanantai sen jälkeen nousee uusi vastus. Loppupomo herää 14.12., ja se on vahvempi kuin yksikään kauden monstereista.</p>
       </BossShadow>
 
       <section className="card">

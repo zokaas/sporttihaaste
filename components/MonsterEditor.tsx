@@ -53,7 +53,7 @@ function WeaknessOptions() {
 }
 
 /** Pienentää kuvan niin, että pidempi sivu on enintään 1024 px. */
-async function shrinkJpeg(file: File): Promise<Blob> {
+export async function shrinkJpeg(file: File): Promise<Blob> {
   const bmp = await createImageBitmap(file);
   const scale = Math.min(1, 1024 / Math.max(bmp.width, bmp.height));
   const canvas = document.createElement('canvas');

@@ -9,6 +9,10 @@ export const MONSTER_WEEKS = 11;
 export const BOSS_WEEK = 12;
 /** seasonWeek palauttaa tämän kauden jälkeen. */
 export const AFTER_SEASON = 13;
+/** Portinvartijan taistelu ti 29.9.–ke 30.9. ennen viikkoa 1 (seasonWeek = 0). GATE_DAY on viimeinen päivä. */
+export const GATE_START = '2026-09-29';
+export const GATE_DAY = '2026-09-30';
+export const isGateDay = (iso: string) => iso >= GATE_START && iso <= GATE_DAY;
 
 const DAY = 86_400_000;
 const toMs = (iso: string) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
@@ -33,6 +37,7 @@ export function seasonWeek(iso: string) {
 
 /** Viikon ensimmäinen ja viimeinen päivä. */
 export function weekRange(week: number) {
+  if (week === 0) return { start: GATE_START, end: GATE_DAY };
   if (week === 1) return { start: SEASON_START, end: addDays(WEEK2_START, -1) };
   const start = addDays(WEEK2_START, (week - 2) * 7);
   return { start, end: addDays(start, 6) };
@@ -40,6 +45,7 @@ export function weekRange(week: number) {
 
 /** Viikon päivät, joille voi vielä kirjata: viikon alusta tähän päivään asti. */
 export function loggableDays(today: string) {
+  if (isGateDay(today)) return today === GATE_DAY ? [GATE_START, GATE_DAY] : [GATE_START];
   const week = seasonWeek(today);
   if (week < 1 || week > BOSS_WEEK) return [];
   const days: string[] = [];

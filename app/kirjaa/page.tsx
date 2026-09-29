@@ -67,7 +67,7 @@ export default async function Kirjaa() {
       />
 
       <section className="card">
-        <h2 className="display">Iskusi viikolla {week}</h2>
+        <h2 className="display">{week === 0 ? 'Iskusi portinvartijaan' : `Iskusi viikolla ${week}`}</h2>
         {(myHits ?? []).length === 0 ? (
           <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla.</p>
         ) : (

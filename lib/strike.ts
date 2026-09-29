@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadBattle } from './battle';
 import { sealView } from './rules';
 import { hitReaction } from './taunts';
-import { BOSS_WEEK } from './season';
+import { BOSS_WEEK, isGateDay } from './season';
 import { monsterImageUrl } from './supabase/client';
 
 export type StrikeSummary = { name: string; image: string | null; hp: number; maxHp: number; reaction: string } | null;
@@ -11,6 +11,10 @@ export type StrikeSummary = { name: string; image: string | null; hp: number; ma
 /** Nykyisen vastustajan tilanne juuri tehdyn kirjauksen jälkeen: näytetään pienessä iskuikkunassa. */
 export async function strikeSummary(supabase: SupabaseClient, today: string): Promise<StrikeSummary> {
   const b = await loadBattle(supabase, today);
+  // Portinvartijan päivinä iskut osuvat portinvartijaan.
+  if (isGateDay(today)) {
+    return { name: b.gate.name, image: monsterImageUrl(b.gate.image_path), hp: b.gate.left, maxHp: b.gate.hp, reaction: b.gate.killed ? 'Portti on auki!' : hitReaction(null, null, false) };
+  }
   const target = b.ledger?.alive[0];
   if (!target) return null;
   const m = b.monsters.get(target.week);

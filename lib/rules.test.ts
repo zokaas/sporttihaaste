@@ -110,6 +110,18 @@ for (const sp of SPORTS) {
 }
 assert.equal(new Set(SPORTS.map((s) => s.name)).size, SPORTS.length, 'lajin nimi on listalla kahdesti');
 
+// Portinvartija: HP 1 500, ei sinettiä; ylijäämä pottiin, vajaus viikon 1 monsterille
+import { gateResult } from './gate.ts';
+const gh = [{ trained_on: '2026-09-29', damage: 700 }, { trained_on: '2026-09-30', damage: 500 }, { trained_on: '2026-10-01', damage: 999 }, { trained_on: '2026-09-28', damage: 999 }];
+const gs = [{ day: '2026-09-30' }, { day: '2026-09-30' }, { day: '2026-10-01' }];
+const g1 = gateResult(null, gh, gs);
+assert.deepEqual([g1.hp, g1.dealt, g1.left, g1.surplus, g1.killed], [1500, 1300, 200, 0, false]);
+const g2 = gateResult({ name: 'Vartija', description: null, image_path: null, taunt: null, hp: 1000 }, gh, gs);
+assert.deepEqual([g2.name, g2.left, g2.surplus, g2.killed], ['Vartija', 0, 300, true]);
+// Kirjanpito: aloituspotti vähentää loppupomoa kuten muu potti
+r = computeLedger({ ...base, startPot: 500, events: [...smallPot, ev(12, 1, 'a', 10), ev(12, 2, 'b', 10)] }, 12, true);
+assert.equal(r.alive[0].hp, 4000 - 11 * 120 - 500 - 20, 'portinvartijan ylijäämä iskee loppupomoon');
+
 console.log('Kaikki sääntötestit menivät läpi.');
 
 // Sinettiraja: HP ei näy nollana, kun sinetistä puuttuu sankareita
