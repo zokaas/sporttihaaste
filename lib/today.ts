@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { helsinkiToday, SEASON_START } from './season';
 
 export const TEST_DAY_COOKIE = 'mj_testipaiva';
+/** Testitilassa aiemmat viikot kaadetaan automaattisesti (vain ylläpitäjän oma näkymä). */
+export const TEST_SKIP_COOKIE = 'mj_testi_kaada';
 
 /**
  * Palvelimen "tänään" Suomen aikaa. Ylläpitäjä voi ennen kauden alkua asettaa testipäivän (eväste),
@@ -28,4 +30,13 @@ export function testOffsetMs() {
   const t = testDay();
   if (!t) return 0;
   return Date.parse(`${t}T12:00:00Z`) - Date.parse(`${helsinkiToday()}T12:00:00Z`);
+}
+
+/** Kaadetaanko testitilassa aiemmat viikot automaattisesti. Ajastetuissa ajoissa ei ole evästeitä. */
+export function testSkipPast() {
+  try {
+    return testDay() !== null && cookies().get(TEST_SKIP_COOKIE)?.value !== '0';
+  } catch {
+    return false;
+  }
 }

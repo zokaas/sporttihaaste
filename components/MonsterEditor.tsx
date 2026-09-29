@@ -206,7 +206,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
               </label>
               <label className="field">
                 Kuvaus
-                <textarea className="input" rows={2} style={{ padding: 12 }} value={part.description ?? ''} onChange={(e) => setPart(i, { description: e.target.value })} />
+                <textarea className="input" rows={5} style={{ padding: 12 }} value={part.description ?? ''} onChange={(e) => setPart(i, { description: e.target.value })} />
               </label>
               <label className="field">
                 Heikkous
@@ -232,7 +232,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
         ) : null}
         <label className="field">
           {parts ? 'Yhteinen kuvaus' : 'Kuvaus'}
-          <textarea className="input" rows={3} style={{ padding: 12 }} value={m.description ?? ''} onChange={(e) => setM({ ...m, description: e.target.value })} />
+          <textarea className="input" rows={8} style={{ padding: 12 }} value={m.description ?? ''} onChange={(e) => setM({ ...m, description: e.target.value })} />
         </label>
         <label className="field">
           {m.week === 1 ? 'Arvoitus (näkyy etusivulla ennen kauden alkua, ma 28.9. alkaen)' : 'Arvoitus (näkyy kaikille edellisen viikon perjantaista alkaen)'}

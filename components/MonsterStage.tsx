@@ -68,6 +68,8 @@ function write(key: string, value: string) {
   try { localStorage.setItem(key, value); } catch { /* ei tallennusta */ }
 }
 
+const TAUNT_MS = 4000;
+
 export default function MonsterStage(p: Props) {
   const state = stateOf(p.hp, p.maxHp, p.padded, Boolean(p.dead));
   const [shownHp, setShownHp] = useState(p.hp);
@@ -80,6 +82,27 @@ export default function MonsterStage(p: Props) {
   const timers = useRef<number[]>([]);
   const rootRef = useRef<HTMLElement | null>(null);
   const [offscreen, setOffscreen] = useState(false);
+  // Puhekupla näkyy 4 s ja häipyy, jotta kuva jää näkyviin. Aika lasketaan vasta, kun kupla oikeasti näkyy:
+  // näyttämö ruudulla, välilehti auki ja paljastusanimaatio ohi. Jos jokin näistä katkeaa, aika alkaa alusta.
+  const [taunt, setTaunt] = useState<'on' | 'fading' | 'gone'>('on');
+  const [pageVisible, setPageVisible] = useState(true);
+  useEffect(() => {
+    const update = () => setPageVisible(document.visibilityState === 'visible');
+    update();
+    document.addEventListener('visibilitychange', update);
+    return () => document.removeEventListener('visibilitychange', update);
+  }, []);
+  useEffect(() => { setTaunt('on'); }, [p.taunt]);
+  useEffect(() => {
+    if (taunt === 'gone') return;
+    if (taunt === 'fading') {
+      const t = window.setTimeout(() => setTaunt('gone'), 600);
+      return () => clearTimeout(t);
+    }
+    if (offscreen || revealing || !pageVisible) return;
+    const t = window.setTimeout(() => setTaunt('fading'), TAUNT_MS);
+    return () => clearTimeout(t);
+  }, [taunt, offscreen, revealing, pageVisible]);
   const parts = p.parts?.length ? p.parts : null;
   const front = parts ? parts.find((x) => !x.dead) ?? parts[parts.length - 1] : null;
   const deadParts = parts ? parts.filter((x) => x.dead).length : 0;
@@ -167,13 +190,22 @@ export default function MonsterStage(p: Props) {
   const sealDone = p.seal ? p.seal.filter((s) => !s.excused).every((s) => s.hit) : false;
 
   const image = front ? front.image ?? p.image : p.image;
+  // Kaatunut kaksikko tai kolmikko näytetään koko porukkana.
+  const groupImages = p.dead && parts ? parts.map((x) => x.image).filter((x): x is string => Boolean(x)) : [];
   const title = front && !p.dead ? front.name : p.title;
 
   const content = (
     <>
       <div className="stage-art" aria-hidden="true" style={{ ['--dam' as string]: String(damPct / 100) }}>
         {p.boss ? <div className="stage-sky" /> : null}
-        {image ? (
+        {groupImages.length > 1 ? (
+          <>
+            <img className="stage-backdrop" src={resizedImage(groupImages[0], 96)} alt="" />
+            <div className="stage-group">
+              {groupImages.map((src) => <img key={src} className="stage-group-img" src={src} alt="" />)}
+            </div>
+          </>
+        ) : image ? (
           <>
             {/* Tausta on sumennettu, joten siihen riittää pieni kuva: kevyempi ladata ja piirtää. */}
             <img className="stage-backdrop" src={resizedImage(image, 96)} alt="" />
@@ -216,10 +248,10 @@ export default function MonsterStage(p: Props) {
         </div>
       ) : null}
 
-      {reply && p.hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status">“{p.hitLine}”</div>
-        : p.taunt && !p.dead ? <div key="taunt" className="stage-taunt" role="note">“{p.taunt}”</div> : null}
-
       <div className="stage-info">
+        {/* Puhekupla nimen yläpuolella, jotta se ei peitä kuvan kasvoja (ne ovat yleensä kuvan yläosassa). */}
+        {reply && p.hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status">“{p.hitLine}”</div>
+          : p.taunt && !p.dead && taunt !== 'gone' ? <div key="taunt" className={`stage-taunt${taunt === 'fading' ? ' fading' : ''}`} role="note">“{p.taunt}”</div> : null}
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
         {parts ? (
           <div className="stage-parts" aria-label={`${groupName(parts.length)}: ${deadParts}/${parts.length} kaatunut`}>
@@ -255,7 +287,7 @@ export default function MonsterStage(p: Props) {
 
       {partFall ? (
         <div className="stage-reveal part-fall" aria-live="polite">
-          <span>Kolmikosta kaatui</span>
+          <span>{parts?.length === 2 ? 'Kaksikosta' : 'Kolmikosta'} kaatui</span>
           <strong className="display">{partFall}</strong>
         </div>
       ) : null}

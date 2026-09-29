@@ -14,7 +14,7 @@ import LiveRefresh from '@/components/LiveRefresh';
 import AwaySummary, { type AwayEvent } from '@/components/AwaySummary';
 import RecapPrompt from '@/components/RecapPrompt';
 import RecapCard from '@/components/RecapCard';
-import { stageParts, weaknessesOf } from '@/lib/trio';
+import { activeWeaknesses, stageParts } from '@/lib/trio';
 import Hint from '@/components/Hint';
 import TodayCard from '@/components/TodayCard';
 import { isSickOn } from '@/lib/weekly';
@@ -52,7 +52,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const heroById = new Map(heroes.map((h) => [h.id, h]));
   const nameOf = (w: number) => monsters.get(w)?.name ?? (w === BOSS_WEEK ? 'Loppupomo' : `Viikon ${w} monsteri`);
   const blows = finalBlows(data);
-  const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Megamarssi' : null }));
+  const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), images: (monsters.get(k.week)?.parts ?? []).map((x) => monsterImageUrl(x.image_path)).filter((x): x is string => Boolean(x)), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Megamarssi' : null }));
   const missing = target ? required.filter((id) => !target.hitters.includes(id)) : [];
   const view = target ? sealView(target, required) : null;
   // Monsterin repliikki HP:n mukaan: ylläpidon kirjoittama tai oletus.
@@ -116,7 +116,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           week={target.week}
           title={nameOf(target.week)}
           image={monsterImageUrl(monsters.get(target.week)?.image_path)}
-          weakness={weaknessesOf(monsters.get(target.week)).join(', ') || null}
+          weakness={activeWeaknesses(monsters.get(target.week), view!.hp).join(', ') || null}
           parts={stageParts(monsters.get(target.week), view!.hp, false, monsterImageUrl)}
           hp={view!.hp}
           maxHp={monsters.get(target.week)?.hp ?? 1}
@@ -187,11 +187,21 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
                 Kun {missing.map((id) => heroById.get(id)?.hero_name).join(', ').replace(/, ([^,]*)$/, ' ja $1')} {missing.length > 1 ? 'lyövät' : 'lyö'}, monsteri kaatuu heti ja koko pato siirtyy eteenpäin. Jos sinetti jää su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59 vajaaksi, pato menetetään ja monsteri jää rästiin.
               </p>
             </>
+          ) : null}
+          {view?.dam ? (
+            <>
+              <p className="small" style={{ margin: 0 }}>Puuttuu: {missing.map((id) => heroById.get(id)?.hero_name).join(', ')}</p>
+              {missing.some((id) => id !== userId) ? <NudgeButton count={missing.filter((id) => id !== userId).length} /> : null}
+            </>
           ) : (
-            <Hint id="seal" title={<strong>Sinetti {required.length - missing.length}/{required.length}</strong>}>Monsteri kaatuu vasta, kun jokainen terve sankari on lyönyt sitä treenillä. Askeleet eivät täytä sinettiä.</Hint>
+            // Ilman patoa sinetti on yksi rivi: nimet näkyvät jo näyttämön sinettirivillä, joten tässä vain määrä.
+            <div className="row seal-line">
+              <p className="grow small" title={`Puuttuu: ${missing.map((id) => heroById.get(id)?.hero_name).join(', ')}`}>
+                <strong>Sinetti {required.length - missing.length}/{required.length}</strong> · {missing.includes(userId) ? (missing.length === 1 ? 'vain sinä puutut' : `puuttuu ${missing.length}, myös sinä`) : `puuttuu ${missing.length}`}
+              </p>
+              {missing.some((id) => id !== userId) ? <NudgeButton compact count={missing.filter((id) => id !== userId).length} /> : null}
+            </div>
           )}
-          <p className="small" style={{ margin: 0 }}>Puuttuu: {missing.map((id) => heroById.get(id)?.hero_name).join(', ')}</p>
-          {missing.some((id) => id !== userId) ? <NudgeButton count={missing.filter((id) => id !== userId).length} /> : null}
         </section>
       ) : null}
 

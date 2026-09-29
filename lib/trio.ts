@@ -26,10 +26,25 @@ export function partStates(total: number, hpLeft: number, count: number, killed:
   });
 }
 
-/** Viikon heikkoudet: kolmikolla kaikkien osien, muuten monsterin oma. */
+/** Kaikki viikon heikkoudet (moniosaisella kaikkien osien). Iskun bonukseen käytä activeWeaknesses. */
 export function weaknessesOf(m: { weakness?: Weakness | null; parts?: MonsterPart[] | null } | null | undefined): Weakness[] {
   if (m?.parts?.length) return [...new Set(m.parts.map((p) => p.weakness).filter(Boolean) as Weakness[])];
   return m?.weakness ? [m.weakness] : [];
+}
+
+/**
+ * Heikkous iskuhetkellä. Moniosaisella heikkous on osakohtainen: bonus tulee vain vuorossa olevan osan
+ * heikkoudesta (sama osa kuin näyttämöllä). `hpLeft` on viikon monsterin jäljellä oleva HP.
+ */
+export function activeWeaknesses(m: { hp?: number | null; weakness?: Weakness | null; parts?: MonsterPart[] | null } | null | undefined, hpLeft: number): Weakness[] {
+  if (!m?.parts?.length) return weaknessesOf(m);
+  let i = 0;
+  if (m.hp) {
+    i = partStates(m.hp, hpLeft, m.parts.length, false).findIndex((x) => !x.dead);
+    if (i < 0) i = m.parts.length - 1;
+  }
+  const w = m.parts[i].weakness;
+  return w ? [w] : [];
 }
 
 /** Näyttämön osat: HP-tila ja kuva osittain. `image` muuntaa tallennuspolun osoitteeksi. */

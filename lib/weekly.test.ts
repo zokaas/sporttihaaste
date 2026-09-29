@@ -44,7 +44,7 @@ assert.deepEqual(requiredForSeal(['a', 'b', 'c'], periods, 3, '2026-10-14'), ['a
 
 console.log('Kaikki viikkotestit menivät läpi.');
 
-import { partHps, partStates, weaknessesOf } from './trio.ts';
+import { activeWeaknesses, partHps, partStates, weaknessesOf } from './trio.ts';
 assert.deepEqual(partHps(5000, 3), [1666, 1666, 1668]);
 // 2 000 vahinkoa 5 000 HP:n kolmikkoon: ensimmäinen kaatunut, toinen osin
 assert.deepEqual(partStates(5000, 3000, 3, false).map((p) => [p.left, p.dead]), [[0, true], [1332, false], [1668, false]]);
@@ -55,4 +55,11 @@ assert.deepEqual(weaknessesOf({ parts: [{ name: 'a', weakness: 'Voimailu' }, { n
 // Kaksikko: 7 500 HP → 2 × 3 750; 4 000 vahinkoa → ensimmäinen kaatunut, toisesta 250 pois
 assert.deepEqual(partHps(7500, 2), [3750, 3750]);
 assert.deepEqual(partStates(7500, 3500, 2, false).map((p) => [p.left, p.dead]), [[0, true], [3500, false]]);
+// Heikkous on osakohtainen: bonus vain vuorossa olevan osan heikkoudesta
+const trio = { hp: 8400, parts: [{ name: 'Zom', weakness: 'Crossfit' }, { name: 'Zam', weakness: 'HIIT' }, { name: 'Zom Zam', weakness: 'Padel' }] };
+assert.deepEqual(activeWeaknesses(trio, 8400), ['Crossfit']);
+assert.deepEqual(activeWeaknesses(trio, 5600), ['HIIT']);
+assert.deepEqual(activeWeaknesses(trio, 100), ['Padel']);
+assert.deepEqual(activeWeaknesses(trio, 0), ['Padel']);
+assert.deepEqual(activeWeaknesses({ hp: 5000, weakness: 'Uinti' }, 100), ['Uinti']);
 console.log('Kolmikko- ja kaksikkotestit menivät läpi.');

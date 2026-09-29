@@ -1,7 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { weaknessesOf, type MonsterPart } from './trio';
+import { activeWeaknesses, type MonsterPart } from './trio';
 import { computeLedger, pledgeHours, seasonHp, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, type Sport, type Weakness, type LedgerEvent } from './rules';
 import { loadSports } from './sports';
+import { testSkipPast } from './today';
 import { addDays, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from './season';
 import { patrolDays, pledgeForWeek, requiredForSeal, sickDaysBetween, isSickOn, weekPledgeTarget, type SickPeriod } from './weekly';
 
@@ -110,14 +111,24 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     requiredByWeek[w] = requiredForSeal(participants, periods, w, today);
     if (w < week) pledgeBonusesByWeek[w] = participants.filter((u) => pledgeStatus(u, w).kept).length;
   }
-  const ledgerInput = { monsterHp: monsterList.filter((m) => m.week <= MONSTER_WEEKS).map((m) => m.hp!), bossHp: byWeek.get(BOSS_WEEK)!.hp!, events, requiredByWeek, pledgeBonusesByWeek };
+  const monsterHp = monsterList.filter((m) => m.week <= MONSTER_WEEKS).map((m) => m.hp!);
+  // Testitila: ylläpitäjä voi kaataa aiemmat viikot automaattisesti, jotta tulevan viikon näkymän näkee
+  // ilman kaikkien sankarien iskuja. Keinotekoiset kaadot eivät näy iskuina eivätkä viimeisinä iskuina.
+  const testKills: LedgerEvent[] = [];
+  if (testSkipPast()) {
+    for (let w = 1; w < week && w <= MONSTER_WEEKS; w++) {
+      requiredByWeek[w] = [];
+      testKills.push({ week: w, at: Date.parse(`${weekRange(w).start}T00:00:00Z`), userId: 'testi', damage: monsterHp[w - 1], isTraining: true });
+    }
+  }
+  const ledgerInput = { monsterHp, bossHp: byWeek.get(BOSS_WEEK)!.hp!, events: [...testKills, ...events], requiredByWeek, pledgeBonusesByWeek };
   const ledger = computeLedger(ledgerInput, week, true);
   return { ...base, hpLocked, hpPreview, required: requiredByWeek[week], ledger, events, ledgerInput };
 }
 
-/** Viikon monsterin nimi ja heikkoudet (kolmikolla kaikkien osien). Ylläpitäjä lukee taulusta (testitila). */
-export async function monsterOfWeek(supabase: SupabaseClient, week: number) {
-  const own = await supabase.from('monsters').select('name, weakness, parts').eq('week', week).maybeSingle();
-  const m = own.data ?? (await supabase.from('monsters_public').select('name, weakness, parts').eq('week', week).maybeSingle()).data;
-  return { name: (m?.name as string | null) ?? null, weaknesses: weaknessesOf(m as PublicMonster | null) };
+/** Viikon heikkous iskuhetkellä: moniosaisella vain vuorossa olevan osan. Kaatuneella viikolla viimeisen osan. */
+export function currentWeaknesses(b: { monsters: Map<number, PublicMonster>; ledger: { alive: { week: number; hp: number }[] } | null }, week: number) {
+  const m = b.monsters.get(week);
+  const f = b.ledger?.alive.find((x) => x.week === week);
+  return activeWeaknesses(m, f ? f.hp : b.ledger ? 0 : m?.hp ?? 0);
 }
