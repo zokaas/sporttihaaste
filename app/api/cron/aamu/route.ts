@@ -47,8 +47,8 @@ export async function GET(request: Request) {
     // Varataan viesti ennen lähetystä, jotta päällekkäinen ajo ei lähetä sitä kahdesti.
     const { data: claimed } = await supabase.from('messages').update({ pushed_at: new Date().toISOString() }).eq('id', m.id).is('pushed_at', null).select('id');
     if (!claimed?.length) continue;
-    const others = (heroes ?? []).map((h) => h.id).filter((id) => id !== m.sender);
-    sent += await sendPush(supabase, { title: `📣 ${m.profiles?.hero_name ?? 'Sankari'}`, body: m.body, url: '/viestit' }, others);
+    // Kaikille, myös lähettäjälle.
+    sent += await sendPush(supabase, { title: `📣 ${m.profiles?.hero_name ?? 'Sankari'}`, body: m.body, url: '/viestit' }, (heroes ?? []).map((h) => h.id));
   }
   result.viestit = sent;
 

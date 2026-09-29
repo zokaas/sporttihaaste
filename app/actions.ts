@@ -124,7 +124,7 @@ export async function sendMessage(text: string): Promise<Result & { sent?: numbe
   // Hiljaiset tunnit klo 22–09: viesti tallentuu, mutta push lähtee vasta aamun ajastuksella klo 9.
   const quiet = isQuietHour();
   const { error } = await supabase.from('messages').insert({ sender: user.id, body, pushed_at: quiet ? null : new Date().toISOString() });
-  if (error) return { ok: false, error: error.message.includes('messages') ? 'Viestejä ei voi vielä lähettää. Ylläpitäjän pitää ajaa migraatiot 011 ja 012.' : error.message };
+  if (error) return { ok: false, error: error.message.includes('messages') ? 'Viestejä ei voi vielä lähettää. Ylläpitäjän pitää ajaa migraatiot 011, 012 ja 019.' : error.message };
   if (quiet) {
     revalidatePath('/viestit');
     return { ok: true, sent: 0, queued: true };
@@ -134,8 +134,9 @@ export async function sendMessage(text: string): Promise<Result & { sent?: numbe
     supabase.from('profiles').select('hero_name').eq('id', user.id).single(),
     supabase.from('profiles').select('id').not('pledge_locked_at', 'is', null),
   ]);
-  const others = (heroes ?? []).map((h) => h.id).filter((id) => id !== user.id);
-  const sent = await sendPush(supabase, { title: `📣 ${sender?.hero_name ?? 'Sankari'}`, body, url: '/viestit' }, others);
+  // Ilmoitus menee kaikille, myös lähettäjälle (näkee, että viesti lähti perille).
+  const everyone = (heroes ?? []).map((h) => h.id);
+  const sent = await sendPush(supabase, { title: `📣 ${sender?.hero_name ?? 'Sankari'}`, body, url: '/viestit' }, everyone);
   revalidatePath('/viestit');
   return { ok: true, sent };
 }
