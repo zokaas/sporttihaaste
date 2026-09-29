@@ -3,7 +3,7 @@ import { createClient } from './supabase/server';
 import { cache } from 'react';
 import { today } from './today';
 import { currentUser } from './auth';
-import { BOSS_WEEK, GATE_DAY, seasonWeek } from './season';
+import { BOSS_WEEK, isGateDay, seasonWeek } from './season';
 
 export type NavMode = 'auto' | 'on' | 'off';
 
@@ -12,8 +12,8 @@ export const navVisibility = cache(async () => {
   const supabase = createClient();
   const day = today();
   const week = seasonWeek(day);
-  // Portinvartijan päivänä (ke 30.9.) Lyö ja askelkuittaus ovat jo auki.
-  const inSeason = (week >= 1 && week <= BOSS_WEEK) || day === GATE_DAY;
+  // Portinvartijan päivinä (29.–30.9.) Lyö ja askelkuittaus ovat jo auki.
+  const inSeason = (week >= 1 && week <= BOSS_WEEK) || isGateDay(day);
   // Käyttäjä on yleensä jo haettu sivulla (välimuisti), joten asetukset ja askel haetaan rinnakkain.
   const user = await currentUser();
   const [{ data }, { data: stepRow }] = await Promise.all([

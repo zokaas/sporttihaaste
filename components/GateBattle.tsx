@@ -16,7 +16,7 @@ type Props = {
   offsetMs: number;
 };
 
-/** Portinvartija ke 30.9.: yhden päivän taistelu ennen kauden alkua. Ei sinettiä, kaatuu kun HP loppuu. */
+/** Portinvartija ti 29.9.–ke 30.9.: taistelu ennen kauden alkua. Ei sinettiä, kaatuu kun HP loppuu. */
 export default function GateBattle({ gate, hits, names, stepped, ownHit, crit, offsetMs }: Props) {
   const recent = [...hits].sort((a, b) => b.created_at.localeCompare(a.created_at));
   return (
@@ -38,7 +38,7 @@ export default function GateBattle({ gate, hits, names, stepped, ownHit, crit, o
         effects
         endMs={helsinkiMs(GATE_DAY, '23:59:59')}
         offsetMs={offsetMs}
-        taunt={gate.taunt ?? 'Portti ei aukea kenellekään. Ei edes teille.'}
+        taunt={gate.taunt ?? 'Näen teidät. Portti ei aukea kenellekään.'}
         hitLine={ownHit != null ? hitReaction(null, null, crit) : null}
       />
       {gate.description ? <p className="narrator">{gate.description}</p> : null}
@@ -50,12 +50,12 @@ export default function GateBattle({ gate, hits, names, stepped, ownHit, crit, o
           </>
         ) : (
           <>
-            <h2 className="display">Kaada portinvartija tänään</h2>
-            <p style={{ margin: 0 }}>Portti kauteen aukeaa vain, jos {gate.name} kaatuu ennen keskiyötä. Treenit ja askeleet lyövät, eikä sinettiä tarvita. Jos se jää henkiin, jäljelle jäänyt HP siirtyy torstain monsterille.</p>
-            <p className="muted small" style={{ margin: 0 }}>Tämän päivän treenit eivät kerry viikon 1 lupaukseen.</p>
+            <h2 className="display">Kaatakaa portinvartija</h2>
+            <p style={{ margin: 0 }}>Portti kauteen aukeaa vain, jos {gate.name} kaatuu ennen ke 30.9. klo 23.59. Treenit ja askeleet lyövät, eikä sinettiä tarvita. Jos se jää henkiin, jäljelle jäänyt HP siirtyy torstain monsterille.</p>
+            <p className="muted small" style={{ margin: 0 }}>Ti–ke treenit eivät kerry viikon 1 lupaukseen.</p>
           </>
         )}
-        <p className="small" style={{ margin: 0 }}>Askeleet kuitattu: {stepped} · iskuja: {hits.length}</p>
+        <p className="small" style={{ margin: 0 }}>Askeleet tänään: {stepped} · iskuja yhteensä: {hits.length}</p>
       </section>
       {recent.length ? (
         <section className="card">

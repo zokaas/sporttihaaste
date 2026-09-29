@@ -8,7 +8,7 @@ import { seasonFinale } from '@/lib/finale';
 import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
-import { helsinkiMs, seasonWeek, AFTER_SEASON, BOSS_WEEK, GATE_DAY, SEASON_START } from '@/lib/season';
+import { helsinkiMs, isGateDay, seasonWeek, AFTER_SEASON, BOSS_WEEK, SEASON_START } from '@/lib/season';
 import GateBattle from '@/components/GateBattle';
 import Countdown from '@/components/Countdown';
 import { today, testOffsetMs } from '@/lib/today';
@@ -26,8 +26,8 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   if (!user) redirect('/kirjaudu');
 
   const week = seasonWeek(today());
-  // Portinvartijan päivä (ke 30.9.): yhden päivän taistelu ennen kauden alkua.
-  const gateDay = today() === GATE_DAY;
+  // Portinvartijan taistelu (ti 29.9.–ke 30.9.) ennen kauden alkua.
+  const gateDay = isGateDay(today());
   const [{ data: me }, { data: heroes }, maybeBattle, { data: firstMonster }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at').order('created_at'),
@@ -74,9 +74,9 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
       {gateBattle ? (
         <GateBattle
           gate={gateBattle.gate}
-          hits={gateBattle.hits.filter((h) => h.trained_on === GATE_DAY)}
+          hits={gateBattle.hits.filter((h) => isGateDay(h.trained_on))}
           names={new Map(gateBattle.heroes.map((h) => [h.id, h.hero_name ?? '']))}
-          stepped={gateBattle.steps.filter((x) => x.day === GATE_DAY).length}
+          stepped={gateBattle.steps.filter((x) => x.day === today()).length}
           ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null}
           crit={searchParams.krit === '1'}
           offsetMs={testOffsetMs()}

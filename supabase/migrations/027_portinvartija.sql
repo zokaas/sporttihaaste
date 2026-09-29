@@ -1,9 +1,9 @@
--- Portinvartija: kauden avaava yhden päivän taistelu ke 30.9.2026 (viikko 0).
+-- Portinvartija (Sauronin silmä): kauden avaava taistelu ti 29.9.–ke 30.9.2026 (viikko 0).
 -- Treenit ja askeleet lyövät, sinettiä ei ole. Jäljelle jäänyt HP siirtyy viikon 1 monsterille,
--- ylijäämä pottiin (lasketaan sovelluksessa). Päivän treenit eivät kerry viikon 1 lupaukseen.
--- Aja Supabasen SQL-editorissa TÄNÄÄN (ennen ke 30.9. klo 00.00). Turvallista ajaa uudelleen.
+-- ylijäämä pottiin (lasketaan sovelluksessa). Ti–ke treenit eivät kerry viikon 1 lupaukseen.
+-- Aja Supabasen SQL-editorissa HETI. Turvallista ajaa uudelleen.
 
--- 1) Portinvartijan tiedot (yksi rivi). Muut näkevät sen vasta portinvartijan päivänä, ylläpito aina.
+-- 1) Portinvartijan tiedot (yksi rivi). Näkyy kaikille 29.9. alkaen.
 create table if not exists public.gate (
   id int primary key default 1 check (id = 1),
   name text,
@@ -12,24 +12,26 @@ create table if not exists public.gate (
   taunt text,
   hp int not null default 1500 check (hp between 100 and 100000)
 );
-insert into public.gate (id) values (1) on conflict (id) do nothing;
+insert into public.gate (id, name) values (1, 'Sauronin silmä') on conflict (id) do nothing;
+update public.gate set name = 'Sauronin silmä' where id = 1 and name is null;
 alter table public.gate enable row level security;
 drop policy if exists "portinvartija näkyy" on public.gate;
 create policy "portinvartija näkyy" on public.gate for select to authenticated
-  using (public.helsinki_today() >= date '2026-09-30' or public.is_admin());
+  using (public.helsinki_today() >= date '2026-09-29' or public.is_admin());
 drop policy if exists "ylläpito muokkaa portinvartijaa" on public.gate;
 create policy "ylläpito muokkaa portinvartijaa" on public.gate for update to authenticated
   using (public.is_admin()) with check (public.is_admin());
 grant select, update on public.gate to authenticated;
 grant select on public.gate to service_role;
 
--- 2) Iskut ja askeleet sallitaan portinvartijan päivälle sinä päivänä (viikko 0).
+-- 2) Iskut ja askeleet sallitaan portinvartijan päiville 29.–30.9. niiden aikana (ei tulevaisuuteen).
 create or replace function public.guard_hit_week() returns trigger
 language plpgsql as $$
 declare
   today date := public.helsinki_today();
   current_week int := public.season_week(public.helsinki_today());
-  gate_ok boolean := today = date '2026-09-30' and (case when tg_op = 'DELETE' then old.trained_on else new.trained_on end) = date '2026-09-30';
+  d date := case when tg_op = 'DELETE' then old.trained_on else new.trained_on end;
+  gate_ok boolean := today between date '2026-09-29' and date '2026-09-30' and d between date '2026-09-29' and today;
 begin
   if public.is_admin() or gate_ok then
     return coalesce(new, old);
@@ -58,7 +60,7 @@ declare
   d date := case when tg_op = 'DELETE' then old.day else new.day end;
 begin
   if public.is_admin() then return coalesce(new, old); end if;
-  if today = date '2026-09-30' and d = date '2026-09-30' then return coalesce(new, old); end if;
+  if today between date '2026-09-29' and date '2026-09-30' and d between date '2026-09-29' and today then return coalesce(new, old); end if;
   if d > today then raise exception 'Tulevaa päivää ei voi kuitata.'; end if;
   if public.season_week(d) not between 1 and 12 or public.season_week(d) <> public.season_week(today) then
     raise exception 'Viikko on jo lukittu.';
@@ -66,17 +68,18 @@ begin
   return coalesce(new, old);
 end $$;
 
--- 3) Testidatan tyhjennys estyy jo portinvartijan päivänä, jotta sen iskut eivät katoa.
+-- 3) Testidatan tyhjennys säilyttää portinvartijan oikeat iskut ja askeleet (29.–30.9.):
+--    vain testitilassa kirjatut kauden päivät (1.10. alkaen) poistetaan.
 create or replace function public.reset_test_data() returns void
 language plpgsql security definer set search_path = public as $$
 begin
   if not public.is_admin() then raise exception 'Vain ylläpitäjä voi tyhjentää testidatan.'; end if;
-  if public.helsinki_today() >= date '2026-09-30' then raise exception 'Portinvartijan taistelu on alkanut, testidataa ei voi enää tyhjentää.'; end if;
-  delete from public.hits where true;
-  delete from public.step_days where true;
+  if public.helsinki_today() >= date '2026-10-01' then raise exception 'Kausi on alkanut, testidataa ei voi enää tyhjentää.'; end if;
+  delete from public.hits where trained_on >= date '2026-10-01';
+  delete from public.step_days where day >= date '2026-10-01';
   delete from public.sick_periods where true;
   delete from public.pledge_changes where true;
   delete from public.nudges where true;
-  delete from public.notifications_sent where true;
+  delete from public.notifications_sent where key not like 'gate%';
   delete from public.messages where true;
 end $$;

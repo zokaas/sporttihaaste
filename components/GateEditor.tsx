@@ -49,7 +49,7 @@ export default function GateEditor({ gate }: { gate: GateRow }) {
         <input type="file" accept="image/*" hidden onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
       </label>
       <label className="field">Nimi
-        <input className="input" value={g.name ?? ''} placeholder="Portinvartija" onChange={(e) => setG({ ...g, name: e.target.value })} />
+        <input className="input" value={g.name ?? ''} placeholder="Sauronin silmä" onChange={(e) => setG({ ...g, name: e.target.value })} />
       </label>
       <label className="field">HP
         <input className="input" type="number" inputMode="numeric" min={100} step={100} value={hp} onChange={(e) => setHp(e.target.value)} />
@@ -58,7 +58,7 @@ export default function GateEditor({ gate }: { gate: GateRow }) {
         <textarea className="input" rows={6} style={{ padding: 12 }} value={g.description ?? ''} onChange={(e) => setG({ ...g, description: e.target.value })} />
       </label>
       <label className="field">Repliikki (puhekupla)
-        <input className="input" value={g.taunt ?? ''} placeholder="Portti ei aukea kenellekään. Ei edes teille." onChange={(e) => setG({ ...g, taunt: e.target.value })} />
+        <input className="input" value={g.taunt ?? ''} placeholder="Näen teidät. Portti ei aukea kenellekään." onChange={(e) => setG({ ...g, taunt: e.target.value })} />
       </label>
       <button type="button" className="btn" disabled={busy} onClick={saveAll}>{busy ? 'Tallennetaan…' : 'Tallenna portinvartija'}</button>
       {msg ? <p className={`note${msg.ok ? '' : ' threat'}`} role="status" style={{ margin: 0 }}>{msg.text}</p> : null}

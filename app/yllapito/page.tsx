@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { TEST_DAY_COOKIE, TEST_SKIP_COOKIE, testDay, testSkipPast } from '@/lib/today';
-import { helsinkiToday, formatDay, GATE_DAY, SEASON_START, SEASON_END, BOSS_WEEK } from '@/lib/season';
+import { helsinkiToday, formatDay, SEASON_START, SEASON_END, BOSS_WEEK } from '@/lib/season';
 import { revalidatePath } from 'next/cache';
 import webpush from 'web-push';
 import { createClient } from '@/lib/supabase/server';
@@ -195,7 +195,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
           <Hint id="admin-test" className="">Kokeile sovellusta ennen kautta: valitse päivä, niin sovellus toimii sinulle kuin se olisi tänään. Muut näkevät sovelluksen normaalisti.</Hint>
           <form action={setTestDay} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div className="row" style={{ alignItems: 'center' }}>
-              <input className="input grow" type="date" name="day" min={GATE_DAY} max={SEASON_END} defaultValue={testDay() ?? '2026-10-07'} required />
+              <input className="input grow" type="date" name="day" min={SEASON_START} max={SEASON_END} defaultValue={testDay() ?? '2026-10-07'} required />
               <button className="btn" type="submit">Aseta</button>
             </div>
             <label className="row" style={{ alignItems: 'center', gap: 10, minHeight: 44 }}>
@@ -209,7 +209,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
           <form action={resetTestData}>
             <ConfirmButton message="Poistetaanko kaikkien iskut, askeleet, sairaudet ja lupausmuutokset?" className="btn btn-ghost" style={{ width: '100%', color: 'var(--blood-text)' }}>Tyhjennä testidata</ConfirmButton>
           </form>
-          <Hint id="admin-reset">Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet, lupausmuutokset ja viestit. Tunnukset ja ilmoittautumiset säilyvät. Toimii vain ti 29.9. asti: portinvartijan iskut ke 30.9. ovat jo oikeita. Muista tyhjentää ennen sitä!</Hint>
+          <Hint id="admin-reset">Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet, lupausmuutokset ja viestit. Tunnukset ja ilmoittautumiset säilyvät. Portinvartijan oikeat iskut ja askeleet 29.–30.9. säilyvät, vain testitilan kauden päivät (1.10. alkaen) poistetaan. Toimii ennen kauden alkua 1.10.</Hint>
           {searchParams.testi ? <p className={`note${searchParams.testi.startsWith('Tyhjennys epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.testi}</p> : null}
           {searchParams.nollaa ? <ClearLocalState /> : null}
         </section>
@@ -306,8 +306,8 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
       </section>
 
       <section className="card" id="portinvartija">
-        <h2 className="display">🗝️ Portinvartija (ke 30.9.)</h2>
-        <p className="muted small" style={{ margin: 0 }}>Kauden avaava yhden päivän taistelu. Treenit ja askeleet lyövät, sinettiä ei ole. Jos se jää henkiin, jäljelle jäänyt HP siirtyy viikon 1 monsterille; jos se kaatuu, ylijäämä menee pottiin. Muut näkevät sen ke 30.9. klo 00.00 alkaen.</p>
+        <h2 className="display">👁️ Portinvartija (ti 29.9.–ke 30.9.)</h2>
+        <p className="muted small" style={{ margin: 0 }}>Kauden avaava taistelu ti 29.9.–ke 30.9. klo 23.59. Treenit ja askeleet lyövät, sinettiä ei ole. Jos se jää henkiin, jäljelle jäänyt HP siirtyy viikon 1 monsterille; jos se kaatuu, ylijäämä menee pottiin. Näkyy kaikille heti.</p>
         {gateError ? <p className="note threat" style={{ margin: 0 }}>Aja ensin migraatio 027_portinvartija.sql.</p> : <GateEditor gate={(gateRow ?? { name: null, description: null, image_path: null, taunt: null, hp: null }) as GateRow} />}
       </section>
 

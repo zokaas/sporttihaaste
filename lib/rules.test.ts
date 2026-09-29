@@ -112,7 +112,7 @@ assert.equal(new Set(SPORTS.map((s) => s.name)).size, SPORTS.length, 'lajin nimi
 
 // Portinvartija: HP 1 500, ei sinettiä; ylijäämä pottiin, vajaus viikon 1 monsterille
 import { gateResult } from './gate.ts';
-const gh = [{ trained_on: '2026-09-30', damage: 1200 }, { trained_on: '2026-10-01', damage: 999 }];
+const gh = [{ trained_on: '2026-09-29', damage: 700 }, { trained_on: '2026-09-30', damage: 500 }, { trained_on: '2026-10-01', damage: 999 }, { trained_on: '2026-09-28', damage: 999 }];
 const gs = [{ day: '2026-09-30' }, { day: '2026-09-30' }, { day: '2026-10-01' }];
 const g1 = gateResult(null, gh, gs);
 assert.deepEqual([g1.hp, g1.dealt, g1.left, g1.surplus, g1.killed], [1500, 1300, 200, 0, false]);
