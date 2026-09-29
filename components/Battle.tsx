@@ -194,10 +194,10 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
               {missing.some((id) => id !== userId) ? <NudgeButton count={missing.filter((id) => id !== userId).length} /> : null}
             </>
           ) : (
-            // Ilman patoa sinetti on yksi rivi: sankarit näkyvät jo näyttämön sinettirivillä.
+            // Ilman patoa sinetti on yksi rivi: nimet näkyvät jo näyttämön sinettirivillä, joten tässä vain määrä.
             <div className="row seal-line">
               <p className="grow small" title={`Puuttuu: ${missing.map((id) => heroById.get(id)?.hero_name).join(', ')}`}>
-                <strong>Sinetti {required.length - missing.length}/{required.length}</strong> · puuttuu {missing.map((id) => heroById.get(id)?.hero_name).join(', ')}
+                <strong>Sinetti {required.length - missing.length}/{required.length}</strong> · {missing.includes(userId) ? (missing.length === 1 ? 'vain sinä puutut' : `sinä ja ${missing.length - 1} muuta puuttuu`) : `${missing.length} puuttuu`}
               </p>
               {missing.some((id) => id !== userId) ? <NudgeButton compact count={missing.filter((id) => id !== userId).length} /> : null}
             </div>
