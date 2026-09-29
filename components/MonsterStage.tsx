@@ -68,6 +68,8 @@ function write(key: string, value: string) {
   try { localStorage.setItem(key, value); } catch { /* ei tallennusta */ }
 }
 
+const TAUNT_MS = 8000; // sama kuin .stage-taunt.fades häivytyksen loppu
+
 export default function MonsterStage(p: Props) {
   const state = stateOf(p.hp, p.maxHp, p.padded, Boolean(p.dead));
   const [shownHp, setShownHp] = useState(p.hp);
@@ -77,6 +79,13 @@ export default function MonsterStage(p: Props) {
   const [partFall, setPartFall] = useState<string | null>(null);
   const [claw, setClaw] = useState(0);
   const [reply, setReply] = useState(false);
+  // Puhekupla näkyy hetken ja häipyy, jotta kuva jää näkyviin. Iskureaktio näkyy silti.
+  const [tauntOn, setTauntOn] = useState(true);
+  useEffect(() => {
+    setTauntOn(true);
+    const t = window.setTimeout(() => setTauntOn(false), TAUNT_MS);
+    return () => clearTimeout(t);
+  }, [p.taunt]);
   const timers = useRef<number[]>([]);
   const rootRef = useRef<HTMLElement | null>(null);
   const [offscreen, setOffscreen] = useState(false);
@@ -219,7 +228,7 @@ export default function MonsterStage(p: Props) {
       <div className="stage-info">
         {/* Puhekupla nimen yläpuolella, jotta se ei peitä kuvan kasvoja (ne ovat yleensä kuvan yläosassa). */}
         {reply && p.hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status">“{p.hitLine}”</div>
-          : p.taunt && !p.dead ? <div key="taunt" className="stage-taunt" role="note">“{p.taunt}”</div> : null}
+          : p.taunt && !p.dead && tauntOn ? <div key="taunt" className="stage-taunt fades" role="note">“{p.taunt}”</div> : null}
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
         {parts ? (
           <div className="stage-parts" aria-label={`${groupName(parts.length)}: ${deadParts}/${parts.length} kaatunut`}>

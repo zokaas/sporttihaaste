@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { nudgeMissing } from '@/app/actions';
 
 /** Muistuttaa sinetistä puuttuvia push-ilmoituksella. */
-export default function NudgeButton({ count }: { count: number }) {
+export default function NudgeButton({ count, compact = false }: { count: number; compact?: boolean }) {
   const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle');
   const [msg, setMsg] = useState('');
   async function nudge() {
@@ -14,8 +14,8 @@ export default function NudgeButton({ count }: { count: number }) {
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <button type="button" className="btn btn-ghost" disabled={state !== 'idle'} onClick={nudge}>
-        {state === 'done' ? '✓ Muistutettu' : state === 'busy' ? 'Lähetetään…' : `🔔 Muistuta puuttuvia (${count})`}
+      <button type="button" className={`btn btn-ghost${compact ? ' btn-compact' : ''}`} disabled={state !== 'idle'} onClick={nudge} aria-label={`Muistuta puuttuvia (${count})`}>
+        {state === 'done' ? '✓ Muistutettu' : state === 'busy' ? 'Lähetetään…' : compact ? '🔔 Muistuta' : `🔔 Muistuta puuttuvia (${count})`}
       </button>
       {msg ? <span className="muted small" role="status">{msg}</span> : null}
     </div>

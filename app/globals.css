@@ -163,9 +163,9 @@ table.plain th, table.plain td { text-align: left; padding: 6px 4px; border-bott
 .stage-shadow { object-fit: initial; }
 .stage-vignette { position: absolute; inset: 0; pointer-events: none; background:
   radial-gradient(ellipse at 50% 40%, transparent 45%, rgba(8, 5, 4, 0.75) 100%),
-  linear-gradient(to bottom, rgba(8, 5, 4, 0.2) 0%, transparent 25%, transparent 45%, rgba(8, 5, 4, 0.92) 78%, var(--deep) 100%); }
+  linear-gradient(to bottom, rgba(8, 5, 4, 0.2) 0%, transparent 25%, transparent 40%, rgba(8, 5, 4, 0.55) 55%, rgba(8, 5, 4, 0.94) 72%, var(--deep) 100%); }
 .stage-info { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
-.stage .stage-title { font-size: 40px; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9); overflow-wrap: anywhere; }
+.stage .stage-title { font-size: 40px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8), 0 2px 18px rgba(0, 0, 0, 0.95); overflow-wrap: anywhere; }
 .stage-hp { width: 100%; height: 16px; border-radius: 999px; background: rgba(42, 35, 32, 0.9); overflow: hidden; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06); }
 .stage-hp span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #7d1812, var(--blood) 60%, #e0452f); transition: width 0.9s cubic-bezier(0.3, 0.7, 0.2, 1); }
 .stage-hp.segmented { position: relative; }
@@ -370,7 +370,9 @@ details.companions[open] { padding-bottom: 12px; }
 .mcell.legend { width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; }
 .stage-taunt { position: relative; z-index: 3; max-width: 88%; margin-bottom: 4px; padding: 10px 14px; border-radius: 4px 16px 16px 16px; background: rgba(242, 234, 224, 0.94); color: #1c1715; font: italic 600 14px/1.35 var(--font-body), sans-serif; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); animation: taunt-in 0.5s ease-out both; }
 @keyframes taunt-in { from { opacity: 0; transform: translateY(-6px) scale(0.96); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .stage-taunt { animation: none; } }
+@keyframes taunt-out { to { opacity: 0; transform: translateY(4px); } }
+.stage-taunt.fades { animation: taunt-in 0.5s ease-out both, taunt-out 0.6s ease-in 7.4s forwards; }
+@media (prefers-reduced-motion: reduce) { .stage-taunt, .stage-taunt.fades { animation: none; } }
 .card.teaser { flex-direction: row; align-items: center; gap: 14px; background: radial-gradient(ellipse at 20% 50%, #2a1512, var(--surface) 70%); }
 .teaser-shadow { flex: 0 0 72px; width: 72px; height: 56px; filter: blur(1.5px); }
 .teaser-text { margin: 4px 0 0; font-style: italic; color: var(--light); }
@@ -543,3 +545,8 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
   .myweek-block { padding: 10px 8px; }
   .weekstrip { gap: 4px; }
 }
+
+/* Sinetti yhtenä rivinä: nimet katkaistaan, Muistuta-nappi oikealla */
+.seal-line { align-items: center; }
+.seal-line p { margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn.btn-compact { min-height: 44px; padding: 0 14px; font-size: 14px; flex: 0 0 auto; }

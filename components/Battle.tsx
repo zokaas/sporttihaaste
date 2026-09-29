@@ -187,11 +187,21 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
                 Kun {missing.map((id) => heroById.get(id)?.hero_name).join(', ').replace(/, ([^,]*)$/, ' ja $1')} {missing.length > 1 ? 'lyövät' : 'lyö'}, monsteri kaatuu heti ja koko pato siirtyy eteenpäin. Jos sinetti jää su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59 vajaaksi, pato menetetään ja monsteri jää rästiin.
               </p>
             </>
+          ) : null}
+          {view?.dam ? (
+            <>
+              <p className="small" style={{ margin: 0 }}>Puuttuu: {missing.map((id) => heroById.get(id)?.hero_name).join(', ')}</p>
+              {missing.some((id) => id !== userId) ? <NudgeButton count={missing.filter((id) => id !== userId).length} /> : null}
+            </>
           ) : (
-            <Hint id="seal" title={<strong>Sinetti {required.length - missing.length}/{required.length}</strong>}>Monsteri kaatuu vasta, kun jokainen terve sankari on lyönyt sitä treenillä. Askeleet eivät täytä sinettiä.</Hint>
+            // Ilman patoa sinetti on yksi rivi: sankarit näkyvät jo näyttämön sinettirivillä.
+            <div className="row seal-line">
+              <p className="grow small" title={`Puuttuu: ${missing.map((id) => heroById.get(id)?.hero_name).join(', ')}`}>
+                <strong>Sinetti {required.length - missing.length}/{required.length}</strong> · puuttuu {missing.map((id) => heroById.get(id)?.hero_name).join(', ')}
+              </p>
+              {missing.some((id) => id !== userId) ? <NudgeButton compact count={missing.filter((id) => id !== userId).length} /> : null}
+            </div>
           )}
-          <p className="small" style={{ margin: 0 }}>Puuttuu: {missing.map((id) => heroById.get(id)?.hero_name).join(', ')}</p>
-          {missing.some((id) => id !== userId) ? <NudgeButton count={missing.filter((id) => id !== userId).length} /> : null}
         </section>
       ) : null}
 
