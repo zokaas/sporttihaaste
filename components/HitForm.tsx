@@ -109,10 +109,10 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
       ) : null}
 
       {familyWeek ? (
-        // Viikon erikoisheikkous: kirjaaja merkitsee itse, treenasiko lapsen tai mummun kanssa.
+        // Viikon erikoisheikkous: kirjaaja merkitsee itse, urheiliko mamun tai lapsen kanssa.
         <label className="family-check">
           <input type="checkbox" checked={withFamily} onChange={(e) => setWithFamily(e.target.checked)} />
-          <span><strong>👶👵 Treenasin lapsen tai mummun kanssa</strong><span className="muted small">Viikon heikkous: +50 %</span></span>
+          <span><strong>👶👵 Urheilin mamun tai lapsen kanssa</strong><span className="muted small">Viikon heikkous: +50 %</span></span>
         </label>
       ) : null}
 

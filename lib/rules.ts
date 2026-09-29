@@ -65,16 +65,16 @@ export interface HitInput {
   weakness: Weakness | Weakness[] | null;
   participants?: number; // ilmoittautuneiden määrä ("kaikki yhdessä"), oletus 10
   sport?: string; // lajin nimi: osuuko yksittäisen lajin heikkouteen
-  withFamily?: boolean; // treenattu lapsen tai mummun kanssa (erikoisheikkous)
+  withFamily?: boolean; // treenattu mamun tai lapsen kanssa (erikoisheikkous)
 }
 
 /** Heikkous on lajiryhmä, yksittäisen lajin nimi tai erikoisheikkous (FAMILY_WEAKNESS). */
 export type Weakness = Category | string;
 
-/** Erikoisheikkous: mikä tahansa laji lapsen tai mummun kanssa. Kirjaaja merkitsee sen itse. */
-export const FAMILY_WEAKNESS = 'Lapsen tai mummun kanssa';
+/** Erikoisheikkous: mikä tahansa laji mamun tai lapsen kanssa. Kirjaaja merkitsee sen itse. */
+export const FAMILY_WEAKNESS = 'Urheilu mamun tai lapsen kanssa';
 
-/** Osuuko isku heikkouteen: juuri tämä laji, sen lajiryhmä tai treeni lapsen/mummun kanssa. Palauttaa osuman nimen. */
+/** Osuuko isku heikkouteen: juuri tämä laji, sen lajiryhmä tai treeni mamun tai lapsen kanssa. Palauttaa osuman nimen. */
 export function weaknessHit(weaknesses: Weakness[], category: Category, sport?: string, withFamily = false) {
   if (sport && weaknesses.includes(sport)) return sport;
   if (weaknesses.includes(category)) return category;

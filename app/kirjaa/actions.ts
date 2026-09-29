@@ -35,7 +35,7 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
   const celebration = (heroes ?? []).some((h) => h.pledge_locked_at && (h.birthday === md || h.name_day === md));
   const groupSize = 1 + companions.length;
   const weaknesses = currentWeaknesses(battle, seasonWeek(input.day));
-  // Lapsi/mummu-merkintä tallennetaan vain, kun se on viikon heikkous.
+  // Mamu/lapsi-merkintä tallennetaan vain, kun se on viikon heikkous.
   const withFamily = Boolean(input.withFamily) && weaknesses.includes(FAMILY_WEAKNESS);
   const result = hitDamage({
     minutes: input.minutes,
@@ -70,7 +70,7 @@ export async function logHit(input: HitInput): Promise<Result> {
     // Sarake tulee migraatiossa 024; lähetetään vain merkittynä, jotta tavallinen kirjaus toimii ilman sitä.
     ...(hit.withFamily ? { with_family: true } : {}),
   });
-  if (error) return { ok: false, error: error.message.includes('with_family') ? 'Lapsi/mummu-merkintä vaatii tietokantapäivityksen (migraatio 024). Kerro ylläpidolle.' : error.message };
+  if (error) return { ok: false, error: error.message.includes('with_family') ? 'Mamu/lapsi-merkintä vaatii tietokantapäivityksen (migraatio 024). Kerro ylläpidolle.' : error.message };
   await afterHit(supabase).catch(() => {});
   revalidatePath('/', 'layout');
   revalidatePath('/kirjaa');
