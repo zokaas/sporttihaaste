@@ -114,7 +114,7 @@ export async function nudgeMissing(): Promise<Result & { sent?: number }> {
   return { ok: true, sent };
 }
 
-/** Viesti porukalle: push kaikille muille ja näkyy Viestit-sivulla. Tietokanta rajaa yhteen päivässä (ylläpito rajatta). */
+/** Viesti porukalle: push kaikille (myös lähettäjälle) ja näkyy Viestit-sivulla. Tietokanta rajaa kahteen päivässä (ylläpito rajatta). */
 export async function sendMessage(text: string): Promise<Result & { sent?: number; queued?: boolean }> {
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };

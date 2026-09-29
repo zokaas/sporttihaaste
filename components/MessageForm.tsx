@@ -35,7 +35,7 @@ export default function MessageForm({ left, isAdmin }: { left: number; isAdmin: 
         <textarea className="input" rows={4} style={{ padding: 12 }} maxLength={MAX} value={text} onChange={(e) => setText(e.target.value)} placeholder="Esim. Lähtekö joku huomenna aamulla lenkille? 🏃" />
       </label>
       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <span className="muted small">{isAdmin ? 'Ylläpitäjänä voit lähettää rajatta.' : `Tänään jäljellä ${left}/${MESSAGES_PER_DAY}.`} Klo 22–09 ilmoitus lähtee vasta aamulla klo 9.</span>
+        <span className="muted small">{isAdmin ? '' : `Tänään jäljellä ${left}/${MESSAGES_PER_DAY}.`} Klo 22–09 ilmoitus lähtee vasta aamulla klo 9.</span>
         <span className={`small ${text.length > MAX - 20 ? 'error' : 'muted'}`}>{text.length}/{MAX}</span>
       </div>
       <button className="btn" type="submit" disabled={busy || !text.trim()}>{busy ? 'Lähetetään…' : '📣 Lähetä kaikille'}</button>
