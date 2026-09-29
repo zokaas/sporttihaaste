@@ -67,7 +67,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
                 <div className="grow" style={{ minWidth: 0 }}>
                   <div className="who">{part.name}</div>
                   <div className="facts">{parts[i].dead ? <span className="ok">Kaatunut</span> : `${fmt(parts[i].left)} / ${fmt(parts[i].hp)} HP`}{part.weakness ? ` · heikkous ${part.weakness}` : ''}</div>
-                  {part.description ? <div className="facts">{part.description}</div> : null}
+                  {part.description ? <div className="facts keep-lines">{part.description}</div> : null}
                 </div>
               </li>
             ))}

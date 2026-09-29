@@ -217,7 +217,9 @@ table.plain th, table.plain td { text-align: left; padding: 6px 4px; border-bott
 .stage-reveal span { font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); }
 .stage-reveal strong { font-size: 44px; color: var(--light); text-shadow: 0 0 24px var(--eye); animation: reveal-text 3.2s ease-out forwards; }
 
-.narrator { margin: 0; font-style: italic; font-size: 17px; line-height: 1.55; color: #d8cfc4; border-left: 3px solid var(--ember-fill); padding-left: 12px; }
+.narrator { margin: 0; font-style: italic; font-size: 17px; line-height: 1.55; color: #d8cfc4; border-left: 3px solid var(--ember-fill); padding-left: 12px; white-space: pre-line; }
+/* Ylläpidon kirjoittamat kuvaukset: rivinvaihdot säilyvät */
+.keep-lines { white-space: pre-line; }
 
 /* Pelinäyttö: yläpalkki, pato, sinettirengas, kriittinen, loppupomo */
 .stage-top { position: absolute; top: 0; left: 0; right: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; font-size: 13px; font-weight: 600; color: #e8dccd; text-shadow: 0 1px 6px #000; }
