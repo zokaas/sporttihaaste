@@ -44,7 +44,8 @@ export default function GateBattle({ gate, hits, names, stepped, ownHit, crit, o
         maxHp={gate.hp}
         padded={0}
         backlog={false}
-        revealed
+        // Kaatuneelle ei näytetä paljastusanimaatiota (kaatumisruutu näytetään sen sijaan).
+        revealed={!gate.killed}
         dead={gate.killed}
         ownHit={ownHit}
         crit={crit}
