@@ -526,3 +526,4 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 /* Viestisivun sivutus */
 .pager { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .pager .btn { min-height: 44px; }
+.rules-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
