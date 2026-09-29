@@ -68,7 +68,7 @@ function write(key: string, value: string) {
   try { localStorage.setItem(key, value); } catch { /* ei tallennusta */ }
 }
 
-const TAUNT_MS = 12000; // sama kuin .stage-taunt.fades häivytyksen loppu
+const TAUNT_MS = 4000;
 
 export default function MonsterStage(p: Props) {
   const state = stateOf(p.hp, p.maxHp, p.padded, Boolean(p.dead));
@@ -79,16 +79,30 @@ export default function MonsterStage(p: Props) {
   const [partFall, setPartFall] = useState<string | null>(null);
   const [claw, setClaw] = useState(0);
   const [reply, setReply] = useState(false);
-  // Puhekupla näkyy hetken ja häipyy, jotta kuva jää näkyviin. Iskureaktio näkyy silti.
-  const [tauntOn, setTauntOn] = useState(true);
-  useEffect(() => {
-    setTauntOn(true);
-    const t = window.setTimeout(() => setTauntOn(false), TAUNT_MS);
-    return () => clearTimeout(t);
-  }, [p.taunt]);
   const timers = useRef<number[]>([]);
   const rootRef = useRef<HTMLElement | null>(null);
   const [offscreen, setOffscreen] = useState(false);
+  // Puhekupla näkyy 4 s ja häipyy, jotta kuva jää näkyviin. Aika lasketaan vasta, kun kupla oikeasti näkyy:
+  // näyttämö ruudulla, välilehti auki ja paljastusanimaatio ohi. Jos jokin näistä katkeaa, aika alkaa alusta.
+  const [taunt, setTaunt] = useState<'on' | 'fading' | 'gone'>('on');
+  const [pageVisible, setPageVisible] = useState(true);
+  useEffect(() => {
+    const update = () => setPageVisible(document.visibilityState === 'visible');
+    update();
+    document.addEventListener('visibilitychange', update);
+    return () => document.removeEventListener('visibilitychange', update);
+  }, []);
+  useEffect(() => { setTaunt('on'); }, [p.taunt]);
+  useEffect(() => {
+    if (taunt === 'gone') return;
+    if (taunt === 'fading') {
+      const t = window.setTimeout(() => setTaunt('gone'), 600);
+      return () => clearTimeout(t);
+    }
+    if (offscreen || revealing || !pageVisible) return;
+    const t = window.setTimeout(() => setTaunt('fading'), TAUNT_MS);
+    return () => clearTimeout(t);
+  }, [taunt, offscreen, revealing, pageVisible]);
   const parts = p.parts?.length ? p.parts : null;
   const front = parts ? parts.find((x) => !x.dead) ?? parts[parts.length - 1] : null;
   const deadParts = parts ? parts.filter((x) => x.dead).length : 0;
@@ -237,7 +251,7 @@ export default function MonsterStage(p: Props) {
       <div className="stage-info">
         {/* Puhekupla nimen yläpuolella, jotta se ei peitä kuvan kasvoja (ne ovat yleensä kuvan yläosassa). */}
         {reply && p.hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status">“{p.hitLine}”</div>
-          : p.taunt && !p.dead && tauntOn ? <div key="taunt" className="stage-taunt fades" role="note">“{p.taunt}”</div> : null}
+          : p.taunt && !p.dead && taunt !== 'gone' ? <div key="taunt" className={`stage-taunt${taunt === 'fading' ? ' fading' : ''}`} role="note">“{p.taunt}”</div> : null}
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
         {parts ? (
           <div className="stage-parts" aria-label={`${groupName(parts.length)}: ${deadParts}/${parts.length} kaatunut`}>

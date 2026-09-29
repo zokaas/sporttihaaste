@@ -371,8 +371,8 @@ details.companions[open] { padding-bottom: 12px; }
 .stage-taunt { position: relative; z-index: 3; max-width: 88%; margin-bottom: 4px; padding: 10px 14px; border-radius: 4px 16px 16px 16px; background: rgba(242, 234, 224, 0.94); color: #1c1715; font: italic 600 14px/1.35 var(--font-body), sans-serif; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); animation: taunt-in 0.5s ease-out both; }
 @keyframes taunt-in { from { opacity: 0; transform: translateY(-6px) scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes taunt-out { to { opacity: 0; transform: translateY(4px); } }
-.stage-taunt.fades { animation: taunt-in 0.5s ease-out both, taunt-out 0.6s ease-in 11.4s forwards; }
-@media (prefers-reduced-motion: reduce) { .stage-taunt, .stage-taunt.fades { animation: none; } }
+.stage-taunt.fading { animation: taunt-out 0.6s ease-in forwards; }
+@media (prefers-reduced-motion: reduce) { .stage-taunt, .stage-taunt.fading { animation: none; } }
 .card.teaser { flex-direction: row; align-items: center; gap: 14px; background: radial-gradient(ellipse at 20% 50%, #2a1512, var(--surface) 70%); }
 .teaser-shadow { flex: 0 0 72px; width: 72px; height: 56px; filter: blur(1.5px); }
 .teaser-text { margin: 4px 0 0; font-style: italic; color: var(--light); }
