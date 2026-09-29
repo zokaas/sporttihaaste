@@ -13,6 +13,11 @@ function optimized(url: string, width: number, quality: number) {
   return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=${quality}`;
 }
 
+/** Sama optimoitu kuva eri leveydellä (esim. sumennettu tausta tarvitsee vain pienen kuvan). */
+export function resizedImage(url: string, width: number) {
+  return url.startsWith('/_next/image?') ? url.replace(/([?&])w=\d+/, `$1w=${width}`).replace(/([?&])q=\d+/, '$1q=60') : url;
+}
+
 export function avatarUrl(path: string | null | undefined) {
   if (!path) return null;
   return optimized(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${path}`, 256, 85);

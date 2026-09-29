@@ -102,7 +102,8 @@ export default async function Sankarit({ searchParams }: { searchParams: { tab?:
       <section className="card">
         <div className="tabs" role="tablist" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
           {TABS.map((t) => (
-            <Link key={t.key} role="tab" aria-selected={tab === t.key} href={`/sankarit?tab=${t.key}`} className="tab-link">{t.label}</Link>
+            // Välilehden vaihto ei vieritä sivua eikä kasvata selaimen historiaa.
+            <Link key={t.key} role="tab" aria-selected={tab === t.key} href={`/sankarit?tab=${t.key}`} scroll={false} replace className="tab-link">{t.label}</Link>
           ))}
         </div>
         <ul className="people">

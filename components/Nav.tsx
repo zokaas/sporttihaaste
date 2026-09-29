@@ -19,7 +19,9 @@ export default async function Nav({ current }: { current: string }) {
   const show = await navVisibility();
   const right = RIGHT.filter((l) => l.href !== '/bestiaario' || show.bestiary);
   const tab = (l: (typeof LEFT)[number]) => (
-    <Link key={l.href} href={l.href} aria-current={current === l.href ? 'page' : undefined}>
+    // scroll={false}: sivu avautuu siihen kohtaan, johon sitä viimeksi selattiin (ScrollMemory), ei hyppää ylös.
+    // prefetch: välilehden sisältö haetaan valmiiksi, joten vaihto on heti valmis ilman latausruutua.
+    <Link key={l.href} href={l.href} scroll={false} prefetch aria-current={current === l.href ? 'page' : undefined}>
       <span aria-hidden="true">{l.icon}</span>
       {l.label}
     </Link>
@@ -28,8 +30,8 @@ export default async function Nav({ current }: { current: string }) {
     <>
       <header className="topbar">
         <span className="display topbar-title">Monsterijahti</span>
-        <Link href="/viestit" className="topbar-icon" aria-label="Viestit" aria-current={current === '/viestit' ? 'page' : undefined}>📣<UnreadDot seenNow={current === '/viestit'} /></Link>
-        <Link href="/saannot" className="topbar-icon" aria-label="Säännöt" aria-current={current === '/saannot' ? 'page' : undefined}>?</Link>
+        <Link href="/viestit" scroll={false} className="topbar-icon" aria-label="Viestit" aria-current={current === '/viestit' ? 'page' : undefined}>📣<UnreadDot seenNow={current === '/viestit'} /></Link>
+        <Link href="/saannot" scroll={false} className="topbar-icon" aria-label="Säännöt" aria-current={current === '/saannot' ? 'page' : undefined}>?</Link>
       </header>
       <InstallHint />
       <NightVisit />

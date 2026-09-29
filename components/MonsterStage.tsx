@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Countdown from '@/components/Countdown';
+import { resizedImage } from '@/lib/supabase/client';
 
 export type StagePart = { name: string; image: string | null; hp: number; left: number; dead: boolean };
 
@@ -76,9 +77,20 @@ export default function MonsterStage(p: Props) {
   const [claw, setClaw] = useState(0);
   const [reply, setReply] = useState(false);
   const timers = useRef<number[]>([]);
+  const rootRef = useRef<HTMLElement | null>(null);
+  const [offscreen, setOffscreen] = useState(false);
   const parts = p.parts?.length ? p.parts : null;
   const front = parts ? parts.find((x) => !x.dead) ?? parts[parts.length - 1] : null;
   const deadParts = parts ? parts.filter((x) => x.dead).length : 0;
+
+  // Kun näyttämö on vieritetty pois näkyvistä, sen jatkuvat animaatiot pysäytetään: vieritys pysyy sulavana.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(([e]) => setOffscreen(!e.isIntersecting), { rootMargin: '80px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   // Kolmikon osan kaatuminen: lyhyt banneri, kun kaatuneiden määrä kasvaa edellisestä käynnistä
   useEffect(() => {
@@ -137,8 +149,6 @@ export default function MonsterStage(p: Props) {
     // E: HP-palkki laskee edellisestä käynnistä nykyiseen, ja vahinko lentää kuvan päälle
     const drop = last > p.hp ? last - p.hp : 0;
     const damage = p.ownHit ?? drop;
-    // Juuri kirjattu isku tai askeleet: näytä monsteri ylhäältä, jotta animaatio näkyy.
-    if (p.ownHit != null) window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
     if (damage > 0 && !reduced) {
       strike(damage, p.ownHit != null ? (p.crit ? 'KRIITTINEN!' : p.ownLabel ?? 'Osumasi!') : null, Boolean(p.crit && p.ownHit != null), Math.min(p.maxHp, p.hp + damage));
       if (p.ownHit != null && 'vibrate' in navigator) navigator.vibrate(p.crit ? [80, 40, 80, 40, 160] : [60, 40, 120]);
@@ -152,7 +162,7 @@ export default function MonsterStage(p: Props) {
   const damPct = Math.min(100, (p.padded / Math.max(1, p.maxHp / 3)) * 100);
   const label = `${p.title}, ${fmt(p.hp)} / ${fmt(p.maxHp)} HP.`;
   const nearDeath = state === 'dying' && p.hp / p.maxHp < 0.1;
-  const className = `stage state-${state}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
+  const className = `stage state-${state}${offscreen ? ' is-offscreen' : ''}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
   const sealDone = p.seal ? p.seal.filter((s) => !s.excused).every((s) => s.hit) : false;
 
   const image = front ? front.image ?? p.image : p.image;
@@ -164,7 +174,8 @@ export default function MonsterStage(p: Props) {
         {p.boss ? <div className="stage-sky" /> : null}
         {image ? (
           <>
-            <img className="stage-backdrop" src={image} alt="" />
+            {/* Tausta on sumennettu, joten siihen riittää pieni kuva: kevyempi ladata ja piirtää. */}
+            <img className="stage-backdrop" src={resizedImage(image, 96)} alt="" />
             <img className="stage-img" src={image} alt="" />
           </>
         ) : (
@@ -259,6 +270,6 @@ export default function MonsterStage(p: Props) {
   );
 
   return p.href
-    ? <Link href={p.href} className={className} aria-label={`${label} Avaa monsterin sivu.`}>{content}</Link>
-    : <section className={className} aria-label={label}>{content}</section>;
+    ? <Link ref={(el) => { rootRef.current = el; }} href={p.href} className={className} aria-label={`${label} Avaa monsterin sivu.`}>{content}</Link>
+    : <section ref={(el) => { rootRef.current = el; }} className={className} aria-label={label}>{content}</section>;
 }

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import type { loadBattle } from '@/lib/battle';
-import { computeLedger, sealView } from '@/lib/rules';
+import { computeLedger, sealView, STEP_DAY_DAMAGE } from '@/lib/rules';
 import { finalBlows, weekRecap } from '@/lib/stats';
 import { addDays, formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
@@ -11,6 +11,7 @@ import MonsterStage, { type SealHero } from '@/components/MonsterStage';
 import KillFinale from '@/components/KillFinale';
 import NudgeButton from '@/components/NudgeButton';
 import LiveRefresh from '@/components/LiveRefresh';
+import AwaySummary, { type AwayEvent } from '@/components/AwaySummary';
 import RecapPrompt from '@/components/RecapPrompt';
 import RecapCard from '@/components/RecapCard';
 import { stageParts, weaknessesOf } from '@/lib/trio';
@@ -31,9 +32,9 @@ function ago(iso: string) {
   return `${Math.round(h / 24)} pv sitten`;
 }
 
-type Props = { data: BattleData; userId: string; ownHit?: number | null; ownStep?: boolean; crit?: boolean; offsetMs?: number; isAdmin?: boolean };
+type Props = { data: BattleData; userId: string; ownHit?: number | null; crit?: boolean; offsetMs?: number; isAdmin?: boolean };
 
-export default function Battle({ data, userId, ownHit = null, ownStep = false, crit = false, offsetMs = 0, isAdmin = false }: Props) {
+export default function Battle({ data, userId, ownHit = null, crit = false, offsetMs = 0, isAdmin = false }: Props) {
   const { week, ledger, monsters, heroes, participants, required } = data;
 
   if (!ledger) {
@@ -67,6 +68,11 @@ export default function Battle({ data, userId, ownHit = null, ownStep = false, c
     return { id, name: h?.hero_name ?? '', initial: (h?.hero_name ?? '?').slice(0, 1), avatar: avatarUrl(h?.avatar_path), hit: Boolean(target?.hitters.includes(id)), excused: !required.includes(id) };
   });
   const endMs = helsinkiMs(weekRange(week).end);
+  // Poissaolon kooste: tämän viikon muiden iskut ja askeleet aikaleimoineen (selain valitsee edellisen käynnin jälkeiset).
+  const awayEvents: AwayEvent[] = [
+    ...data.hits.filter((h) => h.user_id !== userId && seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, name: heroById.get(h.user_id)?.hero_name ?? 'Sankari', kind: 'hit' as const, damage: h.damage })),
+    ...data.steps.filter((s) => s.user_id !== userId && seasonWeek(s.day) === week).map((s) => ({ at: s.created_at, name: heroById.get(s.user_id)?.hero_name ?? 'Sankari', kind: 'step' as const, damage: STEP_DAY_DAMAGE })),
+  ];
   const potBeforeBoss = week === BOSS_WEEK && data.ledgerInput ? Math.min(computeLedger(data.ledgerInput, MONSTER_WEEKS).pot, ledger.potCap) : 0;
   const recap = week >= 2 ? weekRecap(data, week - 1) : null;
   // Loppupomon HP (ja siitä johdettu pottikatto) pysyy salassa, kunnes se herää.
@@ -102,6 +108,7 @@ export default function Battle({ data, userId, ownHit = null, ownStep = false, c
         </p>
       ) : null}
       <KillFinale killed={ledger.killed.length} kills={kills} />
+      {target ? <AwaySummary events={awayEvents} skip={ownHit != null} strike={{ name: nameOf(target.week), image: monsterImageUrl(targetMonster?.image_path), hp: view!.hp, maxHp: targetMonster?.hp ?? 1, reaction: hitReaction(targetMonster?.hit_lines, targetMonster?.hit_crit, false) }} /> : null}
       {recap ? <RecapPrompt week={recap.week}><RecapCard r={recap} /></RecapPrompt> : null}
 
       {target ? (
@@ -118,7 +125,6 @@ export default function Battle({ data, userId, ownHit = null, ownStep = false, c
           revealed={Boolean(monsters.get(target.week)?.name)}
           href={`/monsteri/${target.week}`}
           ownHit={ownHit}
-          ownLabel={ownStep ? '👣 Askeleet!' : undefined}
           crit={crit}
           effects
           seal={seal}
@@ -169,9 +175,18 @@ export default function Battle({ data, userId, ownHit = null, ownStep = false, c
       {target && missing.length ? (
         <section className={`card${view?.dam ? ' threat' : ''}`}>
           {view?.dam ? (
-            <p style={{ margin: 0 }}>
-              <strong style={{ color: 'var(--gold)' }}>{nameOf(target.week)} on sinettirajalla!</strong> Sille jää {fmt(view.hp)} HP (10 HP jokaista puuttuvaa kohden), ja se kaatuu heti, kun puuttuvat lyövät. Jos sinetti jää su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59 vajaaksi, monsteri jää rästiin.
-            </p>
+            <>
+              <div className="dam-lock">
+                <span className="dam-lock-icon" aria-hidden="true">🔒</span>
+                <div>
+                  <strong className="dam-lock-amount">{fmt(view.dam)} voimaa odottaa sinettiä</strong>
+                  <span className="muted small">{nameOf(target.week)} on sinettirajalla ({fmt(view.hp)} HP).</span>
+                </div>
+              </div>
+              <p style={{ margin: 0 }}>
+                Kun {missing.map((id) => heroById.get(id)?.hero_name).join(', ').replace(/, ([^,]*)$/, ' ja $1')} {missing.length > 1 ? 'lyövät' : 'lyö'}, monsteri kaatuu heti ja koko pato siirtyy eteenpäin. Jos sinetti jää su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59 vajaaksi, pato menetetään ja monsteri jää rästiin.
+              </p>
+            </>
           ) : (
             <Hint id="seal" title={<strong>Sinetti {required.length - missing.length}/{required.length}</strong>}>Monsteri kaatuu vasta, kun jokainen terve sankari on lyönyt sitä treenillä. Askeleet eivät täytä sinettiä.</Hint>
           )}
