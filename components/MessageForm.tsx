@@ -20,7 +20,7 @@ export default function MessageForm({ canSend, isAdmin }: { canSend: boolean; is
     setBusy(false);
     if (!res.ok) return setMsg({ ok: false, text: res.error });
     setText('');
-    setMsg({ ok: true, text: res.queued ? 'Viesti tallentui. Nyt on hiljaiset tunnit (22–07), joten ilmoitus lähtee muille aamulla.' : `Viesti lähti. Ilmoitus meni ${res.sent ?? 0} laitteeseen.` });
+    setMsg({ ok: true, text: res.queued ? 'Viesti tallentui. Nyt on hiljaiset tunnit (22–09), joten ilmoitus lähtee muille aamulla klo 9.' : `Viesti lähti. Ilmoitus meni ${res.sent ?? 0} laitteeseen.` });
     router.refresh();
   }
 
@@ -34,7 +34,7 @@ export default function MessageForm({ canSend, isAdmin }: { canSend: boolean; is
         <textarea className="input" rows={4} style={{ padding: 12 }} maxLength={MAX} value={text} onChange={(e) => setText(e.target.value)} placeholder="Esim. Lähtekö joku huomenna aamulla lenkille? 🏃" />
       </label>
       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-        <span className="muted small">{isAdmin ? 'Ylläpitäjänä voit lähettää rajatta.' : 'Yksi viesti päivässä.'} Klo 22–07 ilmoitus lähtee vasta aamulla.</span>
+        <span className="muted small">{isAdmin ? 'Ylläpitäjänä voit lähettää rajatta.' : 'Yksi viesti päivässä.'} Klo 22–09 ilmoitus lähtee vasta aamulla klo 9.</span>
         <span className={`small ${text.length > MAX - 20 ? 'error' : 'muted'}`}>{text.length}/{MAX}</span>
       </div>
       <button className="btn" type="submit" disabled={busy || !text.trim()}>{busy ? 'Lähetetään…' : '📣 Lähetä kaikille'}</button>

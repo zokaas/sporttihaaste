@@ -8,11 +8,10 @@ import { seasonFinale } from '@/lib/finale';
 import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
 import { loadBattle } from '@/lib/battle';
-import { addDays, seasonWeek, weekRange, AFTER_SEASON, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
+import { seasonWeek, AFTER_SEASON, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
 import { today, testOffsetMs } from '@/lib/today';
 import { currentUser } from '@/lib/auth';
 import { navVisibility } from '@/lib/nav';
-import { announceReveal } from '@/lib/events';
 import Nav from '@/components/Nav';
 import Hint from '@/components/Hint';
 
@@ -38,7 +37,6 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   const inSeason = (week >= 1 && week <= BOSS_WEEK) || (me.is_admin && searchParams.esikatselu === '1');
   const battle = maybeBattle ?? (inSeason ? await loadBattle(supabase, today()) : null);
   // Paljastusilmoitus tarkistetaan vain viikon kahtena ensimmäisenä päivänä, ei jokaisella latauksella.
-  if (battle && battle.today <= addDays(weekRange(battle.week).start, 1)) await announceReveal(supabase, battle).catch(() => { });
 
   // Kauden jälkeen: loppugaala. Ylläpitäjä voi esikatsella sitä osoitteella /?finaali=1.
   const finale = week === AFTER_SEASON || (me.is_admin && searchParams.finaali === '1');

@@ -5,12 +5,12 @@
   ],
   "crons": [
     {
-      "path": "/api/cron/perjantai",
-      "schedule": "0 6 * * 5"
+      "path": "/api/cron/aamu",
+      "schedule": "0 6 * * *"
     },
     {
-      "path": "/api/cron/aamu",
-      "schedule": "0 5 * * *"
+      "path": "/api/cron/aamu?ajo=2",
+      "schedule": "0 7 * * *"
     }
   ]
 }
