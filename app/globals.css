@@ -548,7 +548,7 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 
 /* Sinetti yhtenä rivinä: nimet katkaistaan, Muistuta-nappi oikealla */
 .seal-line { align-items: center; }
-.seal-line p { margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.seal-line p { margin: 0; min-width: 0; }
 .btn.btn-compact { min-height: 44px; padding: 0 14px; font-size: 14px; flex: 0 0 auto; }
 
 /* Kaatunut kaksikko/kolmikko: kaikki osat rinnakkain */
