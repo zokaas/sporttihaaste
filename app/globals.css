@@ -565,3 +565,11 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .family-check { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; cursor: pointer; }
 .family-check input { width: 24px; height: 24px; flex: 0 0 auto; accent-color: var(--ember-fill); }
 .family-check > span { display: flex; flex-direction: column; gap: 2px; }
+
+/* Käynnistysruutu: sama kuin iPhonen käynnistyskuva (public/splash), häivytetään kun sisältö on valmis */
+.boot-splash { position: fixed; inset: 0; z-index: 100; background: #0E0C0B; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 44px; transition: opacity 0.35s ease-out; }
+.boot-splash.is-fading { opacity: 0; pointer-events: none; }
+.boot-eyes { display: flex; gap: 34px; }
+.boot-eyes span { width: 30px; height: 11px; border-radius: 50%; background: #ff4a2e; box-shadow: 0 0 18px #ff4a2e, 0 0 44px rgba(255, 74, 46, 0.6); }
+.boot-title { font: 500 46px var(--font-display), serif; color: #f2eae0; letter-spacing: 0.5px; text-shadow: 0 2px 18px #000; }
+@media (prefers-reduced-motion: reduce) { .boot-splash { transition: none; } }
