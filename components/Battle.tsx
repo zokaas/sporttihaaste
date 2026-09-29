@@ -3,7 +3,7 @@ import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import type { loadBattle } from '@/lib/battle';
 import { computeLedger, sealView, STEP_DAY_DAMAGE } from '@/lib/rules';
 import { finalBlows, weekRecap } from '@/lib/stats';
-import { addDays, formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
+import { addDays, formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_START } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
 import { bossWhisper } from '@/lib/boss';
 import { fullTaunt, hitReaction } from '@/lib/taunts';
@@ -105,8 +105,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         </p>
       ) : null}
       <KillFinale killed={ledger.killed.length} kills={kills} />
-      {week === 1 && (data.gate.dealt > 0 || data.gate.left > 0) ? (
-        // Portinvartijan (29.–30.9.) tulos: selittää viikon 1 monsterin lisä-HP:n tai potin ylijäämän.
+      {data.today === SEASON_START && (data.gate.dealt > 0 || data.gate.left > 0) ? (
+        // Portinvartijan (29.–30.9.) tulos kauden ensimmäisenä päivänä: selittää viikon 1 monsterin lisä-HP:n tai potin ylijäämän.
         <section className={`card gate-result${data.gate.killed ? '' : ' threat'}`}>
           <p style={{ margin: 0 }}>
             {data.gate.killed
