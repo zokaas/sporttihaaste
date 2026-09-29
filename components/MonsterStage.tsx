@@ -68,7 +68,7 @@ function write(key: string, value: string) {
   try { localStorage.setItem(key, value); } catch { /* ei tallennusta */ }
 }
 
-const TAUNT_MS = 8000; // sama kuin .stage-taunt.fades häivytyksen loppu
+const TAUNT_MS = 15000; // sama kuin .stage-taunt.fades häivytyksen loppu
 
 export default function MonsterStage(p: Props) {
   const state = stateOf(p.hp, p.maxHp, p.padded, Boolean(p.dead));
@@ -176,13 +176,22 @@ export default function MonsterStage(p: Props) {
   const sealDone = p.seal ? p.seal.filter((s) => !s.excused).every((s) => s.hit) : false;
 
   const image = front ? front.image ?? p.image : p.image;
+  // Kaatunut kaksikko tai kolmikko näytetään koko porukkana.
+  const groupImages = p.dead && parts ? parts.map((x) => x.image).filter((x): x is string => Boolean(x)) : [];
   const title = front && !p.dead ? front.name : p.title;
 
   const content = (
     <>
       <div className="stage-art" aria-hidden="true" style={{ ['--dam' as string]: String(damPct / 100) }}>
         {p.boss ? <div className="stage-sky" /> : null}
-        {image ? (
+        {groupImages.length > 1 ? (
+          <>
+            <img className="stage-backdrop" src={resizedImage(groupImages[0], 96)} alt="" />
+            <div className="stage-group">
+              {groupImages.map((src) => <img key={src} className="stage-group-img" src={src} alt="" />)}
+            </div>
+          </>
+        ) : image ? (
           <>
             {/* Tausta on sumennettu, joten siihen riittää pieni kuva: kevyempi ladata ja piirtää. */}
             <img className="stage-backdrop" src={resizedImage(image, 96)} alt="" />

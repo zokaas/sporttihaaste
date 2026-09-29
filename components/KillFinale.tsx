@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 
-type Kill = { week: number; name: string; image: string | null; blow: string | null };
+type Kill = { week: number; name: string; image: string | null; images?: string[]; blow: string | null };
 
 /** Iso kaatumisruutu, kun monstereita on kaatunut edellisen käynnin jälkeen. Napautus sulkee. */
 export default function KillFinale({ killed, kills }: { killed: number; kills: Kill[] }) {
@@ -20,7 +20,10 @@ export default function KillFinale({ killed, kills }: { killed: number; kills: K
   return (
     <div className="finale" role="dialog" aria-label={`${k.name} kaatui`} onClick={() => setFresh([])}>
       <div className="finale-body">
-        {k.image ? <img className="finale-img" src={k.image} alt="" /> : <div className="finale-img finale-skull">💀</div>}
+        {k.images && k.images.length > 1 ? (
+          // Kaksikko tai kolmikko: kaikki osat murenevat yhdessä
+          <div className="finale-group">{k.images.map((src) => <img key={src} className="finale-img" src={src} alt="" />)}</div>
+        ) : k.image ? <img className="finale-img" src={k.image} alt="" /> : <div className="finale-img finale-skull">💀</div>}
         <div className="finale-ash" aria-hidden="true">
           {Array.from({ length: 18 }, (_, i) => (
             <i key={i} style={{ left: `${8 + ((i * 37) % 84)}%`, animationDelay: `${0.9 + (i % 6) * 0.18}s`, ['--drift' as string]: `${((i * 53) % 60) - 30}px` }} />

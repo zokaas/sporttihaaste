@@ -70,7 +70,9 @@ export default async function Bestiaario() {
             const { start } = weekRange(w);
             return (
               <li key={w} style={future ? { opacity: 0.5 } : undefined}>
-                {img && !future
+                {m?.parts?.length && !future && m.parts.some((x) => x.image_path)
+                  ? <span className="avatar-stack">{m.parts.filter((x) => x.image_path).map((x) => <img key={x.image_path} className="avatar" src={monsterImageUrl(x.image_path)!} alt="" width={40} height={40} style={k ? { filter: 'grayscale(1)', width: 40, height: 40 } : { width: 40, height: 40 }} />)}</span>
+                  : img && !future
                   ? <img className="avatar" src={img} alt="" width={56} height={56} style={k ? { filter: 'grayscale(1)' } : undefined} />
                   : <div className="avatar" style={{ width: 56, height: 56, fontSize: 22 }}>{future ? '?' : k ? '✝' : '!'}</div>}
                 <div className="grow" style={{ minWidth: 0 }}>

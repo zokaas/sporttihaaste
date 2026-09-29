@@ -371,7 +371,7 @@ details.companions[open] { padding-bottom: 12px; }
 .stage-taunt { position: relative; z-index: 3; max-width: 88%; margin-bottom: 4px; padding: 10px 14px; border-radius: 4px 16px 16px 16px; background: rgba(242, 234, 224, 0.94); color: #1c1715; font: italic 600 14px/1.35 var(--font-body), sans-serif; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); animation: taunt-in 0.5s ease-out both; }
 @keyframes taunt-in { from { opacity: 0; transform: translateY(-6px) scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes taunt-out { to { opacity: 0; transform: translateY(4px); } }
-.stage-taunt.fades { animation: taunt-in 0.5s ease-out both, taunt-out 0.6s ease-in 7.4s forwards; }
+.stage-taunt.fades { animation: taunt-in 0.5s ease-out both, taunt-out 0.6s ease-in 14.4s forwards; }
 @media (prefers-reduced-motion: reduce) { .stage-taunt, .stage-taunt.fades { animation: none; } }
 .card.teaser { flex-direction: row; align-items: center; gap: 14px; background: radial-gradient(ellipse at 20% 50%, #2a1512, var(--surface) 70%); }
 .teaser-shadow { flex: 0 0 72px; width: 72px; height: 56px; filter: blur(1.5px); }
@@ -550,3 +550,11 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .seal-line { align-items: center; }
 .seal-line p { margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .btn.btn-compact { min-height: 44px; padding: 0 14px; font-size: 14px; flex: 0 0 auto; }
+
+/* Kaatunut kaksikko/kolmikko: kaikki osat rinnakkain */
+.stage-group { position: absolute; left: 0; right: 0; top: 48px; bottom: 170px; display: flex; gap: 6px; justify-content: center; align-items: center; padding: 0 12px; }
+.stage-group-img { flex: 1 1 0; min-width: 0; height: 100%; object-fit: contain; filter: grayscale(1) brightness(0.55); }
+.finale-group { display: flex; gap: 8px; justify-content: center; align-items: flex-end; }
+.finale-group .finale-img { width: min(28vw, 150px); }
+.avatar-stack { display: inline-flex; flex: 0 0 auto; }
+.avatar-stack .avatar + .avatar { margin-left: -22px; }
