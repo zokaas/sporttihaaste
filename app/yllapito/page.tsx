@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { TEST_DAY_COOKIE, testDay } from '@/lib/today';
+import { TEST_DAY_COOKIE, TEST_SKIP_COOKIE, testDay, testSkipPast } from '@/lib/today';
 import { helsinkiToday, formatDay, SEASON_START, SEASON_END, BOSS_WEEK } from '@/lib/season';
 import { revalidatePath } from 'next/cache';
 import webpush from 'web-push';
@@ -91,6 +91,7 @@ async function setTestDay(formData: FormData) {
   await requireAdmin();
   const day = String(formData.get('day') ?? '');
   if (/^\d{4}-\d{2}-\d{2}$/.test(day)) cookies().set(TEST_DAY_COOKIE, day, { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' });
+  cookies().set(TEST_SKIP_COOKIE, formData.get('kaada') ? '1' : '0', { path: '/', maxAge: 60 * 60 * 24 * 7, sameSite: 'lax' });
   redirect('/');
 }
 
@@ -189,9 +190,15 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
         <section className="card">
           <h2 className="display">Testitila</h2>
           <Hint id="admin-test" className="">Kokeile sovellusta ennen kautta: valitse päivä, niin sovellus toimii sinulle kuin se olisi tänään. Muut näkevät sovelluksen normaalisti.</Hint>
-          <form action={setTestDay} className="row" style={{ alignItems: 'center' }}>
-            <input className="input grow" type="date" name="day" min={SEASON_START} max={SEASON_END} defaultValue={testDay() ?? '2026-10-07'} required />
-            <button className="btn" type="submit">Aseta</button>
+          <form action={setTestDay} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div className="row" style={{ alignItems: 'center' }}>
+              <input className="input grow" type="date" name="day" min={SEASON_START} max={SEASON_END} defaultValue={testDay() ?? '2026-10-07'} required />
+              <button className="btn" type="submit">Aseta</button>
+            </div>
+            <label className="row" style={{ alignItems: 'center', gap: 10, minHeight: 44 }}>
+              <input type="checkbox" name="kaada" defaultChecked={!testDay() || testSkipPast()} style={{ width: 22, height: 22 }} />
+              <span>Kaada aiemmat viikot automaattisesti, jotta näet valitun viikon monsterin</span>
+            </label>
           </form>
           {testDay() ? (
             <form action={clearTestDay}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Lopeta testitila ({formatDay(testDay()!)})</button></form>
