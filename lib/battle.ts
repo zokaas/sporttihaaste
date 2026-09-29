@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { weaknessesOf, type MonsterPart } from './trio';
-import { computeLedger, pledgeHours, seasonHp, SPORTS, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, type Weakness, type LedgerEvent } from './rules';
+import { computeLedger, pledgeHours, seasonHp, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, type Sport, type Weakness, type LedgerEvent } from './rules';
+import { loadSports } from './sports';
 import { addDays, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from './season';
 import { patrolDays, pledgeForWeek, requiredForSeal, sickDaysBetween, isSickOn, weekPledgeTarget, type SickPeriod } from './weekly';
 
@@ -35,16 +36,15 @@ type Hit = { id: number; user_id: string; trained_on: string; sport: string; min
 type Step = { user_id: string; day: string; created_at: string };
 type PledgeChange = { user_id: string; from_week: number; hours: number };
 
-const sportValue = (name: string) => SPORTS.find((s) => s.name === name)?.value ?? 100;
-
 /** Lupaukseen kertyneet tunnit viikolla. */
-export function hoursInWeek(hits: Hit[], userId: string, week: number) {
-  return hits.filter((h) => h.user_id === userId && seasonWeek(h.trained_on) === week).reduce((a, h) => a + pledgeHours(h.minutes, sportValue(h.sport)), 0);
+export function hoursInWeek(hits: Hit[], userId: string, week: number, sports: Sport[]) {
+  const value = (name: string) => sports.find((s) => s.name === name)?.value ?? 100;
+  return hits.filter((h) => h.user_id === userId && seasonWeek(h.trained_on) === week).reduce((a, h) => a + pledgeHours(h.minutes, value(h.sport)), 0);
 }
 
 /** Lataa kauden tilanteen ja laskee sen kirjauksista. Kuluva viikko on vielä auki. */
 export async function loadBattle(supabase: SupabaseClient, today: string) {
-  const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }] = await Promise.all([
+  const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }, sports] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at'),
     // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot. Haetaan rinnakkain.
     supabase.from('monsters').select('week, hp, name, description, weakness, image_path, parts, taunt_half, taunt_low, teaser, boss_whisper, hit_lines, hit_crit, taunt_full').order('week'),
@@ -53,6 +53,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     supabase.from('step_days').select('user_id, day, created_at'),
     supabase.from('sick_periods').select('user_id, starts_on, ends_on'),
     supabase.from('pledge_changes').select('user_id, from_week, hours'),
+    loadSports(supabase),
   ]);
   const heroList = (heroes ?? []) as Hero[];
   let monsterList = (monsters ?? []) as PublicMonster[];
@@ -88,13 +89,13 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     const { start, end } = weekRange(w);
     const sickDays = sickDaysBetween(periods, userId, start, end < today ? end : today);
     const target = weekPledgeTarget(pledgeOf(userId, w), w, sickDays);
-    const hours = hoursInWeek(hitList, userId, w);
+    const hours = hoursInWeek(hitList, userId, w, sports);
     return { target, hours, kept: target > 0 && hours >= target, sickDays };
   };
 
   const patrols = patrolDays(stepList, participants, periods);
   const sickNow = participants.filter((u) => isSickOn(periods, u, today));
-  const base = { week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList };
+  const base = { week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
 
   if (!hpLocked && !hpPreview) return { ...base, hpLocked, hpPreview, required: participants, ledger: null, events: [] as LedgerEvent[], ledgerInput: null };
 

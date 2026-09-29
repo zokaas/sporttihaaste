@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { SPORTS } from '@/lib/rules';
+import { loadSports } from '@/lib/sports';
 import { SEASON_START, formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
 import { AdminHitForm, AdminSickForm, DeleteRow } from '@/components/AdminTools';
@@ -28,10 +28,11 @@ export default async function Korjaukset({ searchParams }: { searchParams: { vko
   const current = Math.min(BOSS_WEEK, Math.max(1, seasonWeek(now)));
   const week = Math.min(BOSS_WEEK, Math.max(1, Number(searchParams.vko) || current));
   const { start, end } = weekRange(week);
-  const [{ data: heroes }, { data: hits }, { data: sick }] = await Promise.all([
+  const [{ data: heroes }, { data: hits }, { data: sick }, sports] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, pledge_locked_at').order('hero_name'),
     supabase.from('hits').select('*').gte('trained_on', start).lte('trained_on', end).order('trained_on', { ascending: false }).order('created_at', { ascending: false }),
     supabase.from('sick_periods').select('*').order('starts_on', { ascending: false }),
+    loadSports(supabase),
   ]);
   const heroList = (heroes ?? []).filter((h) => h.pledge_locked_at).map((h) => ({ id: h.id, name: h.hero_name ?? '' }));
   const name = (id: string) => heroList.find((h) => h.id === id)?.name ?? '?';
@@ -67,7 +68,7 @@ export default async function Korjaukset({ searchParams }: { searchParams: { vko
       <section className="card">
         <h2 className="display">Kirjaa sankarin puolesta</h2>
         <p className="muted small" style={{ margin: 0 }}>Mille tahansa kauden päivälle, myös lukitulle viikolle. Voima ja bonukset lasketaan säännöistä.</p>
-        <AdminHitForm heroes={heroList} sports={SPORTS.map((s) => s.name)} min={SEASON_START} max={maxDay} />
+        <AdminHitForm heroes={heroList} sports={sports.map((s) => s.name)} min={SEASON_START} max={maxDay} />
       </section>
 
       <section className="card">

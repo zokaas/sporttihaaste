@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl } from '@/lib/supabase/client';
-import { SPORTS, type Category } from '@/lib/rules';
+import { type Category } from '@/lib/rules';
+import { activeSports, loadSports } from '@/lib/sports';
 import { formatDay, loggableDays, monthDay, seasonWeek, weekRange, SEASON_START } from '@/lib/season';
 import { today } from '@/lib/today';
 import { monsterOfWeek } from '@/lib/battle';
@@ -34,11 +35,12 @@ export default async function Kirjaa() {
 
   const week = seasonWeek(now);
   const { start, end } = weekRange(week);
-  const [{ data: heroes }, monster, { data: myHits }, { data: sick }] = await Promise.all([
+  const [{ data: heroes }, monster, { data: myHits }, { data: sick }, sports] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, birthday, name_day').order('hero_name'),
     monsterOfWeek(supabase, week),
     supabase.from('hits').select('*').eq('user_id', user.id).gte('trained_on', start).lte('trained_on', end).order('trained_on', { ascending: false }).order('created_at', { ascending: false }),
     supabase.from('sick_periods').select('user_id, starts_on, ends_on'),
+    loadSports(supabase),
   ]);
   const participants = (heroes ?? []).filter((h) => h.pledge_locked_at);
   const celebrations: Record<string, string[]> = {};
@@ -57,7 +59,7 @@ export default async function Kirjaa() {
       <h1 className="display">Kirjaa treeni</h1>
       <HitForm
         days={days}
-        sports={SPORTS}
+        sports={activeSports(sports)}
         companions={participants.filter((h) => h.id !== user.id).map((h) => ({ id: h.id, name: h.hero_name ?? '', avatar: avatarUrl(h.avatar_path) }))}
         weakness={monster.weaknesses}
         celebrations={celebrations}

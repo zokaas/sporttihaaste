@@ -90,7 +90,7 @@ export function heroStats(b: Battle, avatarUrl: (p: string | null) => string | n
       avatar: avatarUrl(h.avatar_path),
       damage: hits.reduce((a, x) => a + x.damage, 0) + steps.length * STEP_DAY_DAMAGE,
       hitCount: hits.length,
-      hours: Array.from({ length: b.week }, (_, i) => hoursInWeek(b.hits, h.id, i + 1)).reduce((a, x) => a + x, 0),
+      hours: Array.from({ length: b.week }, (_, i) => hoursInWeek(b.hits, h.id, i + 1, b.sports)).reduce((a, x) => a + x, 0),
       stepDays: steps.length,
       longestStreak: streak,
       pledgesKept: kept,

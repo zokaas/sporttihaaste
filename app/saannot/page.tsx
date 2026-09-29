@@ -1,9 +1,10 @@
 import Nav from '@/components/Nav';
 import { MESSAGES_PER_DAY } from '@/lib/messages';
 import { QUIET_END, QUIET_START } from '@/lib/quiet';
-import { SPORTS, hitDamage, type Category, BONUS_CAP_PCT, STEP_GOAL, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, PLEDGE_BONUS } from '@/lib/rules';
+import { CATEGORIES, hitDamage, BONUS_CAP_PCT, STEP_GOAL, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, PLEDGE_BONUS } from '@/lib/rules';
 
-const CATEGORIES: Category[] = ['Kestävyys', 'Voimailu', 'Palloilu', 'Muu'];
+import { createClient } from '@/lib/supabase/server';
+import { activeSports, loadSports } from '@/lib/sports';
 
 const examples = [
   { text: '1 h salia yksin', r: hitDamage({ minutes: 60, sportValue: 100, category: 'Voimailu', groupSize: 1, celebration: false, weakness: null }) },
@@ -45,7 +46,8 @@ const FAQ: [string, string][] = [
   ['Mihin ylimääräinen voima menee?', `Kun viikon monsteri on kaatunut, loput iskut menevät pottiin. Potti iskee loppupomoon sen herätessä.`],
 ];
 
-export default function Saannot() {
+export default async function Saannot() {
+  const sports = activeSports(await loadSports(createClient()));
   return (
     <>
       <Nav current="/saannot" />
@@ -128,7 +130,7 @@ export default function Saannot() {
         <table className="plain">
           <thead><tr><th>Laji</th><th>Ryhmä</th><th>/ h</th></tr></thead>
           <tbody>
-            {CATEGORIES.flatMap((c) => SPORTS.filter((s) => s.category === c).map((s) => (
+            {CATEGORIES.flatMap((c) => sports.filter((s) => s.category === c).map((s) => (
               <tr key={s.name}><td>{s.name}</td><td className="muted">{c}</td><td>{s.value}</td></tr>
             )))}
           </tbody>

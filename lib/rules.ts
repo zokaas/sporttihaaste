@@ -7,27 +7,42 @@ export { BOSS_WEEK, MONSTER_WEEKS };
 
 export type Category = 'Kestävyys' | 'Voimailu' | 'Palloilu' | 'Muu';
 
-export const SPORTS: { name: string; value: number; category: Category }[] = [
+export type Sport = { name: string; value: number; category: Category };
+export const CATEGORIES: Category[] = ['Kestävyys', 'Voimailu', 'Palloilu', 'Muu'];
+export const SPORT_VALUES = [50, 100, 200] as const;
+
+/** Kauden alun lajit. Ylläpito voi lisätä lajeja (taulu sports, migraatio 023); tätä listaa käytetään, jos taulua ei vielä ole. */
+export const SPORTS: Sport[] = [
   { name: 'Sali', value: 100, category: 'Voimailu' },
   { name: 'Crossfit', value: 100, category: 'Voimailu' },
   { name: 'Pump', value: 100, category: 'Voimailu' },
   { name: 'Kehonpainotreeni', value: 100, category: 'Voimailu' },
+  { name: 'Kiipeily/boulderointi', value: 100, category: 'Voimailu' },
+  { name: 'Pilates', value: 100, category: 'Voimailu' },
   { name: 'Juoksu', value: 100, category: 'Kestävyys' },
   { name: 'Pyöräily', value: 100, category: 'Kestävyys' },
   { name: 'Hiihto', value: 100, category: 'Kestävyys' },
   { name: 'Uinti', value: 200, category: 'Kestävyys' },
   { name: 'HIIT', value: 100, category: 'Kestävyys' },
   { name: 'Spinning', value: 100, category: 'Kestävyys' },
+  { name: 'Soutu', value: 100, category: 'Kestävyys' },
+  { name: 'Porrastreeni', value: 100, category: 'Kestävyys' },
+  { name: 'Tanssi', value: 100, category: 'Kestävyys' },
+  { name: 'Vaellus (syke ylös)', value: 100, category: 'Kestävyys' },
   { name: 'Tennis', value: 100, category: 'Palloilu' },
   { name: 'Padel', value: 100, category: 'Palloilu' },
   { name: 'Squash', value: 100, category: 'Palloilu' },
   { name: 'Sulkapallo', value: 100, category: 'Palloilu' },
   { name: 'Jalkapallo', value: 100, category: 'Palloilu' },
   { name: 'Jääkiekko', value: 100, category: 'Palloilu' },
+  { name: 'Salibandy', value: 100, category: 'Palloilu' },
+  { name: 'Koripallo', value: 100, category: 'Palloilu' },
+  { name: 'Lentopallo', value: 100, category: 'Palloilu' },
   { name: 'Kamppailulaji', value: 100, category: 'Muu' },
   { name: 'Jooga', value: 50, category: 'Muu' },
   { name: 'Liikkuvuus', value: 50, category: 'Muu' },
   { name: 'Golf', value: 50, category: 'Muu' },
+  { name: 'Laskettelu', value: 50, category: 'Muu' },
 ];
 
 export const PARTICIPANTS = 10;

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { hitDamage, type Category, type Weakness } from '@/lib/rules';
+import { CATEGORIES, hitDamage, type Category, type Weakness } from '@/lib/rules';
 import { formatDay } from '@/lib/season';
 import { logHit } from '@/app/kirjaa/actions';
 import Hint from '@/components/Hint';
@@ -16,7 +16,6 @@ type Props = {
   celebrations: Record<string, string[]>;
 };
 
-const CATEGORIES: Category[] = ['Kestävyys', 'Voimailu', 'Palloilu', 'Muu'];
 
 function duration(min: number) {
   const h = Math.floor(min / 60);
