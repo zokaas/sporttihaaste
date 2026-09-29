@@ -7,6 +7,7 @@ import ScrollMemory from '@/components/ScrollMemory';
 import StrikeToastHost from '@/components/StrikeToastHost';
 import LiveStrikes from '@/components/LiveStrikes';
 import ResumeRefresh from '@/components/ResumeRefresh';
+import BootSplash from '@/components/BootSplash';
 
 const display = Grenze_Gotisch({ subsets: ['latin', 'latin-ext'], weight: ['500', '700'], variable: '--font-display' });
 const body = IBM_Plex_Sans({ subsets: ['latin', 'latin-ext'], weight: ['400', '500', '600'], variable: '--font-body' });
@@ -47,8 +48,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fi" className={`${display.variable} ${body.variable}`}>
       <head>
+        {/* Tumma tausta heti ennen tyylitiedoston latautumista: ei valkoista välähdystä käynnistyksessä. */}
+        <meta name="color-scheme" content="dark" />
+        <style dangerouslySetInnerHTML={{ __html: 'html,body{background:#0E0C0B;color-scheme:dark}' }} />
       </head>
       <body>
+        <BootSplash />
         {testDay() ? <div className="test-banner">Testitila: {formatDay(testDay()!)} · <a href="/yllapito">lopeta</a></div> : null}
         <main className="app">{children}</main>
         <ScrollMemory />
