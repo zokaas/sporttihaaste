@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CATEGORIES, FAMILY_WEAKNESS, hitDamage, type Category, type Weakness } from '@/lib/rules';
+import { CATEGORIES, SPECIAL_WEAKNESSES, hitDamage, specialOf, type Category, type Weakness } from '@/lib/rules';
 import { formatDay } from '@/lib/season';
 import { logHit } from '@/app/kirjaa/actions';
 import Hint from '@/components/Hint';
@@ -30,15 +30,17 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
   const [minutes, setMinutes] = useState(60);
   const [withIds, setWithIds] = useState<string[]>([]);
   const [groupOpen, setGroupOpen] = useState(false);
-  const [withFamily, setWithFamily] = useState(false);
-  const familyWeek = weakness.includes(FAMILY_WEAKNESS);
+  // Viikon erikoisheikkous (esim. "Urheilija on nainen"): kirjaaja merkitsee itse, täyttyikö ehto.
+  const special = specialOf(weakness);
+  const [claimed, setClaimed] = useState(false);
+  const claim = special && claimed ? special : null;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   const sport = sports.find((s) => s.name === sportName);
   const celebrating = celebrations[day] ?? [];
   const preview = sport
-    ? hitDamage({ minutes, sportValue: sport.value, category: sport.category, groupSize: 1 + withIds.length, celebration: celebrating.length > 0, weakness, sport: sport.name, withFamily: familyWeek && withFamily, participants: healthyByDay[day] ?? companions.length + 1 })
+    ? hitDamage({ minutes, sportValue: sport.value, category: sport.category, groupSize: 1 + withIds.length, celebration: celebrating.length > 0, weakness, sport: sport.name, special: claim, participants: healthyByDay[day] ?? companions.length + 1 })
     : null;
 
   const toggle = (id: string) => setWithIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
@@ -47,7 +49,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
     if (!sport) return setError('Valitse laji.');
     setBusy(true);
     setError('');
-    const res = await logHit({ day, sport: sport.name, minutes, companions: withIds, withFamily: familyWeek && withFamily });
+    const res = await logHit({ day, sport: sport.name, minutes, companions: withIds, special: claim });
     setBusy(false);
     if (!res.ok) return setError(res.error);
     // Etusivulla isku näkyy lentävänä lukuna ja HP-palkki laskee.
@@ -108,11 +110,10 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
         </details>
       ) : null}
 
-      {familyWeek ? (
-        // Viikon erikoisheikkous: kirjaaja merkitsee itse, urheiliko mamun tai lapsen kanssa.
+      {special ? (
         <label className="family-check">
-          <input type="checkbox" checked={withFamily} onChange={(e) => setWithFamily(e.target.checked)} />
-          <span><strong>Urheilin mamun tai lapsen kanssa</strong><span className="muted small">Viikon heikkous: +50 %</span></span>
+          <input type="checkbox" checked={claimed} onChange={(e) => setClaimed(e.target.checked)} />
+          <span><strong>{SPECIAL_WEAKNESSES[special].check}</strong><span className="muted small">Viikon heikkous: +50 %</span></span>
         </label>
       ) : null}
 

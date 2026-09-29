@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminLogHit } from '@/app/kirjaa/actions';
+import { SPECIAL_WEAKNESSES } from '@/lib/rules';
 import { adminDeleteHit, adminDeleteSick, adminSetSick } from '@/app/yllapito/korjaukset/actions';
 
 type Hero = { id: string; name: string };
@@ -41,7 +42,7 @@ export function AdminHitForm({ heroes, sports, min, max }: { heroes: Hero[]; spo
   const [sport, setSport] = useState(sports[0]);
   const [minutes, setMinutes] = useState(60);
   const [companions, setCompanions] = useState<string[]>([]);
-  const [withFamily, setWithFamily] = useState(false);
+  const [special, setSpecial] = useState('');
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <label className="field">Sankari
@@ -66,12 +67,14 @@ export function AdminHitForm({ heroes, sports, min, max }: { heroes: Hero[]; spo
           ))}
         </div>
       </fieldset>
-      {/* Bonus annetaan vain, jos päivän viikon heikkous on "Urheilu mamun tai lapsen kanssa". */}
-      <label className="family-check">
-        <input type="checkbox" checked={withFamily} onChange={(e) => setWithFamily(e.target.checked)} />
-        <span><strong>Urheili mamun tai lapsen kanssa</strong><span className="muted small">Vaikuttaa vain, jos se on sen viikon heikkous</span></span>
+      {/* Bonus annetaan vain, jos valittu erikoisheikkous on sen viikon heikkous. */}
+      <label className="field">Erikoisheikkous
+        <select className="input" value={special} onChange={(e) => setSpecial(e.target.value)}>
+          <option value="">Ei merkintää</option>
+          {Object.entries(SPECIAL_WEAKNESSES).map(([name, x]) => <option key={name} value={name}>{x.check}</option>)}
+        </select>
       </label>
-      <button type="button" className="btn" disabled={busy} onClick={() => run(() => adminLogHit({ userId, day, sport, minutes, companions, withFamily }), 'Isku kirjattu.')}>Kirjaa sankarin puolesta</button>
+      <button type="button" className="btn" disabled={busy} onClick={() => run(() => adminLogHit({ userId, day, sport, minutes, companions, special: special || null }), 'Isku kirjattu.')}>Kirjaa sankarin puolesta</button>
       <Msg msg={msg} />
     </div>
   );

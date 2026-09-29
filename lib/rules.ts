@@ -65,20 +65,30 @@ export interface HitInput {
   weakness: Weakness | Weakness[] | null;
   participants?: number; // ilmoittautuneiden määrä ("kaikki yhdessä"), oletus 10
   sport?: string; // lajin nimi: osuuko yksittäisen lajin heikkouteen
-  withFamily?: boolean; // treenattu mamun tai lapsen kanssa (erikoisheikkous)
+  special?: string | null; // kirjaajan merkitsemä erikoisheikkous (SPECIAL_WEAKNESSES)
 }
 
-/** Heikkous on lajiryhmä, yksittäisen lajin nimi tai erikoisheikkous (FAMILY_WEAKNESS). */
+/** Heikkous on lajiryhmä, yksittäisen lajin nimi tai erikoisheikkous (SPECIAL_WEAKNESSES). */
 export type Weakness = Category | string;
 
-/** Erikoisheikkous: mikä tahansa laji mamun tai lapsen kanssa. Kirjaaja merkitsee sen itse. */
+/**
+ * Erikoisheikkoudet: mikä tahansa laji käy, ja kirjaaja merkitsee itse, että ehto täyttyi.
+ * Avain on heikkouden nimi (näkyy monsterilla), check on kirjauksen valinnan teksti ja log iskulistan merkintä.
+ */
+export const SPECIAL_WEAKNESSES: Record<string, { check: string; log: string }> = {
+  'Urheilu mamun tai lapsen kanssa': { check: 'Urheilin mamun tai lapsen kanssa', log: 'mamun tai lapsen kanssa' },
+  'Urheilija on nainen': { check: 'Olen nainen', log: 'nainen' },
+  'Urheilu kenen tahansa isän kanssa': { check: 'Urheilin jonkun isän kanssa', log: 'isän kanssa' },
+};
 export const FAMILY_WEAKNESS = 'Urheilu mamun tai lapsen kanssa';
+/** Viikon erikoisheikkous (vuorossa olevan osan), jos sellainen on. */
+export const specialOf = (weaknesses: Weakness[]) => weaknesses.find((w) => w in SPECIAL_WEAKNESSES) ?? null;
 
-/** Osuuko isku heikkouteen: juuri tämä laji, sen lajiryhmä tai treeni mamun tai lapsen kanssa. Palauttaa osuman nimen. */
-export function weaknessHit(weaknesses: Weakness[], category: Category, sport?: string, withFamily = false) {
+/** Osuuko isku heikkouteen: juuri tämä laji, sen lajiryhmä tai kirjaajan merkitsemä erikoisheikkous. Palauttaa osuman nimen. */
+export function weaknessHit(weaknesses: Weakness[], category: Category, sport?: string, special?: string | null) {
   if (sport && weaknesses.includes(sport)) return sport;
   if (weaknesses.includes(category)) return category;
-  return withFamily && weaknesses.includes(FAMILY_WEAKNESS) ? FAMILY_WEAKNESS : null;
+  return special && special in SPECIAL_WEAKNESSES && weaknesses.includes(special) ? special : null;
 }
 
 export function hitDamage(h: HitInput) {
@@ -89,7 +99,7 @@ export function hitDamage(h: HitInput) {
   else if (h.groupSize >= 3) bonuses.push({ label: `Yhdessä (${h.groupSize} henkeä)`, pct: 50 });
   if (h.celebration) bonuses.push({ label: 'Juhlapäivä', pct: 50 });
   const weaknesses = Array.isArray(h.weakness) ? h.weakness : h.weakness ? [h.weakness] : [];
-  const hit = weaknessHit(weaknesses, h.category, h.sport, h.withFamily);
+  const hit = weaknessHit(weaknesses, h.category, h.sport, h.special);
   if (hit) bonuses.push({ label: `Heikkous: ${hit}`, pct: 50 });
   const pct = Math.min(BONUS_CAP_PCT, bonuses.reduce((a, b) => a + b.pct, 0));
   return { base, bonuses, pct, damage: Math.round(base * (1 + pct / 100)) };

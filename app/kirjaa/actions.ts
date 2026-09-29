@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { FAMILY_WEAKNESS, hitDamage, type Category } from '@/lib/rules';
+import { FAMILY_WEAKNESS, hitDamage, specialOf, type Category } from '@/lib/rules';
 import { loadSports } from '@/lib/sports';
 import { loggableDays, monthDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
@@ -9,7 +9,7 @@ import { currentWeaknesses, loadBattle } from '@/lib/battle';
 import { afterHit } from '@/lib/events';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
 
-export type HitInput = { day: string; sport: string; minutes: number; companions: string[]; withFamily?: boolean };
+export type HitInput = { day: string; sport: string; minutes: number; companions: string[]; special?: string | null };
 type Result = { ok: true; damage: number; pct?: number } | { ok: false; error: string };
 
 /** Laskee iskun samoilla säännöillä kuin esikatselu. Käytetään sekä esikatselussa että tallennuksessa. */
@@ -35,8 +35,8 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
   const celebration = (heroes ?? []).some((h) => h.pledge_locked_at && (h.birthday === md || h.name_day === md));
   const groupSize = 1 + companions.length;
   const weaknesses = currentWeaknesses(battle, seasonWeek(input.day));
-  // Mamu/lapsi-merkintä tallennetaan vain, kun se on viikon heikkous.
-  const withFamily = Boolean(input.withFamily) && weaknesses.includes(FAMILY_WEAKNESS);
+  // Erikoisheikkouden merkintä hyväksytään vain, kun se on viikon (vuorossa olevan osan) heikkous.
+  const special = input.special && input.special === specialOf(weaknesses) ? input.special : null;
   const result = hitDamage({
     minutes: input.minutes,
     sportValue: sport.value,
@@ -45,20 +45,20 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
     celebration,
     weakness: weaknesses,
     sport: sport.name,
-    withFamily,
+    special,
     participants: healthy,
   });
-  return { result, companions, withFamily, weaknessHit: result.bonuses.some((b) => b.label.startsWith('Heikkous')), allTogether: healthy >= 2 && groupSize >= healthy } as const;
+  return { result, companions, special, weaknessHit: result.bonuses.some((b) => b.label.startsWith('Heikkous')), allTogether: healthy >= 2 && groupSize >= healthy } as const;
 }
 
 type Computed = Exclude<Awaited<ReturnType<typeof computeHit>>, { error: string }>;
 
 /**
- * Tallentaa iskun. with_family (migraatio 024) lähetetään vain merkittynä ja weakness_hit (migraatio 025)
- * vain osuessa; jos 025 on ajamatta, tallennetaan ilman sitä, jotta kirjaus toimii silti.
+ * Tallentaa iskun. Uudet sarakkeet lähetetään vain tarvittaessa: with_family (024), weakness_hit (025)
+ * ja special (026). Jos migraatio on ajamatta, sarake jätetään pois ja tallennetaan ilman sitä.
  */
 async function insertHit(supabase: ReturnType<typeof createClient>, userId: string, input: HitInput, hit: Computed) {
-  const row = {
+  const row: Record<string, unknown> = {
     user_id: userId,
     trained_on: input.day,
     sport: input.sport,
@@ -68,13 +68,18 @@ async function insertHit(supabase: ReturnType<typeof createClient>, userId: stri
     bonus_pct: hit.result.pct,
     damage: hit.result.damage,
     all_together: hit.allTogether,
-    ...(hit.withFamily ? { with_family: true } : {}),
   };
-  if (hit.weaknessHit) {
-    const { error } = await supabase.from('hits').insert({ ...row, weakness_hit: true });
-    if (!error || !error.message.includes('weakness_hit')) return error;
+  const optional: Record<string, unknown> = {
+    ...(hit.special === FAMILY_WEAKNESS ? { with_family: true } : {}),
+    ...(hit.special ? { special: hit.special } : {}),
+    ...(hit.weaknessHit ? { weakness_hit: true } : {}),
+  };
+  for (;;) {
+    const { error } = await supabase.from('hits').insert({ ...row, ...optional });
+    const missing = error && Object.keys(optional).find((k) => error.message.includes(k));
+    if (!missing) return error;
+    delete optional[missing];
   }
-  return (await supabase.from('hits').insert(row)).error;
 }
 
 export async function logHit(input: HitInput): Promise<Result> {
@@ -84,7 +89,7 @@ export async function logHit(input: HitInput): Promise<Result> {
   const hit = await computeHit(input, user.id);
   if ('error' in hit) return { ok: false, error: hit.error! };
   const error = await insertHit(supabase, user.id, input, hit);
-  if (error) return { ok: false, error: error.message.includes('with_family') ? 'Mamu/lapsi-merkintä vaatii tietokantapäivityksen (migraatio 024). Kerro ylläpidolle.' : error.message };
+  if (error) return { ok: false, error: error.message };
   await afterHit(supabase).catch(() => {});
   revalidatePath('/', 'layout');
   revalidatePath('/kirjaa');
