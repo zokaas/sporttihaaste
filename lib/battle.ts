@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { weaknessesOf, type MonsterPart } from './trio';
-import { computeLedger, pledgeHours, seasonHp, SPORTS, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, type Category, type LedgerEvent } from './rules';
+import { computeLedger, pledgeHours, seasonHp, SPORTS, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, type Weakness, type LedgerEvent } from './rules';
 import { addDays, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS } from './season';
 import { patrolDays, pledgeForWeek, requiredForSeal, sickDaysBetween, isSickOn, weekPledgeTarget, type SickPeriod } from './weekly';
 
@@ -19,7 +19,7 @@ export type PublicMonster = {
   hp: number | null;
   name: string | null;
   description: string | null;
-  weakness: Category | null;
+  weakness: Weakness | null;
   image_path: string | null;
   parts?: MonsterPart[] | null;
   taunt_half?: string | null;

@@ -1,7 +1,7 @@
 // Moniosainen monsteri (kaksikko tai kolmikko): osat jakavat viikon HP:n tasan ja kaatuvat järjestyksessä.
-import type { Category } from './rules';
+import type { Weakness } from './rules';
 
-export type MonsterPart = { name: string; description?: string | null; weakness?: Category | null; image_path?: string | null };
+export type MonsterPart = { name: string; description?: string | null; weakness?: Weakness | null; image_path?: string | null };
 
 /** Osien HP:t: tasajako, jakojäännös viimeiselle. */
 export function partHps(total: number, count: number) {
@@ -27,8 +27,8 @@ export function partStates(total: number, hpLeft: number, count: number, killed:
 }
 
 /** Viikon heikkoudet: kolmikolla kaikkien osien, muuten monsterin oma. */
-export function weaknessesOf(m: { weakness?: Category | null; parts?: MonsterPart[] | null } | null | undefined): Category[] {
-  if (m?.parts?.length) return [...new Set(m.parts.map((p) => p.weakness).filter(Boolean) as Category[])];
+export function weaknessesOf(m: { weakness?: Weakness | null; parts?: MonsterPart[] | null } | null | undefined): Weakness[] {
+  if (m?.parts?.length) return [...new Set(m.parts.map((p) => p.weakness).filter(Boolean) as Weakness[])];
   return m?.weakness ? [m.weakness] : [];
 }
 

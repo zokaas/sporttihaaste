@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { hitDamage, type Category } from '@/lib/rules';
+import { hitDamage, type Category, type Weakness } from '@/lib/rules';
 import { formatDay } from '@/lib/season';
 import { logHit } from '@/app/kirjaa/actions';
 import Hint from '@/components/Hint';
@@ -12,7 +12,7 @@ type Props = {
   companions: { id: string; name: string; avatar: string | null }[];
   /** Päivän terveet sankarit (koko porukka -bonus). */
   healthyByDay: Record<string, number>;
-  weakness: Category[];
+  weakness: Weakness[];
   celebrations: Record<string, string[]>;
 };
 
@@ -37,7 +37,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
   const sport = sports.find((s) => s.name === sportName);
   const celebrating = celebrations[day] ?? [];
   const preview = sport
-    ? hitDamage({ minutes, sportValue: sport.value, category: sport.category, groupSize: 1 + withIds.length, celebration: celebrating.length > 0, weakness, participants: healthyByDay[day] ?? companions.length + 1 })
+    ? hitDamage({ minutes, sportValue: sport.value, category: sport.category, groupSize: 1 + withIds.length, celebration: celebrating.length > 0, weakness, sport: sport.name, participants: healthyByDay[day] ?? companions.length + 1 })
     : null;
 
   const toggle = (id: string) => setWithIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
@@ -73,7 +73,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
           {CATEGORIES.map((c) => (
             <optgroup key={c} label={weakness.includes(c) ? `${c} (viikon heikkous)` : c}>
               {sports.filter((s) => s.category === c).map((s) => (
-                <option key={s.name} value={s.name}>{s.name}{s.value !== 100 ? ` (${s.value}/h)` : ''}</option>
+                <option key={s.name} value={s.name}>{s.name}{s.value !== 100 ? ` (${s.value}/h)` : ''}{weakness.includes(s.name) ? ' · viikon heikkous!' : ''}</option>
               ))}
             </optgroup>
           ))}

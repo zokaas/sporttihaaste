@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { createClient, monsterImageUrl } from '@/lib/supabase/client';
 import { BOSS_WEEK } from '@/lib/season';
 import { bossWhisper } from '@/lib/boss';
+import { SPORTS } from '@/lib/rules';
 
 export type Monster = {
   week: number;
@@ -28,6 +29,23 @@ type Part = { name: string; description: string | null; weakness: string | null;
 const emptyPart = (): Part => ({ name: '', description: null, weakness: null, image_path: null });
 
 const WEAKNESSES = ['Kestävyys', 'Voimailu', 'Palloilu', 'Muu'];
+
+/** Heikkousvaihtoehdot: koko lajiryhmä tai yksittäinen laji. */
+function WeaknessOptions() {
+  return (
+    <>
+      <option value="">Ei heikkoutta</option>
+      <optgroup label="Lajiryhmä (kaikki ryhmän lajit)">
+        {WEAKNESSES.map((w) => <option key={w} value={w}>{w}</option>)}
+      </optgroup>
+      {WEAKNESSES.map((c) => (
+        <optgroup key={c} label={`Yksittäinen laji: ${c}`}>
+          {SPORTS.filter((s) => s.category === c).map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
+        </optgroup>
+      ))}
+    </>
+  );
+}
 
 /** Pienentää kuvan niin, että pidempi sivu on enintään 1024 px. */
 async function shrinkJpeg(file: File): Promise<Blob> {
@@ -191,8 +209,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
               <label className="field">
                 Heikkous
                 <select className="input" value={part.weakness ?? ''} onChange={(e) => setPart(i, { weakness: e.target.value || null })}>
-                  <option value="">Ei heikkoutta</option>
-                  {WEAKNESSES.map((w) => <option key={w} value={w}>{w}</option>)}
+                  <WeaknessOptions />
                 </select>
               </label>
             </fieldset>
@@ -249,8 +266,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
           <label className="field">
             Heikkous
             <select className="input" value={m.weakness ?? ''} onChange={(e) => setM({ ...m, weakness: e.target.value || null })}>
-              <option value="">Ei heikkoutta</option>
-              {WEAKNESSES.map((w) => <option key={w} value={w}>{w}</option>)}
+              <WeaknessOptions />
             </select>
           </label>
         ) : null}

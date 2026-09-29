@@ -39,6 +39,7 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
     groupSize,
     celebration,
     weakness: monster.weaknesses,
+    sport: sport.name,
     participants: healthy,
   });
   return { result, companions, allTogether: healthy >= 2 && groupSize >= healthy } as const;

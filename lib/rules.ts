@@ -46,8 +46,19 @@ export interface HitInput {
   category: Category;
   groupSize: number; // kirjaaja + merkityt seuralaiset
   celebration: boolean; // nimi- tai syntymäpäivä jollakulla
-  weakness: Category | Category[] | null; // viikon monsterin heikkous (kolmikolla useampi)
+  /** Viikon monsterin heikkous: lajiryhmä (esim. "Kestävyys") tai yksittäinen laji (esim. "Uinti"). Moniosaisella useampi. */
+  weakness: Weakness | Weakness[] | null;
   participants?: number; // ilmoittautuneiden määrä ("kaikki yhdessä"), oletus 10
+  sport?: string; // lajin nimi: osuuko yksittäisen lajin heikkouteen
+}
+
+/** Heikkous on joko lajiryhmä tai yksittäisen lajin nimi. */
+export type Weakness = Category | string;
+
+/** Osuuko laji heikkouteen: juuri tämä laji tai sen lajiryhmä. Palauttaa osuman nimen. */
+export function weaknessHit(weaknesses: Weakness[], category: Category, sport?: string) {
+  if (sport && weaknesses.includes(sport)) return sport;
+  return weaknesses.includes(category) ? category : null;
 }
 
 export function hitDamage(h: HitInput) {
@@ -58,7 +69,8 @@ export function hitDamage(h: HitInput) {
   else if (h.groupSize >= 3) bonuses.push({ label: `Yhdessä (${h.groupSize} henkeä)`, pct: 50 });
   if (h.celebration) bonuses.push({ label: 'Juhlapäivä', pct: 50 });
   const weaknesses = Array.isArray(h.weakness) ? h.weakness : h.weakness ? [h.weakness] : [];
-  if (weaknesses.includes(h.category)) bonuses.push({ label: `Heikkous: ${h.category}`, pct: 50 });
+  const hit = weaknessHit(weaknesses, h.category, h.sport);
+  if (hit) bonuses.push({ label: `Heikkous: ${hit}`, pct: 50 });
   const pct = Math.min(BONUS_CAP_PCT, bonuses.reduce((a, b) => a + b.pct, 0));
   return { base, bonuses, pct, damage: Math.round(base * (1 + pct / 100)) };
 }

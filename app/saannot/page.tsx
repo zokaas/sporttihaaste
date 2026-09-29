@@ -21,7 +21,7 @@ const GLOSSARY: [string, string][] = [
   ['Sinetti', 'Jokaisen terveen sankarin täytyy lyödä viikon monsteria vähintään yhdellä treenillä. Askeleet eivät täytä sinettiä.'],
   ['Rästi', 'Monsteri, joka jäi viikolla henkiin. Se jatkaa seuraavalla viikolla, ja vanhin rästi ottaa iskut ensin.'],
   ['Potti', 'Kaatuneen monsterin yli mennyt voima ja lupausbonukset. Potti vähennetään loppupomon HP:sta.'],
-  ['Heikkous', 'Viikon monsterin heikko kohta. Sen lajiryhmän treenit tekevät +50 %.'],
+  ['Heikkous', 'Viikon monsterin heikko kohta: joko lajiryhmä (esim. kestävyys) tai yksittäinen laji (esim. uinti). Siihen osuvat treenit tekevät +50 %.'],
   ['Juhlapäivä', 'Kenen tahansa sankarin nimi- tai syntymäpäivä. Silloin kaikkien iskut tekevät +50 %.'],
   ['Yhteistreeni', 'Vähintään kolmen hengen treeni (+50 %). Koko porukka yhdessä (kaikki sinä päivänä terveet) tekee +100 %.'],
   ['Kriittinen isku', 'Isku, jonka bonukset ovat yhteensä vähintään +100 %.'],
