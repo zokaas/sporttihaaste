@@ -43,6 +43,9 @@ type Props = {
   currentWeek?: number;
   /** Yläpalkin otsikko viikkonumeron sijaan (esim. portinvartija). */
   label?: string;
+  /** Paljastuksen yläotsikko ja alarivi (oletus: viikko / loppupomon teksti). */
+  revealLabel?: string;
+  revealLine?: string;
   offsetMs?: number;
   /** Loppupomo: punainen taivas; potti iskee paljastuksen yhteydessä. */
   boss?: boolean;
@@ -296,9 +299,9 @@ export default function MonsterStage(p: Props) {
 
       {revealing ? (
         <div className="stage-reveal" aria-hidden="true">
-          <span>{p.boss ? 'Loppupomo herää' : `Viikko ${p.week}`}</span>
+          <span>{p.revealLabel ?? (p.boss ? 'Loppupomo herää' : `Viikko ${p.week}`)}</span>
           <strong className="display">{p.title}</strong>
-          {p.boss ? <em>Maa järisee. Taivas punertuu. Se on täällä.</em> : null}
+          {p.revealLine ? <em>{p.revealLine}</em> : p.boss ? <em>Maa järisee. Taivas punertuu. Se on täällä.</em> : null}
         </div>
       ) : null}
     </>

@@ -23,7 +23,9 @@ export default function GateBattle({ gate, hits, names, stepped, ownHit, crit, o
     <>
       <MonsterStage
         week={0}
-        label="Portinvartija"
+        label="⚠️ Ennen aikojaan"
+        revealLabel="Etuajassa"
+        revealLine="Se ei odottanut torstaihin."
         title={gate.name}
         image={monsterImageUrl(gate.image_path)}
         weakness={null}
@@ -50,8 +52,8 @@ export default function GateBattle({ gate, hits, names, stepped, ownHit, crit, o
           </>
         ) : (
           <>
-            <h2 className="display">Kaatakaa portinvartija</h2>
-            <p style={{ margin: 0 }}>Portti kauteen aukeaa vain, jos {gate.name} kaatuu ennen ke 30.9. klo 23.59. Treenit ja askeleet lyövät, eikä sinettiä tarvita. Jos se jää henkiin, jäljelle jäänyt HP siirtyy torstain monsterille.</p>
+            <h2 className="display">Portti aukesi etuajassa</h2>
+            <p style={{ margin: 0 }}>Kauden piti alkaa torstaina, mutta pimeys ei odottanut. {gate.name} vartioi porttia, ja se on kaadettava ennen ke 30.9. klo 23.59. Treenit ja askeleet lyövät, eikä sinettiä tarvita. Jos se jää henkiin, jäljelle jäänyt HP siirtyy torstain monsterille.</p>
             <p className="muted small" style={{ margin: 0 }}>Ti–ke treenit eivät kerry viikon 1 lupaukseen.</p>
           </>
         )}
