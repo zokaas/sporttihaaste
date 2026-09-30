@@ -11,7 +11,7 @@ const fmt = (n: number) => n.toLocaleString('fi-FI');
 
 type Props = {
   gate: Gate;
-  hits: { user_id: string; damage: number; sport: string; minutes: number; created_at: string }[];
+  hits: { user_id: string; damage: number; sport: string; minutes: number; trained_on: string; created_at: string }[];
   /** Porttipäivien askelkuittaukset. */
   steps: { user_id: string; day: string; created_at: string }[];
   names: Map<string, string>;
@@ -25,7 +25,7 @@ type Props = {
 export default function GateBattle({ gate, hits, steps, names, stepped, ownHit, crit, offsetMs }: Props) {
   // Iskut ja askelkuittaukset samassa listassa (jokainen omana rivinään); uusimmat 6, loput näkyvät yhteismäärässä.
   const all = [
-    ...hits.map((h) => ({ at: h.created_at, who: names.get(h.user_id) || 'Sankari', dmg: h.damage, facts: `${h.sport} ${h.minutes} min` })),
+    ...hits.map((h) => ({ at: h.created_at, who: names.get(h.user_id) || 'Sankari', dmg: h.damage, facts: `${h.sport} ${h.minutes} min · ${formatDay(h.trained_on)}` })),
     ...steps.map((st) => ({ at: st.created_at, who: names.get(st.user_id) || 'Sankari', dmg: STEP_DAY_DAMAGE, facts: `👣 Askeleet · ${formatDay(st.day)}` })),
   ].sort((a, b) => b.at.localeCompare(a.at));
   const recent = all.slice(0, 6);
