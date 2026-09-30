@@ -22,17 +22,10 @@ type Props = {
 
 /** Portinvartija ti 29.9.–ke 30.9.: taistelu ennen kauden alkua. Ei sinettiä, kaatuu kun HP loppuu. */
 export default function GateBattle({ gate, hits, steps, names, stepped, ownHit, crit, offsetMs }: Props) {
-  // Iskut ja askeleet (yksi rivi päivää kohti) samassa listassa; uusimmat 6, loput näkyvät yhteismäärässä.
-  const stepDays = new Map<string, { names: string[]; at: string }>();
-  for (const st of steps) {
-    const cur = stepDays.get(st.day) ?? { names: [], at: st.created_at };
-    cur.names.push(names.get(st.user_id) || 'Sankari');
-    if (st.created_at > cur.at) cur.at = st.created_at;
-    stepDays.set(st.day, cur);
-  }
+  // Iskut ja askelkuittaukset samassa listassa (jokainen omana rivinään); uusimmat 6, loput näkyvät yhteismäärässä.
   const all = [
     ...hits.map((h) => ({ at: h.created_at, who: names.get(h.user_id) || 'Sankari', dmg: h.damage, facts: `${h.sport} ${h.minutes} min` })),
-    ...[...stepDays].map(([day, v]) => ({ at: v.at, who: '👣 Askeleet', dmg: v.names.length * STEP_DAY_DAMAGE, facts: `${v.names.length > 3 ? `${v.names.slice(0, 2).join(', ')} + ${v.names.length - 2} muuta` : v.names.join(', ')} · ${formatDay(day)}` })),
+    ...steps.map((st) => ({ at: st.created_at, who: names.get(st.user_id) || 'Sankari', dmg: STEP_DAY_DAMAGE, facts: `👣 Askeleet · ${formatDay(st.day)}` })),
   ].sort((a, b) => b.at.localeCompare(a.at));
   const recent = all.slice(0, 6);
   const fmtS = gate.surplus ? ` Ylijäämä ${fmt(gate.surplus)} voimaa menee pottiin loppupomoa vastaan.` : '';

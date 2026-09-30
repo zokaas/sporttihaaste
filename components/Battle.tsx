@@ -84,18 +84,11 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
     ? monsters.get(week + 1)?.teaser || (week + 1 === BOSS_WEEK ? 'Maa tärisee. Jokin valtava heräilee unestaan…' : 'Jotain liikkuu varjoissa. Se tietää jo nimesi…')
     : null;
 
-  // Taisteluloki: viikon iskut ja megamarssit uusimmasta alkaen; saman päivän askeleet yhtenä rivinä
-  const stepDays = new Map<string, { names: string[]; at: string }>();
-  for (const st of data.steps.filter((x) => seasonWeek(x.day) === week)) {
-    const cur = stepDays.get(st.day) ?? { names: [], at: st.created_at };
-    cur.names.push(heroById.get(st.user_id)?.hero_name ?? '?');
-    if (st.created_at > cur.at) cur.at = st.created_at;
-    stepDays.set(st.day, cur);
-  }
+  // Taisteluloki: viikon iskut, askelkuittaukset (jokainen omana rivinään) ja megamarssit uusimmasta alkaen.
   // Jokainen rivi samassa muodossa: toiminto otsikkona, tekijä ja päivä alla.
   const log = [
     ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, title: `⚔️ ${h.sport} ${h.minutes} min`, by: `${heroById.get(h.user_id)?.hero_name ?? ''}${h.companions.length ? ` + ${h.companions.length} muuta` : ''}`, day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100 })),
-    ...[...stepDays].map(([day, v]) => ({ at: v.at, title: '👣 Askeleet', by: v.names.length > 3 ? `${v.names.slice(0, 2).join(', ')} + ${v.names.length - 2} muuta` : v.names.join(', '), day, dmg: v.names.length * 50, crit: false })),
+    ...data.steps.filter((st) => seasonWeek(st.day) === week).map((st) => ({ at: st.created_at, title: '👣 Askeleet', by: heroById.get(st.user_id)?.hero_name ?? '?', day: st.day, dmg: STEP_DAY_DAMAGE, crit: false })),
     ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, title: '⭐ Megamarssi', by: 'Koko porukka', day: p.day, dmg: 250, crit: false })),
   ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 6);
 
