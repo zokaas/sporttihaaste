@@ -9,7 +9,7 @@ import { STEP_DAY_DAMAGE, sealView } from '@/lib/rules';
 import { formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { activeWeaknesses, groupName, stageParts } from '@/lib/trio';
 import Hint from '@/components/Hint';
-import { ImageButton, ZoomImg } from '@/components/ImageViewer';
+import { ZoomImg } from '@/components/ImageViewer';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,12 +60,8 @@ export default async function Monsteri({ params }: { params: { week: string } })
         revealed={Boolean(m?.name)}
         dead={Boolean(killed)}
         ownHit={null}
+        zoom={m?.name ? images : undefined}
       />
-      {m?.name ? (
-        <div className="row" style={{ justifyContent: 'flex-end' }}>
-          <ImageButton images={images}>{images.length > 1 ? 'Avaa kuvat' : 'Avaa kuva'}</ImageButton>
-        </div>
-      ) : null}
       {m?.description ? <p className="narrator">{m.description}</p> : null}
 
       {parts && m?.parts ? (

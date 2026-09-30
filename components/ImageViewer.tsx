@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 
 /** Koko ruudun kuvanäkymä ilman mitään kuvan päällä. Napautus tai Esc sulkee.
  *  <dialog> nousee sivun päälle, vaikka jokin yläelementti olisi himmennetty. */
-function Viewer({ images, onClose }: { images: string[]; onClose: () => void }) {
+export function Viewer({ images, onClose }: { images: string[]; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current;
@@ -31,18 +31,6 @@ export function ZoomImg({ src, full, width, height, className, style }: { src: s
         <img className={className} src={src} alt="" width={width} height={height} style={style} />
       </button>
       {open ? <Viewer images={[full ?? src]} onClose={() => setOpen(false)} /> : null}
-    </>
-  );
-}
-
-/** Nappi, joka avaa annetut kuvat koko ruudulle. */
-export function ImageButton({ images, children }: { images: string[]; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  if (!images.length) return null;
-  return (
-    <>
-      <button type="button" className="btn btn-ghost btn-compact" onClick={() => setOpen(true)}>{children}</button>
-      {open ? <Viewer images={images} onClose={() => setOpen(false)} /> : null}
     </>
   );
 }

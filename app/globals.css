@@ -581,3 +581,4 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .image-viewer img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; }
 .image-viewer.is-many { justify-content: flex-start; overflow-y: auto; }
 .image-viewer.is-many img { max-height: none; width: 100%; height: auto; }
+.stage.is-zoomable { cursor: zoom-in; }

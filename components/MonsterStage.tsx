@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Countdown from '@/components/Countdown';
 import { groupName } from '@/lib/trio';
 import { resizedImage } from '@/lib/supabase/client';
+import { Viewer } from '@/components/ImageViewer';
 
 export type StagePart = { name: string; image: string | null; hp: number; left: number; dead: boolean };
 
@@ -21,6 +22,8 @@ type Props = {
   revealed: boolean;
   /** Napautus avaa tämän osoitteen; ilman sitä näyttämö ei ole linkki. */
   href?: string;
+  /** Ilman linkkiä: napautus avaa nämä kuvat koko ruudulle. */
+  zoom?: string[];
   /** Oma juuri kirjattu isku (?isku=…), näytetään lentävänä lukuna. */
   ownHit: number | null;
   /** Oman iskun otsikko (oletus "Osumasi!", esim. askelkuittauksella "👣 Askeleet!"). */
@@ -79,6 +82,7 @@ export default function MonsterStage(p: Props) {
   const state = stateOf(p.hp, p.maxHp, p.padded, Boolean(p.dead));
   const [shownHp, setShownHp] = useState(p.hp);
   const [flying, setFlying] = useState<{ n: number; label: string | null; crit: boolean } | null>(null);
+  const [zoomed, setZoomed] = useState(false);
   const [hit, setHit] = useState(false);
   const [revealing, setRevealing] = useState(false);
   const [partFall, setPartFall] = useState<string | null>(null);
@@ -309,5 +313,12 @@ export default function MonsterStage(p: Props) {
 
   return p.href
     ? <Link ref={(el) => { rootRef.current = el; }} href={p.href} className={className} aria-label={`${label} Avaa monsterin sivu.`}>{content}</Link>
+    : p.zoom?.length ? (
+      <>
+        <section ref={(el) => { rootRef.current = el; }} className={`${className} is-zoomable`} aria-label={`${label} Avaa kuva.`} role="button" tabIndex={0}
+          onClick={() => setZoomed(true)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setZoomed(true); } }}>{content}</section>
+        {zoomed ? <Viewer images={p.zoom} onClose={() => setZoomed(false)} /> : null}
+      </>
+    )
     : <section ref={(el) => { rootRef.current = el; }} className={className} aria-label={label}>{content}</section>;
 }
