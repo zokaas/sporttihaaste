@@ -139,7 +139,7 @@ export default function MonsterStage(p: Props) {
   }, [p.effects, p.week, deadParts]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!p.effects) return;
+    if (!p.effects) { setShownHp(p.hp); return; }
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const later = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms));
     const strike = (n: number, label: string | null, crit: boolean, from: number) => {
@@ -163,6 +163,7 @@ export default function MonsterStage(p: Props) {
     const firstSight = p.revealed && !read(seenKey);
     if (p.revealed) write(seenKey, '1');
     if (firstSight && !reduced) {
+      setShownHp(p.hp);
       const reveal = () => {
         const dur = p.boss ? 5200 : 3200;
         setRevealing(true);
@@ -182,6 +183,8 @@ export default function MonsterStage(p: Props) {
     // E: HP-palkki laskee edellisestä käynnistä nykyiseen, ja vahinko lentää kuvan päälle
     const drop = last > p.hp ? last - p.hp : 0;
     const damage = p.ownHit ?? drop;
+    // Ilman animaatiota palkki hyppää suoraan uuteen HP:hen (muuten se jäisi edelliseen arvoon).
+    if (damage <= 0 || reduced) setShownHp(p.hp);
     if (damage > 0 && !reduced) {
       strike(damage, p.ownHit != null ? (p.crit ? 'KRIITTINEN!' : p.ownLabel ?? 'Osumasi!') : null, Boolean(p.crit && p.ownHit != null), Math.min(p.maxHp, p.hp + damage));
       if (p.ownHit != null && 'vibrate' in navigator) navigator.vibrate(p.crit ? [80, 40, 80, 40, 160] : [60, 40, 120]);
