@@ -63,9 +63,9 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
     : hpShare < 0.5 ? targetMonster?.taunt_half || 'Tuo sattui. Mutta pelkkä naarmu, sankarit!'
     : hpShare >= 0.9 ? fullTaunt(targetMonster?.taunt_full)
     : null;
-  // Sinetti tulee näkyviin vasta kauden toisena päivänä (pe 2.10.): torstaina näkymä on vielä kevyt.
-  // Sääntö on silti voimassa jo torstaina; padon kortti näytetään aina, koska silloin voimaa on vaakalaudalla.
-  const showSeal = data.today > SEASON_START;
+  // Sinetti tulee näkyviin vasta viikon perjantaina: alkuviikon näkymä on kevyt. Sääntö on silti voimassa
+  // koko viikon; padon kortti näytetään aina, koska silloin voimaa on vaakalaudalla.
+  const showSeal = data.today >= addDays(weekRange(week).end, -2);
   const seal: SealHero[] = participants.map((id) => {
     const h = heroById.get(id);
     return { id, name: h?.hero_name ?? '', initial: (h?.hero_name ?? '?').slice(0, 1), avatar: avatarUrl(h?.avatar_path), hit: Boolean(target?.hitters.includes(id)), excused: !required.includes(id) };
