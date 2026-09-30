@@ -75,6 +75,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
         <GateBattle
           gate={gateBattle.gate}
           hits={gateBattle.hits.filter((h) => isGateDay(h.trained_on))}
+          steps={gateBattle.steps.filter((x) => isGateDay(x.day))}
           names={new Map(gateBattle.heroes.map((h) => [h.id, h.hero_name ?? '']))}
           stepped={gateBattle.steps.filter((x) => x.day === today()).length}
           ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null}
