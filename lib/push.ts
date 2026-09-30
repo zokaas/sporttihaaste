@@ -21,14 +21,6 @@ export async function sendPush(supabase: SupabaseClient, payload: PushPayload, u
   const results = await Promise.allSettled(
     targets.map((t) => webpush.sendNotification({ endpoint: t.endpoint, keys: { p256dh: t.p256dh, auth: t.auth } }, JSON.stringify({ url: '/', ...payload }))),
   );
-  // Vanhentuneet tilaukset (404/410: sovellus poistettu tai ilmoitukset estetty) poistetaan, jotta niihin ei
-  // lähetetä turhaan. RLS päästää poistamaan omat tilaukset; ajastettu ajo (palvelinavain) siivoaa kaikki.
-  const dead = targets.filter((_, i) => {
-    const r = results[i];
-    const code = r.status === 'rejected' ? (r.reason as { statusCode?: number })?.statusCode : undefined;
-    return code === 404 || code === 410;
-  }).map((t) => t.endpoint);
-  if (dead.length) await supabase.from('push_subscriptions').delete().in('endpoint', dead).then(() => undefined, () => undefined);
   return results.filter((r) => r.status === 'fulfilled').length;
 }
 
