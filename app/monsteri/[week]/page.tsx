@@ -9,6 +9,7 @@ import { STEP_DAY_DAMAGE, sealView } from '@/lib/rules';
 import { formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { activeWeaknesses, groupName, stageParts } from '@/lib/trio';
 import Hint from '@/components/Hint';
+import { ImageButton, ZoomImg } from '@/components/ImageViewer';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,10 @@ export default async function Monsteri({ params }: { params: { week: string } })
   // Kaatuneella ei näytetä heikkoutta; elossa olevalla vain vuorossa olevan osan heikkous (kuten taistelussa).
   const weak = killed ? '' : activeWeaknesses(m, view ? view.hp : m?.hp ?? 0).join(', ');
   const parts = stageParts(m, killed ? 0 : view?.hp ?? m?.hp ?? 0, Boolean(killed), monsterImageUrl);
+
+  // Kuvat koko ruudulle: kaksikolla ja kolmikolla osien kuvat, muuten monsterin kuva.
+  const partImages = (parts ?? []).map((x) => x.image).filter((x): x is string => Boolean(x));
+  const images = partImages.length ? partImages : [monsterImageUrl(m?.image_path)].filter((x): x is string => Boolean(x));
 
   // Vahinko monsterin viikolla (iskut + askeleet) sankareittain
   const totals = new Map<string, number>();
@@ -56,6 +61,11 @@ export default async function Monsteri({ params }: { params: { week: string } })
         dead={Boolean(killed)}
         ownHit={null}
       />
+      {m?.name ? (
+        <div className="row" style={{ justifyContent: 'flex-end' }}>
+          <ImageButton images={images}>{images.length > 1 ? 'Avaa kuvat' : 'Avaa kuva'}</ImageButton>
+        </div>
+      ) : null}
       {m?.description ? <p className="narrator">{m.description}</p> : null}
 
       {parts && m?.parts ? (
@@ -64,7 +74,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
           <ul className="people">
             {m.parts.map((part, i) => (
               <li key={i} style={parts[i].dead ? { opacity: 0.6 } : undefined}>
-                {parts[i].image ? <img className="avatar" src={parts[i].image!} alt="" width={56} height={56} style={parts[i].dead ? { filter: 'grayscale(1)' } : undefined} /> : <div className="avatar" style={{ width: 56, height: 56, fontSize: 22 }}>{parts[i].dead ? '✝' : i + 1}</div>}
+                {parts[i].image ? <ZoomImg className="avatar" src={parts[i].image!} width={56} height={56} style={parts[i].dead ? { filter: 'grayscale(1)' } : undefined} /> : <div className="avatar" style={{ width: 56, height: 56, fontSize: 22 }}>{parts[i].dead ? '✝' : i + 1}</div>}
                 <div className="grow" style={{ minWidth: 0 }}>
                   <div className="who">{part.name}</div>
                   <div className="facts">{parts[i].dead ? <span className="ok">Kaatunut</span> : `${fmt(parts[i].left)} / ${fmt(parts[i].hp)} HP`}{part.weakness ? ` · heikkous ${part.weakness}` : ''}</div>

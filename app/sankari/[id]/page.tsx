@@ -2,7 +2,8 @@ import { Fragment } from 'react';
 import { notFound } from 'next/navigation';
 import Nav from '@/components/Nav';
 import { requireHero } from '@/lib/page';
-import { avatarUrl } from '@/lib/supabase/client';
+import { avatarUrl, resizedImage } from '@/lib/supabase/client';
+import { ZoomImg } from '@/components/ImageViewer';
 import { heroStats, rankByPledges, type HeroStats } from '@/lib/stats';
 import { formatDay, seasonWeek } from '@/lib/season';
 
@@ -38,7 +39,7 @@ export default async function Sankari({ params }: { params: { id: string } }) {
     <>
       <Nav current="/sankarit" />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
-        {s.avatar ? <img className="avatar" src={s.avatar} alt="" width={112} height={112} /> : <div className="avatar" style={{ width: 112, height: 112, fontSize: 40 }}>{s.name.slice(0, 1)}</div>}
+        {s.avatar ? <ZoomImg className="avatar" src={s.avatar} full={resizedImage(s.avatar, 828)} width={112} height={112} /> : <div className="avatar" style={{ width: 112, height: 112, fontSize: 40 }}>{s.name.slice(0, 1)}</div>}
         <h1 className="display" style={{ overflowWrap: 'anywhere' }}>{s.name}</h1>
         <span className="muted">Sija {rank}/{stats.length} · lupaus {h(b.pledgeOf(s.id, b.week))} viikossa{b.sickNow.includes(s.id) ? ' · kipeänä' : ''}</span>
       </div>
