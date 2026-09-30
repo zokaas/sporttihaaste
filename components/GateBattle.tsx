@@ -1,7 +1,8 @@
 import MonsterStage from '@/components/MonsterStage';
 import KillFinale from '@/components/KillFinale';
 import { monsterImageUrl } from '@/lib/supabase/client';
-import { helsinkiMs, GATE_DAY } from '@/lib/season';
+import { helsinkiMs, GATE_DAY, formatDay } from '@/lib/season';
+import { STEP_DAY_DAMAGE } from '@/lib/rules';
 import { hitReaction } from '@/lib/taunts';
 import type { Gate } from '@/lib/gate';
 
@@ -10,6 +11,8 @@ const fmt = (n: number) => n.toLocaleString('fi-FI');
 type Props = {
   gate: Gate;
   hits: { user_id: string; damage: number; sport: string; minutes: number; created_at: string }[];
+  /** Porttipäivien askelkuittaukset. */
+  steps: { user_id: string; day: string; created_at: string }[];
   names: Map<string, string>;
   stepped: number;
   ownHit: number | null;
@@ -18,9 +21,13 @@ type Props = {
 };
 
 /** Portinvartija ti 29.9.–ke 30.9.: taistelu ennen kauden alkua. Ei sinettiä, kaatuu kun HP loppuu. */
-export default function GateBattle({ gate, hits, names, stepped, ownHit, crit, offsetMs }: Props) {
-  // Uusimmat 6 iskua; loput näkyvät yhteismäärässä.
-  const recent = [...hits].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 6);
+export default function GateBattle({ gate, hits, steps, names, stepped, ownHit, crit, offsetMs }: Props) {
+  // Iskut ja askelkuittaukset samassa listassa (jokainen omana rivinään); uusimmat 6, loput näkyvät yhteismäärässä.
+  const all = [
+    ...hits.map((h) => ({ at: h.created_at, who: names.get(h.user_id) || 'Sankari', dmg: h.damage, facts: `${h.sport} ${h.minutes} min` })),
+    ...steps.map((st) => ({ at: st.created_at, who: names.get(st.user_id) || 'Sankari', dmg: STEP_DAY_DAMAGE, facts: `👣 Askeleet · ${formatDay(st.day)}` })),
+  ].sort((a, b) => b.at.localeCompare(a.at));
+  const recent = all.slice(0, 6);
   const fmtS = gate.surplus ? ` Ylijäämä ${fmt(gate.surplus)} voimaa menee pottiin loppupomoa vastaan.` : '';
   return (
     <>
@@ -73,13 +80,13 @@ export default function GateBattle({ gate, hits, names, stepped, ownHit, crit, o
       </section>
       {recent.length ? (
         <section className="card">
-          <h2 className="display">Iskut portille{hits.length > recent.length ? <span className="muted small"> · uusimmat {recent.length}/{hits.length}</span> : null}</h2>
+          <h2 className="display">Iskut portille{all.length > recent.length ? <span className="muted small"> · uusimmat {recent.length}/{all.length}</span> : null}</h2>
           <ul className="people">
             {recent.map((h, i) => (
-              <li key={`${h.user_id}-${h.created_at}-${i}`}>
+              <li key={`${h.at}-${i}`}>
                 <div className="grow" style={{ minWidth: 0 }}>
-                  <div className="who">{names.get(h.user_id) ?? 'Sankari'} <span className="ok">{fmt(h.damage)}</span></div>
-                  <div className="facts">{h.sport} {h.minutes} min</div>
+                  <div className="who">{h.who} <span className="ok">{fmt(h.dmg)}</span></div>
+                  <div className="facts">{h.facts}</div>
                 </div>
               </li>
             ))}

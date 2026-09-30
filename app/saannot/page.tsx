@@ -19,7 +19,7 @@ const GLOSSARY: [string, string][] = [
   ['Voima', 'Iskun voima: kesto tunteina × lajin arvo, ja päälle bonukset.'],
   ['HP', 'Monsterin elinvoima. Kun se loppuu ja sinetti on täynnä, monsteri kaatuu.'],
   ['Sinettiraja', 'Niin kauan kuin sinetti on kesken, monsterille jää 10 HP jokaista puuttuvaa sankaria kohden. Se ei siis näy koskaan nollassa ennen kuin kaikki ovat lyöneet.'],
-  ['Sinetti', 'Jokaisen terveen sankarin täytyy lyödä viikon monsteria vähintään yhdellä treenillä. Askeleet eivät täytä sinettiä.'],
+  ['Sinetti', 'Jokaisen terveen sankarin täytyy lyödä viikon monsteria vähintään yhdellä treenillä. Askeleet eivät täytä sinettiä. Sinetti on voimassa koko viikon, mutta se tulee näkyviin vasta perjantaina.'],
   ['Rästi', 'Monsteri, joka jäi viikolla henkiin. Se jatkaa seuraavalla viikolla, ja vanhin rästi ottaa iskut ensin.'],
   ['Potti', 'Kaatuneen monsterin yli mennyt voima ja lupausbonukset. Koko potti vähennetään loppupomon HP:sta, eikä sillä ole kattoa.'],
   ['Heikkous', 'Viikon monsterin heikko kohta: joko lajiryhmä (esim. kestävyys) tai yksittäinen laji (esim. uinti). Joskus heikkous on erikoisheikkous, esim. urheilu mamun tai lapsen kanssa, urheilija on nainen tai urheilu kenen tahansa isän kanssa: silloin laji on vapaa ja kirjauksessa merkitset itse, että ehto täyttyi. Heikkouteen osuvat treenit tekevät +50 %. Kaksikolla ja kolmikolla jokaisella osalla on oma heikkoutensa, ja bonus tulee vuorossa olevan osan heikkoudesta.'],
@@ -121,7 +121,7 @@ export default async function Saannot() {
           <li><strong>👁️ Uusi monsteri</strong>: to 1.10. ja sen jälkeen joka maanantai klo {QUIET_END}.</li>
           <li><strong>⚔️ Perjantaimuistutus</strong>: pe klo {QUIET_END}, vain jos sinulta puuttuu vielä jotain (lupauksen tunnit, isku sinettiin tai askelkuittauksia).</li>
           <li><strong>💀 Monsteri kaatui</strong> ja <strong>⭐ Megamarssi</strong>: heti kaikille.</li>
-          <li><strong>⚔️ Vain sinä puutut sinetistä</strong>: heti sille, jonka isku viimeisenä puuttuu.</li>
+          <li><strong>⚔️ Vain sinä puutut sinetistä</strong>: perjantaista alkaen sille, jonka isku viimeisenä puuttuu.</li>
           <li><strong>⏳ Sinetti odottaa sinua</strong>: kun joku painaa Muistuta puuttuvia (kukin voi muistuttaa kerran kolmessa tunnissa).</li>
         </ul>
         <p className="muted small" style={{ margin: 0 }}>Kun sovellus on auki, näet muiden iskut ja askeleet heti pienenä iskuikkunana ruudun yläreunassa.</p>

@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadBattle } from './battle';
 import { sendOnce } from './push';
 import { testDay, today } from './today';
-import { BOSS_WEEK, isGateDay } from './season';
+import { addDays, weekRange, BOSS_WEEK, isGateDay } from './season';
 
 type Battle = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -28,7 +28,8 @@ export async function afterHit(supabase: SupabaseClient) {
   const target = b.ledger.alive[0];
   if (!target) return;
   const missing = b.required.filter((id) => !target.hitters.includes(id));
-  if (missing.length === 1) {
+  // "Vain sinä puutut" vasta perjantaista alkaen, kun sinetti tulee näkyviin.
+  if (missing.length === 1 && today() >= addDays(weekRange(b.week).end, -2)) {
     await sendOnce(
       supabase,
       `last-${b.week}-${target.week}-${missing[0]}`,
