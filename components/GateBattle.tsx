@@ -1,5 +1,6 @@
 import MonsterStage from '@/components/MonsterStage';
 import KillFinale from '@/components/KillFinale';
+import LiveRefresh from '@/components/LiveRefresh';
 import { monsterImageUrl } from '@/lib/supabase/client';
 import { helsinkiMs, GATE_DAY, formatDay } from '@/lib/season';
 import { STEP_DAY_DAMAGE } from '@/lib/rules';
@@ -31,6 +32,7 @@ export default function GateBattle({ gate, hits, steps, names, stepped, ownHit, 
   const fmtS = gate.surplus ? ` Ylijäämä ${fmt(gate.surplus)} voimaa menee pottiin loppupomoa vastaan.` : '';
   return (
     <>
+      <LiveRefresh />
       <KillFinale
         killed={gate.killed ? 1 : 0}
         kills={[{ week: 0, name: gate.name, image: monsterImageUrl(gate.image_path), blow: null }]}
