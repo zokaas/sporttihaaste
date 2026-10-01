@@ -131,3 +131,13 @@ assert.deepEqual(sealView({ hp: 500, padded: 0, hitters: [] }, ['a', 'b']), { hp
 assert.deepEqual(sealView({ hp: 15, padded: 0, hitters: [] }, ['a', 'b']), { hp: 20, dam: 5, missing: 2, floor: 20 });
 assert.equal(sealView({ hp: 1, padded: 0, hitters: ['a'] }, ['a', 'b']).hp, 10, 'sunnuntain jälkeen rästi näkyy sinettirajalla');
 console.log('Sinettirajatestit menivät läpi.');
+
+// Bonusten erittely lokiin tallennetusta iskusta
+import { hitBonusLabels } from './rules.ts';
+const lbl = (h: Parameters<typeof hitBonusLabels>[0]) => hitBonusLabels(h).map((b) => `${b.label} ${b.pct}`);
+assert.deepEqual(lbl({ bonus_pct: 0, all_together: false, companions: [], weakness_hit: false }), []);
+assert.deepEqual(lbl({ bonus_pct: 100, all_together: false, companions: ['a', 'b'], weakness_hit: true }), ['Yhdessä 50', 'Heikkous 50']);
+assert.deepEqual(lbl({ bonus_pct: 200, all_together: true, companions: ['a', 'b'], weakness_hit: true }), ['Koko porukka 100', 'Heikkous 50', 'Juhlapäivä 50']);
+assert.deepEqual(lbl({ bonus_pct: 50, all_together: false, companions: ['a'], weakness_hit: false }), ['Juhlapäivä 50'], 'kaksin ei ole yhdessä-bonusta');
+assert.deepEqual(lbl({ bonus_pct: 50, all_together: false, companions: [] }), ['Heikkous tai juhlapäivä 50'], 'ilman heikkoustietoa');
+console.log('Bonuserittelytestit menivät läpi.');
