@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import type { loadBattle } from '@/lib/battle';
-import { computeLedger, hitBonusLabels, sealView, STEP_DAY_DAMAGE } from '@/lib/rules';
+import { computeLedger, hitBonusText, sealView, STEP_DAY_DAMAGE } from '@/lib/rules';
 import { finalBlows, weekRecap } from '@/lib/stats';
 import { addDays, formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_START } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
@@ -87,7 +87,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   // Taisteluloki: viikon iskut, askelkuittaukset (jokainen omana rivinään) ja megamarssit uusimmasta alkaen.
   // Jokainen rivi samassa muodossa: toiminto otsikkona, tekijä ja päivä alla.
   const log = [
-    ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, title: `⚔️ ${h.sport} ${h.minutes} min`, by: `${heroById.get(h.user_id)?.hero_name ?? ''}${h.companions.length ? ` + ${h.companions.length} muuta` : ''}`, day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, bonus: hitBonusLabels(h).map((b) => `${b.label} +${b.pct} %`).join(' · ') })),
+    ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, title: `⚔️ ${h.sport} ${h.minutes} min`, by: `${heroById.get(h.user_id)?.hero_name ?? ''}${h.companions.length ? ` + ${h.companions.length} muuta` : ''}`, day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, bonus: hitBonusText(h) })),
     ...data.steps.filter((st) => seasonWeek(st.day) === week).map((st) => ({ at: st.created_at, title: '👣 Askeleet', by: heroById.get(st.user_id)?.hero_name ?? '?', day: st.day, dmg: STEP_DAY_DAMAGE, crit: false, bonus: '' })),
     ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, title: '⭐ Megamarssi', by: 'Koko porukka', day: p.day, dmg: 250, crit: false, bonus: '' })),
   ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 6);

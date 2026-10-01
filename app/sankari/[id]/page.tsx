@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Nav from '@/components/Nav';
 import { requireHero } from '@/lib/page';
 import { avatarUrl, resizedImage } from '@/lib/supabase/client';
+import { hitBonusText } from '@/lib/rules';
 import { ZoomImg } from '@/components/ImageViewer';
 import { heroStats, rankByPledges, type HeroStats } from '@/lib/stats';
 import { formatDay, seasonWeek } from '@/lib/season';
@@ -49,7 +50,7 @@ export default async function Sankari({ params }: { params: { id: string } }) {
         <div className="row" style={{ justifyContent: 'space-between' }}><span>Lupaus</span><span className={status.kept ? 'ok' : ''}>{h(status.hours)} / {h(status.target)}{status.kept ? ' ✓' : ''}</span></div>
         {weekHits.length ? weekHits.map((x, i) => (
           <div key={i} className="row" style={{ justifyContent: 'space-between' }}>
-            <span>{formatDay(x.trained_on)} {x.sport} {x.minutes} min{x.companions.length ? ` · ${x.companions.length + 1} hengen porukka` : ''}</span>
+            <span>{formatDay(x.trained_on)} {x.sport} {x.minutes} min{x.companions.length ? ` · ${x.companions.length + 1} hengen porukka` : ''}{hitBonusText(x) ? <span className="bonus-text"> · {hitBonusText(x)}</span> : null}</span>
             <strong>{x.damage}</strong>
           </div>
         )) : <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla.</p>}

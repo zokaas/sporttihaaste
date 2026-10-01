@@ -119,6 +119,9 @@ export function hitBonusLabels(h: { bonus_pct: number; all_together: boolean; co
   return out;
 }
 
+/** Bonukset yhtenä tekstinä, esim. "Yhdessä +50 % · Heikkous +50 %" (tyhjä, jos bonuksia ei ole). */
+export const hitBonusText = (h: Parameters<typeof hitBonusLabels>[0]) => hitBonusLabels(h).map((b) => `${b.label} +${b.pct} %`).join(' · ');
+
 /** Lupaukseen kertyvät tunnit: vahinko ilman bonuksia / 100. */
 export function pledgeHours(minutes: number, sportValue: number) {
   return ((minutes / 60) * sportValue) / 100;
