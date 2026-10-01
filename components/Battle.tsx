@@ -91,9 +91,9 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   // Taisteluloki: viikon iskut, askelkuittaukset (jokainen omana rivinään) ja megamarssit uusimmasta alkaen.
   // Jokainen rivi samassa muodossa: toiminto otsikkona, tekijä ja päivä alla.
   const log = [
-    ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, title: `⚔️ ${h.sport} ${h.minutes} min`, by: `${heroById.get(h.user_id)?.hero_name ?? ''}${h.companions.length ? ` + ${h.companions.length} muuta` : ''}`, day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, bonus: hitBonusText(h), photo: hitPhotoUrl(h.photo_path) })),
-    ...data.steps.filter((st) => seasonWeek(st.day) === week).map((st) => ({ at: st.created_at, title: '👣 Askeleet', by: heroById.get(st.user_id)?.hero_name ?? '?', day: st.day, dmg: STEP_DAY_DAMAGE, crit: false, bonus: '', photo: null })),
-    ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, title: '⭐ Megamarssi', by: 'Koko porukka', day: p.day, dmg: 250, crit: false, bonus: '', photo: null })),
+    ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, icon: '⚔️', title: `${h.sport} ${h.minutes} min`, by: `${heroById.get(h.user_id)?.hero_name ?? ''}${h.companions.length ? ` + ${h.companions.length} muuta` : ''}`, day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, bonus: hitBonusText(h), photo: hitPhotoUrl(h.photo_path) })),
+    ...data.steps.filter((st) => seasonWeek(st.day) === week).map((st) => ({ at: st.created_at, icon: '👣', title: 'Askeleet', by: heroById.get(st.user_id)?.hero_name ?? '?', day: st.day, dmg: STEP_DAY_DAMAGE, crit: false, bonus: '', photo: null })),
+    ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, icon: '⭐', title: 'Megamarssi', by: 'Koko porukka', day: p.day, dmg: 250, crit: false, bonus: '', photo: null })),
   ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 6);
 
   return (
@@ -240,12 +240,13 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           <ul className="log">
             {log.map((e, i) => (
               <li key={i}>
+                {/* Treenikuva korvaa rivin merkin vasemmassa reunassa. */}
+                {e.photo ? <ZoomImg className="hit-photo" src={resizedImage(e.photo, 96)} full={e.photo} width={40} height={40} /> : null}
                 <div style={{ minWidth: 0 }}>
-                  <div><strong>{e.title}</strong>{e.crit ? <span className="tag">KRIITTINEN</span> : null}</div>
+                  <div><strong>{e.photo ? '' : `${e.icon} `}{e.title}</strong>{e.crit ? <span className="tag">KRIITTINEN</span> : null}</div>
                   <div className="when">{e.by} · {formatDay(e.day)} · {ago(e.at)}</div>
                   {e.bonus ? <div className="bonus">{e.bonus}</div> : null}
                 </div>
-                {e.photo ? <ZoomImg className="hit-photo" src={resizedImage(e.photo, 96)} full={e.photo} width={40} height={40} /> : null}
                 <span className={`dmg${e.crit ? ' crit' : ''}`}>−{fmt(e.dmg)}</span>
               </li>
             ))}
