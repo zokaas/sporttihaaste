@@ -583,4 +583,5 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .image-viewer.is-many img { max-height: none; width: 100%; height: auto; }
 .stage.is-zoomable { cursor: zoom-in; }
 /* Iskun bonusten erittely lokissa */
-.log .bonus, .facts.bonus { color: var(--gold); font-size: 12px; }
+.log .bonus, .facts.bonus, .people .facts.bonus { color: var(--gold); font-size: 12px; }
+.bonus-text { color: var(--gold); }

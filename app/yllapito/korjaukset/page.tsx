@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { loadSports } from '@/lib/sports';
+import { hitBonusText } from '@/lib/rules';
 import { SEASON_START, formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
 import { AdminHitForm, AdminSickForm, DeleteRow } from '@/components/AdminTools';
@@ -56,7 +57,7 @@ export default async function Korjaukset({ searchParams }: { searchParams: { vko
               <li key={h.id}>
                 <div className="grow" style={{ minWidth: 0 }}>
                   <div className="who">{name(h.user_id)} · {h.damage}</div>
-                  <div className="facts">{formatDay(h.trained_on)} · {h.sport} {h.minutes} min{h.bonus_pct ? ` · +${h.bonus_pct} %` : ''}{h.companions.length ? ` · ${h.companions.length + 1} hlö` : ''}</div>
+                  <div className="facts">{formatDay(h.trained_on)} · {h.sport} {h.minutes} min{h.bonus_pct ? ` · ${hitBonusText(h) || `+${h.bonus_pct} %`}` : ''}{h.companions.length ? ` · ${h.companions.length + 1} hlö` : ''}</div>
                 </div>
                 <DeleteRow id={h.id} kind="hit" />
               </li>

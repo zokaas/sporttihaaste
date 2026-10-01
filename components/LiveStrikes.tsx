@@ -3,12 +3,12 @@ import { useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { currentStrike } from '@/app/actions';
 import { showStrike } from '@/components/StrikeToastHost';
-import { STEP_DAY_DAMAGE } from '@/lib/rules';
+import { STEP_DAY_DAMAGE, hitBonusText } from '@/lib/rules';
 
 export const SEEN_KEY = 'mj_seen_until';
 export const markSeen = () => { try { localStorage.setItem(SEEN_KEY, new Date().toISOString()); } catch { /* ei tallennusta */ } };
 
-type HitRow = { user_id: string; sport: string; minutes: number; damage: number };
+type HitRow = { user_id: string; sport: string; minutes: number; damage: number; bonus_pct: number; all_together: boolean; companions: string[]; weakness_hit?: boolean };
 type StepRow = { user_id: string };
 
 /**
@@ -40,7 +40,8 @@ export default function LiveStrikes() {
       channel
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'hits' }, (p) => {
           const h = p.new as HitRow;
-          void announce(h.user_id, h.damage, '⚔️', `${h.sport} ${h.minutes} min`);
+          const bonus = h.bonus_pct ? hitBonusText({ ...h, companions: h.companions ?? [] }) : '';
+          void announce(h.user_id, h.damage, '⚔️', `${h.sport} ${h.minutes} min${bonus ? ` · ${bonus}` : ''}`);
         })
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'step_days' }, (p) => {
           const s = p.new as StepRow;

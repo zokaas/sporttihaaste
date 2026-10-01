@@ -5,7 +5,7 @@ import MonsterStage from '@/components/MonsterStage';
 import { requireHero } from '@/lib/page';
 import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
-import { STEP_DAY_DAMAGE, sealView } from '@/lib/rules';
+import { STEP_DAY_DAMAGE, hitBonusText, sealView } from '@/lib/rules';
 import { formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { activeWeaknesses, groupName, stageParts } from '@/lib/trio';
 import Hint from '@/components/Hint';
@@ -128,6 +128,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
                     {h.companions.length ? ` · ${h.companions.length + 1} hengen porukka` : ''}
                     {h.all_together ? ' · kaikki yhdessä!' : ''}
                   </div>
+                  {hitBonusText(h) ? <div className="facts bonus">{hitBonusText(h)}</div> : null}
                 </div>
                 <strong>{fmt(h.damage)}</strong>
               </li>

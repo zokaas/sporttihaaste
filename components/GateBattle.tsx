@@ -3,7 +3,7 @@ import KillFinale from '@/components/KillFinale';
 import LiveRefresh from '@/components/LiveRefresh';
 import { monsterImageUrl } from '@/lib/supabase/client';
 import { helsinkiMs, GATE_DAY, formatDay } from '@/lib/season';
-import { hitBonusLabels, STEP_DAY_DAMAGE } from '@/lib/rules';
+import { hitBonusText, STEP_DAY_DAMAGE } from '@/lib/rules';
 import { hitReaction } from '@/lib/taunts';
 import type { Gate } from '@/lib/gate';
 
@@ -25,7 +25,7 @@ type Props = {
 export default function GateBattle({ gate, hits, steps, names, stepped, ownHit, crit, offsetMs }: Props) {
   // Iskut ja askelkuittaukset samassa listassa (jokainen omana rivinään); uusimmat 6, loput näkyvät yhteismäärässä.
   const all = [
-    ...hits.map((h) => ({ at: h.created_at, who: names.get(h.user_id) || 'Sankari', dmg: h.damage, facts: `${h.sport} ${h.minutes} min · ${formatDay(h.trained_on)}`, bonus: hitBonusLabels(h).map((b) => `${b.label} +${b.pct} %`).join(' · ') })),
+    ...hits.map((h) => ({ at: h.created_at, who: names.get(h.user_id) || 'Sankari', dmg: h.damage, facts: `${h.sport} ${h.minutes} min · ${formatDay(h.trained_on)}`, bonus: hitBonusText(h) })),
     ...steps.map((st) => ({ at: st.created_at, who: names.get(st.user_id) || 'Sankari', dmg: STEP_DAY_DAMAGE, facts: `👣 Askeleet · ${formatDay(st.day)}`, bonus: '' })),
   ].sort((a, b) => b.at.localeCompare(a.at));
   const recent = all.slice(0, 6);
