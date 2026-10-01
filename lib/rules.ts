@@ -105,6 +105,20 @@ export function hitDamage(h: HitInput) {
   return { base, bonuses, pct, damage: Math.round(base * (1 + pct / 100)) };
 }
 
+/**
+ * Tallennetun iskun bonusten erittely lokiin. Koko porukka, yhdessä ja heikkous tulevat iskun tiedoista;
+ * juhlapäivä on se, mitä bonusprosentista jää yli (kattoa ei voi ylittää: enintään 100 + 50 + 50).
+ */
+export function hitBonusLabels(h: { bonus_pct: number; all_together: boolean; companions: string[]; weakness_hit?: boolean | null }) {
+  const out: { label: string; pct: number }[] = [];
+  if (h.all_together) out.push({ label: 'Koko porukka', pct: 100 });
+  else if (h.companions.length + 1 >= 3) out.push({ label: 'Yhdessä', pct: 50 });
+  if (h.weakness_hit) out.push({ label: 'Heikkous', pct: 50 });
+  const rest = h.bonus_pct - out.reduce((a, b) => a + b.pct, 0);
+  if (rest > 0) out.push({ label: h.weakness_hit == null && rest >= 100 ? 'Heikkous + juhlapäivä' : h.weakness_hit == null ? 'Heikkous tai juhlapäivä' : 'Juhlapäivä', pct: rest });
+  return out;
+}
+
 /** Lupaukseen kertyvät tunnit: vahinko ilman bonuksia / 100. */
 export function pledgeHours(minutes: number, sportValue: number) {
   return ((minutes / 60) * sportValue) / 100;
