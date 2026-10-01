@@ -1,6 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { PREVIEW_ERROR, previewOnly } from '@/lib/today';
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -19,6 +20,7 @@ function done(error: { message: string } | null): Result {
 }
 
 export async function adminDeleteHit(id: number): Promise<Result> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const supabase = await admin();
   if (!supabase) return { ok: false, error: 'Vain ylläpitäjä.' };
   // Treenikuva (migraatio 028) poistetaan iskun mukana.
@@ -30,6 +32,7 @@ export async function adminDeleteHit(id: number): Promise<Result> {
 }
 
 export async function adminSetSick(userId: string, startsOn: string, endsOn: string | null): Promise<Result> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const supabase = await admin();
   if (!supabase) return { ok: false, error: 'Vain ylläpitäjä.' };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startsOn) || (endsOn && (!/^\d{4}-\d{2}-\d{2}$/.test(endsOn) || endsOn < startsOn))) return { ok: false, error: 'Tarkista päivämäärät.' };
@@ -37,6 +40,7 @@ export async function adminSetSick(userId: string, startsOn: string, endsOn: str
 }
 
 export async function adminDeleteSick(id: number): Promise<Result> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const supabase = await admin();
   if (!supabase) return { ok: false, error: 'Vain ylläpitäjä.' };
   return done((await supabase.from('sick_periods').delete().eq('id', id)).error);

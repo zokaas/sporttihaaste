@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { FAMILY_WEAKNESS, hitDamage, specialOf, type Category } from '@/lib/rules';
 import { loadSports } from '@/lib/sports';
 import { loggableDays, monthDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
-import { today } from '@/lib/today';
+import { PREVIEW_ERROR, previewOnly, today } from '@/lib/today';
 import { currentWeaknesses, loadBattle } from '@/lib/battle';
 import { afterHit } from '@/lib/events';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
@@ -89,6 +89,7 @@ async function insertHit(supabase: ReturnType<typeof createClient>, userId: stri
 }
 
 export async function logHit(input: HitInput): Promise<Result> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
@@ -113,6 +114,7 @@ async function hitPhoto(supabase: ReturnType<typeof createClient>, id: number) {
 }
 
 export async function deleteHit(id: number): Promise<Result> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
@@ -127,6 +129,7 @@ export async function deleteHit(id: number): Promise<Result> {
 
 /** Ylläpitäjä kirjaa iskun sankarin puolesta mille tahansa kauden päivälle (korjaukset). */
 export async function adminLogHit(input: HitInput & { userId: string }): Promise<Result> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };

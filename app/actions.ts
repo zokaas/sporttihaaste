@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { addDays, loggableDays, seasonWeek, BOSS_WEEK } from '@/lib/season';
-import { today } from '@/lib/today';
+import { PREVIEW_ERROR, previewOnly, today } from '@/lib/today';
 import { afterStep } from '@/lib/events';
 import { loadBattle } from '@/lib/battle';
 import { sendOrQueue, sendPush } from '@/lib/push';
@@ -27,6 +27,7 @@ function done(error: { message: string } | null): Result {
 
 /** Kuittaa tai peruu askelpäivän (+50). */
 export async function toggleStep(day: string, on: boolean, withStrike = false): Promise<Result & { strike?: StrikeSummary }> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   if (!loggableDays(today()).includes(day)) return { ok: false, error: 'Päivää ei voi enää kuitata.' };
@@ -50,6 +51,7 @@ export async function toggleStep(day: string, on: boolean, withStrike = false): 
  * olemassa olevan jakson kahteen osaan tarvittaessa.
  */
 export async function toggleSickDay(day: string, sick: boolean, continuing = false): Promise<Result> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   const now = today();
@@ -89,6 +91,7 @@ export async function changePledge(_hours: number): Promise<Result> {
 
 /** Muistuttaa sinetistä puuttuvia push-ilmoituksella. Kerran kolmessa tunnissa per lähettäjä. */
 export async function nudgeMissing(): Promise<Result & { sent?: number }> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   const b = await loadBattle(supabase, today());

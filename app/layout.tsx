@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Grenze_Gotisch, IBM_Plex_Sans } from 'next/font/google';
 import './globals.css';
-import { testDay } from '@/lib/today';
+import { previewOnly, testDay } from '@/lib/today';
 import { formatDay } from '@/lib/season';
 import ScrollMemory from '@/components/ScrollMemory';
 import StrikeToastHost from '@/components/StrikeToastHost';
@@ -54,7 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body style={{ backgroundColor: '#0E0C0B' }}>
         <BootSplash />
-        {testDay() ? <div className="test-banner">Testitila: {formatDay(testDay()!)} · <a href="/yllapito">lopeta</a></div> : null}
+        {testDay() ? <div className="test-banner">{previewOnly() ? 'Esikatselu (vain katselu)' : 'Testitila'}: {formatDay(testDay()!)} · <a href="/yllapito">lopeta</a></div> : null}
         <main className="app">{children}</main>
         <ScrollMemory />
         <StrikeToastHost />
