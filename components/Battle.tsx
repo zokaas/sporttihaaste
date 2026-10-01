@@ -84,6 +84,9 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const teaser = week < BOSS_WEEK && data.today >= addDays(weekRange(week).end, -2)
     ? monsters.get(week + 1)?.teaser || (week + 1 === BOSS_WEEK ? 'Maa tärisee. Jokin valtava heräilee unestaan…' : 'Jotain liikkuu varjoissa. Se tietää jo nimesi…')
     : null;
+  // Tulevan viikon heikkoudet vihjeeseen (kaksikolla ja kolmikolla kaikkien osien heikkoudet).
+  const next = teaser ? monsters.get(week + 1) : undefined;
+  const nextWeak = next?.teaser_weaknesses ?? [];
 
   // Taisteluloki: viikon iskut, askelkuittaukset (jokainen omana rivinään) ja megamarssit uusimmasta alkaen.
   // Jokainen rivi samassa muodossa: toiminto otsikkona, tekijä ja päivä alla.
@@ -165,6 +168,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           <div style={{ minWidth: 0 }}>
             <span className="stage-week">{week + 1 === BOSS_WEEK ? 'Loppupomo' : 'Seuraava monsteri'}</span>
             <p className="teaser-text">“{teaser}”</p>
+            {nextWeak.length ? <span className="pill" style={{ marginTop: 6 }}>{nextWeak.length > 1 ? 'Heikkoudet' : 'Heikkous'}: {nextWeak.join(', ')}</span> : null}
           </div>
         </section>
       ) : null}
