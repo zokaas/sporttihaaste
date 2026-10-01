@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Nav from '@/components/Nav';
 import MonsterStage from '@/components/MonsterStage';
 import { requireHero } from '@/lib/page';
-import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
+import { avatarUrl, hitPhotoUrl, monsterImageUrl, resizedImage } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
 import { STEP_DAY_DAMAGE, hitBonusText, sealView } from '@/lib/rules';
 import { formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
@@ -121,6 +121,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
           <ul className="people">
             {hits.map((h, i) => (
               <li key={i}>
+                {hitPhotoUrl(h.photo_path) ? <ZoomImg className="hit-photo" src={resizedImage(hitPhotoUrl(h.photo_path)!, 96)} full={hitPhotoUrl(h.photo_path)!} width={40} height={40} /> : null}
                 <div className="grow" style={{ minWidth: 0 }}>
                   <div className="who">{heroName(h.user_id)} <span className="muted" style={{ fontWeight: 400 }}>· {h.sport} {h.minutes} min</span></div>
                   <div className="facts">

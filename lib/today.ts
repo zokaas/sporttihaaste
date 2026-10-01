@@ -7,16 +7,16 @@ export const TEST_DAY_COOKIE = 'mj_testipaiva';
 export const TEST_SKIP_COOKIE = 'mj_testi_kaada';
 
 /**
- * Palvelimen "tänään" Suomen aikaa. Ylläpitäjä voi ennen kauden alkua asettaa testipäivän (eväste),
- * jolloin sovellus toimii kuin se päivä olisi tänään. Tietokanta päästää ylläpitäjän kirjaukset läpi
- * päivästä riippumatta; muiden kirjaukset tarkistetaan aina oikeaa päivää vasten.
- * MJ_TODAY on vain paikalliseen kehitykseen.
+ * Palvelimen "tänään" Suomen aikaa. Ylläpitäjä voi asettaa testipäivän (eväste), jolloin sovellus näyttää
+ * siltä kuin se päivä olisi tänään. Ennen kautta testipäivänä voi myös kirjata (tietokanta päästää
+ * ylläpitäjän kirjaukset läpi); kauden aikana testipäivä on pelkkä esikatselu (previewOnly), koska
+ * kirjaukset menisivät oikeaan peliin. MJ_TODAY on vain paikalliseen kehitykseen.
  */
 export function today() {
   if (process.env.MJ_TODAY) return process.env.MJ_TODAY;
   const real = helsinkiToday();
   const test = cookies().get(TEST_DAY_COOKIE)?.value;
-  if (test && /^\d{4}-\d{2}-\d{2}$/.test(test) && real < SEASON_START) return test;
+  if (test && /^\d{4}-\d{2}-\d{2}$/.test(test)) return test;
   return real;
 }
 
@@ -40,3 +40,10 @@ export function testSkipPast() {
     return false;
   }
 }
+
+/** Kauden aikana testipäivä on pelkkä esikatselu: kirjaukset ja muistutukset estetään. */
+export function previewOnly() {
+  return helsinkiToday() >= SEASON_START && testDay() !== null;
+}
+
+export const PREVIEW_ERROR = 'Esikatselutila on päällä, joten kirjaukset eivät ole käytössä. Lopeta testitila ylläpidosta.';

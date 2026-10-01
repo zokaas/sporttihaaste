@@ -4,12 +4,17 @@ import { createClient } from '@/lib/supabase/server';
 import { FAMILY_WEAKNESS, hitDamage, specialOf, type Category } from '@/lib/rules';
 import { loadSports } from '@/lib/sports';
 import { loggableDays, monthDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
-import { today } from '@/lib/today';
+import { PREVIEW_ERROR, previewOnly, today } from '@/lib/today';
 import { currentWeaknesses, loadBattle } from '@/lib/battle';
 import { afterHit } from '@/lib/events';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
 
-export type HitInput = { day: string; sport: string; minutes: number; companions: string[]; special?: string | null };
+export type HitInput = { day: string; sport: string; minutes: number; companions: string[]; special?: string | null; photo?: string | null };
+
+const PHOTO_BUCKET = 'hit-photos';
+/** Treenikuvan polku kelpaa vain kirjaajan omasta kansiosta (käyttäjän id / satunnainen nimi). */
+const ownPhoto = (path: string | null | undefined, userId: string) =>
+  path && path.startsWith(`${userId}/`) && /^[0-9a-f-]+\/[0-9a-f-]+\.jpg$/.test(path) ? path : null;
 type Result = { ok: true; damage: number; pct?: number } | { ok: false; error: string };
 
 /** Laskee iskun samoilla säännöillä kuin esikatselu. Käytetään sekä esikatselussa että tallennuksessa. */
@@ -73,6 +78,7 @@ async function insertHit(supabase: ReturnType<typeof createClient>, userId: stri
     ...(hit.special === FAMILY_WEAKNESS ? { with_family: true } : {}),
     ...(hit.special ? { special: hit.special } : {}),
     ...(hit.weaknessHit ? { weakness_hit: true } : {}),
+    ...(ownPhoto(input.photo, userId) ? { photo_path: input.photo } : {}),
   };
   for (;;) {
     const { error } = await supabase.from('hits').insert({ ...row, ...optional });
@@ -83,25 +89,39 @@ async function insertHit(supabase: ReturnType<typeof createClient>, userId: stri
 }
 
 export async function logHit(input: HitInput): Promise<Result> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   const hit = await computeHit(input, user.id);
   if ('error' in hit) return { ok: false, error: hit.error! };
   const error = await insertHit(supabase, user.id, input, hit);
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    const photo = ownPhoto(input.photo, user.id);
+    if (photo) await supabase.storage.from(PHOTO_BUCKET).remove([photo]).catch(() => {});
+    return { ok: false, error: error.message };
+  }
   await afterHit(supabase).catch(() => {});
   revalidatePath('/', 'layout');
   revalidatePath('/kirjaa');
   return { ok: true, damage: hit.result.damage, pct: hit.result.pct };
 }
 
+/** Iskun treenikuvan polku (ennen migraatiota 028 aina null). */
+async function hitPhoto(supabase: ReturnType<typeof createClient>, id: number) {
+  const { data, error } = await supabase.from('hits').select('photo_path').eq('id', id).maybeSingle();
+  return error ? null : ((data as { photo_path?: string | null } | null)?.photo_path ?? null);
+}
+
 export async function deleteHit(id: number): Promise<Result> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
+  const photo = await hitPhoto(supabase, id);
   const { error } = await supabase.from('hits').delete().eq('id', id).eq('user_id', user.id);
   if (error) return { ok: false, error: error.message };
+  if (photo) await supabase.storage.from(PHOTO_BUCKET).remove([photo]).catch(() => {});
   revalidatePath('/', 'layout');
   revalidatePath('/kirjaa');
   return { ok: true, damage: 0 };
@@ -109,6 +129,7 @@ export async function deleteHit(id: number): Promise<Result> {
 
 /** Ylläpitäjä kirjaa iskun sankarin puolesta mille tahansa kauden päivälle (korjaukset). */
 export async function adminLogHit(input: HitInput & { userId: string }): Promise<Result> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };

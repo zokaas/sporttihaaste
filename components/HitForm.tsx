@@ -1,10 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CATEGORIES, SPECIAL_WEAKNESSES, hitDamage, specialOf, type Category, type Weakness } from '@/lib/rules';
 import { formatDay } from '@/lib/season';
 import { logHit } from '@/app/kirjaa/actions';
 import Hint from '@/components/Hint';
+import { createClient } from '@/lib/supabase/client';
+import { shrinkJpeg } from '@/lib/image';
 
 type Props = {
   days: string[];
@@ -36,6 +38,15 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
   const claim = special && claimed ? special : null;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Valinnainen treenikuva: pienennetään ja ladataan vasta Lyö-napista.
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  useEffect(() => {
+    if (!photo) return setPhotoPreview(null);
+    const url = URL.createObjectURL(photo);
+    setPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photo]);
 
   const sport = sports.find((s) => s.name === sportName);
   const celebrating = celebrations[day] ?? [];
@@ -49,7 +60,21 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
     if (!sport) return setError('Valitse laji.');
     setBusy(true);
     setError('');
-    const res = await logHit({ day, sport: sport.name, minutes, companions: withIds, special: claim });
+    let photoPath: string | null = null;
+    if (photo) {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Kirjaudu ensin.');
+        photoPath = `${user.id}/${crypto.randomUUID()}.jpg`;
+        const { error: upErr } = await supabase.storage.from('hit-photos').upload(photoPath, await shrinkJpeg(photo), { contentType: 'image/jpeg' });
+        if (upErr) throw upErr;
+      } catch {
+        setBusy(false);
+        return setError('Kuvan tallennus epäonnistui. Poista kuva tai yritä uudelleen.');
+      }
+    }
+    const res = await logHit({ day, sport: sport.name, minutes, companions: withIds, special: claim, photo: photoPath });
     setBusy(false);
     if (!res.ok) return setError(res.error);
     // Etusivulla isku näkyy lentävänä lukuna ja HP-palkki laskee.
@@ -116,6 +141,20 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
           <span><strong>{SPECIAL_WEAKNESSES[special].check}</strong><span className="muted small">Viikon heikkous: +50 %</span></span>
         </label>
       ) : null}
+
+      <div className="photo-pick">
+        {photoPreview ? (
+          <>
+            <img src={photoPreview} alt="" className="hit-photo" width={56} height={56} />
+            <button type="button" className="btn btn-ghost btn-compact" onClick={() => setPhoto(null)}>Poista kuva</button>
+          </>
+        ) : (
+          <label className="btn btn-ghost btn-compact">
+            📷 Lisää kuva (valinnainen)
+            <input type="file" accept="image/*" hidden onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />
+          </label>
+        )}
+      </div>
 
       {preview ? (
         <div className="note" aria-live="polite">

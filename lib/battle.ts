@@ -32,15 +32,20 @@ export type PublicMonster = {
   hit_lines?: string | null;
   hit_crit?: string | null;
   taunt_full?: string | null;
+  /** Tulevan viikon heikkoudet vihjeeseen (migraatio 029; ylläpitäjällä lasketaan suoraan taulusta). */
+  teaser_weaknesses?: string[] | null;
 };
 
-type Hit = { id: number; user_id: string; trained_on: string; sport: string; minutes: number; damage: number; bonus_pct: number; all_together: boolean; companions: string[]; created_at: string; weakness_hit?: boolean };
+type Hit = { id: number; user_id: string; trained_on: string; sport: string; minutes: number; damage: number; bonus_pct: number; all_together: boolean; companions: string[]; created_at: string; weakness_hit?: boolean; photo_path?: string | null };
 
 const HIT_COLS = 'id, user_id, trained_on, sport, minutes, damage, bonus_pct, all_together, companions, created_at';
-/** Iskut; weakness_hit (migraatio 025) mukaan, jos sarake on jo olemassa. */
+/** Iskut; weakness_hit (migraatio 025) ja photo_path (028) mukaan, jos sarakkeet ovat jo olemassa. */
 async function loadHits(supabase: SupabaseClient) {
-  const withFlag = await supabase.from('hits').select(`${HIT_COLS}, weakness_hit`);
-  return withFlag.error ? supabase.from('hits').select(HIT_COLS) : withFlag;
+  for (const extra of [', weakness_hit, photo_path', ', weakness_hit', '']) {
+    const res = await supabase.from('hits').select(HIT_COLS + extra);
+    if (!res.error || !extra) return res;
+  }
+  throw new Error('unreachable');
 }
 type Step = { user_id: string; day: string; created_at: string };
 type PledgeChange = { user_id: string; from_week: number; hours: number };
@@ -69,7 +74,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const heroList = (heroes ?? []) as Hero[];
   let monsterList = (monsters ?? []) as PublicMonster[];
   if (monsterList.length === 0) monsterList = (publicMonsters ?? []) as PublicMonster[];
-  const hitList = (hits ?? []) as Hit[];
+  const hitList = (hits ?? []) as unknown as Hit[];
   const stepList = (steps ?? []) as Step[];
   const periods = (sick ?? []) as SickPeriod[];
   const changeList = (changes ?? []) as PledgeChange[];
@@ -86,10 +91,13 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     monsterList = monsterList.map((m) => ({ ...m, hp: m.week === BOSS_WEEK ? preview.boss : preview.monsters[m.week - 1] }));
   }
   // Tulevat monsterit pysyvät salassa myös ylläpitäjältä (testitilassa "tänään" voi olla ennen paljastusta).
-  // Seuraavan viikon arvoitus näkyy kuluvan viikon perjantaista alkaen.
+  // Seuraavan viikon arvoitus ja heikkoudet näkyvät kuluvan viikon perjantaista alkaen.
+  // Ylläpitäjä saa heikkoudet suoraan taulusta, muut näkymästä (migraatio 029).
+  const upcomingWeaknesses = (m: PublicMonster) => [...new Set((m.teaser_weaknesses ?? [m.weakness, ...(m.parts ?? []).map((p) => p.weakness)]).filter((w): w is string => Boolean(w)))];
   const teaserOpen = today >= addDays(weekRange(week).end, -2);
   const byWeek = new Map(monsterList.map((m) => [m.week, m.week > week
-    ? { ...m, name: null, description: null, weakness: null, image_path: null, parts: null, taunt_half: null, taunt_low: null, boss_whisper: null, hit_lines: null, hit_crit: null, taunt_full: null, teaser: m.week === week + 1 && teaserOpen ? m.teaser ?? null : null }
+    ? { ...m, name: null, description: null, weakness: null, image_path: null, parts: null, taunt_half: null, taunt_low: null, boss_whisper: null, hit_lines: null, hit_crit: null, taunt_full: null, teaser: m.week === week + 1 && teaserOpen ? m.teaser ?? null : null,
+        teaser_weaknesses: m.week === week + 1 && teaserOpen ? upcomingWeaknesses(m) : null }
     : m]));
 
   const pledgeOf = (userId: string, w: number) =>

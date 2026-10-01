@@ -107,6 +107,8 @@ async function clearTestDay() {
 async function resetTestData() {
   'use server';
   const supabase = await requireAdmin();
+  // Kauden aikana tyhjennys poistaisi oikean pelin iskut, joten se on sallittu vain ennen kautta.
+  if (helsinkiToday() >= SEASON_START) redirect(`/yllapito?testi=${encodeURIComponent('Tyhjennys epäonnistui: kausi on jo alkanut.')}`);
   const { error } = await supabase.rpc('reset_test_data');
   revalidatePath('/', 'layout');
   redirect(`/yllapito?testi=${encodeURIComponent(error ? `Tyhjennys epäonnistui: ${error.message}. Onko migraatio 004 ajettu?` : 'Testidata tyhjennetty.')}${error ? '' : '&nollaa=1'}`);
@@ -189,10 +191,13 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
         </section>
       ) : null}
 
-      {helsinkiToday() < SEASON_START ? (
+      {/* Ennen kautta testipäivänä voi myös kirjata; kauden aikana se on pelkkä esikatselu. */}
+      {(() => { const preseason = helsinkiToday() < SEASON_START; return (
         <section className="card">
-          <h2 className="display">Testitila</h2>
-          <Hint id="admin-test" className="">Kokeile sovellusta ennen kautta: valitse päivä, niin sovellus toimii sinulle kuin se olisi tänään. Muut näkevät sovelluksen normaalisti.</Hint>
+          <h2 className="display">{preseason ? 'Testitila' : 'Esikatselu'}</h2>
+          {preseason
+            ? <Hint id="admin-test" className="">Kokeile sovellusta ennen kautta: valitse päivä, niin sovellus toimii sinulle kuin se olisi tänään. Muut näkevät sovelluksen normaalisti.</Hint>
+            : <Hint id="admin-preview" className="">Katso, miltä sovellus näyttää valittuna päivänä (monsterit, vihjeet, sinetti). Vain katselu: iskuja, askeleita ja sairauksia ei voi kirjata, jotta oikea peli pysyy koskemattomana. Muut näkevät sovelluksen normaalisti.</Hint>}
           <form action={setTestDay} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div className="row" style={{ alignItems: 'center' }}>
               <input className="input grow" type="date" name="day" min={SEASON_START} max={SEASON_END} defaultValue={testDay() ?? '2026-10-07'} required />
@@ -204,16 +209,20 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
             </label>
           </form>
           {testDay() ? (
-            <form action={clearTestDay}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Lopeta testitila ({formatDay(testDay()!)})</button></form>
+            <form action={clearTestDay}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>{preseason ? "Lopeta testitila" : "Lopeta esikatselu"} ({formatDay(testDay()!)})</button></form>
           ) : null}
-          <form action={resetTestData}>
-            <ConfirmButton message="Poistetaanko kaikkien iskut, askeleet, sairaudet ja lupausmuutokset?" className="btn btn-ghost" style={{ width: '100%', color: 'var(--blood-text)' }}>Tyhjennä testidata</ConfirmButton>
-          </form>
-          <Hint id="admin-reset">Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet, lupausmuutokset ja viestit. Tunnukset ja ilmoittautumiset säilyvät. Portinvartijan oikeat iskut ja askeleet 29.–30.9. säilyvät, vain testitilan kauden päivät (1.10. alkaen) poistetaan. Toimii ennen kauden alkua 1.10.</Hint>
+          {preseason ? (
+            <>
+              <form action={resetTestData}>
+                <ConfirmButton message="Poistetaanko kaikkien iskut, askeleet, sairaudet ja lupausmuutokset?" className="btn btn-ghost" style={{ width: '100%', color: 'var(--blood-text)' }}>Tyhjennä testidata</ConfirmButton>
+              </form>
+              <Hint id="admin-reset">Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet, lupausmuutokset ja viestit. Tunnukset ja ilmoittautumiset säilyvät. Portinvartijan oikeat iskut ja askeleet 29.–30.9. säilyvät, vain testitilan kauden päivät (1.10. alkaen) poistetaan. Toimii ennen kauden alkua 1.10.</Hint>
+            </>
+          ) : null}
           {searchParams.testi ? <p className={`note${searchParams.testi.startsWith('Tyhjennys epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.testi}</p> : null}
           {searchParams.nollaa ? <ClearLocalState /> : null}
         </section>
-      ) : null}
+      ); })()}
 
       <section className="card">
         <h2 className="display">Näkyvyys</h2>
