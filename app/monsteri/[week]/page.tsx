@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Nav from '@/components/Nav';
 import MonsterStage from '@/components/MonsterStage';
 import { requireHero } from '@/lib/page';
-import { avatarUrl, monsterImageUrl } from '@/lib/supabase/client';
+import { avatarUrl, hitPhotoUrl, monsterImageUrl, resizedImage } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
 import { STEP_DAY_DAMAGE, hitBonusText, sealView } from '@/lib/rules';
 import { formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
@@ -130,6 +130,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
                   </div>
                   {hitBonusText(h) ? <div className="facts bonus">{hitBonusText(h)}</div> : null}
                 </div>
+                {hitPhotoUrl(h.photo_path) ? <ZoomImg className="hit-photo" src={resizedImage(hitPhotoUrl(h.photo_path)!, 96)} full={hitPhotoUrl(h.photo_path)!} width={40} height={40} /> : null}
                 <strong>{fmt(h.damage)}</strong>
               </li>
             ))}

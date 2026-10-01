@@ -34,13 +34,16 @@ export type PublicMonster = {
   taunt_full?: string | null;
 };
 
-type Hit = { id: number; user_id: string; trained_on: string; sport: string; minutes: number; damage: number; bonus_pct: number; all_together: boolean; companions: string[]; created_at: string; weakness_hit?: boolean };
+type Hit = { id: number; user_id: string; trained_on: string; sport: string; minutes: number; damage: number; bonus_pct: number; all_together: boolean; companions: string[]; created_at: string; weakness_hit?: boolean; photo_path?: string | null };
 
 const HIT_COLS = 'id, user_id, trained_on, sport, minutes, damage, bonus_pct, all_together, companions, created_at';
-/** Iskut; weakness_hit (migraatio 025) mukaan, jos sarake on jo olemassa. */
+/** Iskut; weakness_hit (migraatio 025) ja photo_path (028) mukaan, jos sarakkeet ovat jo olemassa. */
 async function loadHits(supabase: SupabaseClient) {
-  const withFlag = await supabase.from('hits').select(`${HIT_COLS}, weakness_hit`);
-  return withFlag.error ? supabase.from('hits').select(HIT_COLS) : withFlag;
+  for (const extra of [', weakness_hit, photo_path', ', weakness_hit', '']) {
+    const res = await supabase.from('hits').select(HIT_COLS + extra);
+    if (!res.error || !extra) return res;
+  }
+  throw new Error('unreachable');
 }
 type Step = { user_id: string; day: string; created_at: string };
 type PledgeChange = { user_id: string; from_week: number; hours: number };
@@ -69,7 +72,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const heroList = (heroes ?? []) as Hero[];
   let monsterList = (monsters ?? []) as PublicMonster[];
   if (monsterList.length === 0) monsterList = (publicMonsters ?? []) as PublicMonster[];
-  const hitList = (hits ?? []) as Hit[];
+  const hitList = (hits ?? []) as unknown as Hit[];
   const stepList = (steps ?? []) as Step[];
   const periods = (sick ?? []) as SickPeriod[];
   const changeList = (changes ?? []) as PledgeChange[];

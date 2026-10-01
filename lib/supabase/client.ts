@@ -27,3 +27,9 @@ export function monsterImageUrl(path: string | null | undefined) {
   if (!path) return null;
   return optimized(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/monsters/${path}`, 1200, 90);
 }
+
+/** Iskun treenikuva (migraatio 028). */
+export function hitPhotoUrl(path: string | null | undefined) {
+  if (!path) return null;
+  return optimized(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/hit-photos/${path}`, 1080, 85);
+}

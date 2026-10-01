@@ -585,3 +585,7 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 /* Iskun bonusten erittely lokissa */
 .log .bonus, .facts.bonus, .people .facts.bonus { color: var(--gold); font-size: 12px; }
 .bonus-text { color: var(--gold); }
+/* Treenikuva iskussa */
+.hit-photo { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; display: block; }
+.photo-pick { display: flex; align-items: center; gap: 12px; }
+.photo-pick .hit-photo { width: 56px; height: 56px; }

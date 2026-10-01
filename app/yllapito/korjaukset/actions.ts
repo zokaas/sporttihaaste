@@ -21,7 +21,12 @@ function done(error: { message: string } | null): Result {
 export async function adminDeleteHit(id: number): Promise<Result> {
   const supabase = await admin();
   if (!supabase) return { ok: false, error: 'Vain ylläpitäjä.' };
-  return done((await supabase.from('hits').delete().eq('id', id)).error);
+  // Treenikuva (migraatio 028) poistetaan iskun mukana.
+  const { data } = await supabase.from('hits').select('photo_path').eq('id', id).maybeSingle().then((r) => r, () => ({ data: null }));
+  const photo = (data as { photo_path?: string | null } | null)?.photo_path;
+  const { error } = await supabase.from('hits').delete().eq('id', id);
+  if (!error && photo) await supabase.storage.from('hit-photos').remove([photo]).catch(() => {});
+  return done(error);
 }
 
 export async function adminSetSick(userId: string, startsOn: string, endsOn: string | null): Promise<Result> {
