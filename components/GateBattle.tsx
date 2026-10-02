@@ -29,7 +29,7 @@ export default function GateBattle({ gate, hits, steps, names, stepped, ownHit, 
     ...steps.map((st) => ({ at: st.created_at, who: names.get(st.user_id) || 'Sankari', dmg: STEP_DAY_DAMAGE, facts: `👣 Askeleet · ${formatDay(st.day)}`, bonus: '' })),
   ].sort((a, b) => b.at.localeCompare(a.at));
   const recent = all.slice(0, 6);
-  const fmtS = gate.surplus ? ` Ylijäämä ${fmt(gate.surplus)} voimaa menee pottiin loppupomoa vastaan.` : '';
+  const fmtS = gate.surplus ? ` Ylijäämä ${fmt(gate.surplus)} voimaa säästyy ensi-iskuun loppupomoa vastaan.` : '';
   return (
     <>
       <LiveRefresh />
@@ -69,7 +69,7 @@ export default function GateBattle({ gate, hits, steps, names, stepped, ownHit, 
         {gate.killed ? (
           <>
             <h2 className="display">Portti on auki!</h2>
-            <p style={{ margin: 0 }}>{gate.name} kaatui. {gate.surplus ? `Ylijäämä ${fmt(gate.surplus)} voimaa menee pottiin loppupomoa vastaan.` : ''} Torstaina klo 00.00 ensimmäinen monsteri astuu esiin.</p>
+            <p style={{ margin: 0 }}>{gate.name} kaatui. {gate.surplus ? `Ylijäämä ${fmt(gate.surplus)} voimaa säästyy ensi-iskuun loppupomoa vastaan.` : ''} Torstaina klo 00.00 ensimmäinen monsteri astuu esiin.</p>
           </>
         ) : (
           <>

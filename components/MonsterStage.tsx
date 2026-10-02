@@ -170,7 +170,7 @@ export default function MonsterStage(p: Props) {
         if (!p.boss && 'vibrate' in navigator) navigator.vibrate([70, 130, 70, 500]);
         later(() => setRevealing(false), dur);
         if (p.boss && 'vibrate' in navigator) navigator.vibrate([200, 100, 200, 100, 400]);
-        if (p.boss && p.potStrike) later(() => strike(p.potStrike!, 'Potti iskee!', true, p.maxHp), dur + 200);
+        if (p.boss && p.potStrike) later(() => strike(p.potStrike!, 'Ensi-isku!', true, p.maxHp), dur + 200);
       };
       if ((window as unknown as { __mjModalOpen?: boolean }).__mjModalOpen) {
         window.addEventListener('mj:modal-closed', reveal, { once: true });
@@ -294,7 +294,7 @@ export default function MonsterStage(p: Props) {
             ))}
           </div>
         ) : null}
-        {p.boss ? <span className="small" style={{ color: '#f0c9a8' }}>Viimeinen taistelu. Potti iski jo, loput on teidän.</span> : null}
+        {p.boss ? <span className="small" style={{ color: '#f0c9a8' }}>Viimeinen taistelu. Ensi-isku osui jo, loput on teidän.</span> : null}
       </div>
 
       {partFall ? (

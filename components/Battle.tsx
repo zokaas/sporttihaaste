@@ -154,7 +154,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         <section className="card">
           <h2 className="display">{week === BOSS_WEEK ? 'Loppupomo on kaatunut!' : 'Viikon monsteri on kaatunut!'}</h2>
           {week === BOSS_WEEK ? <p style={{ margin: 0 }}>Kausi on voitettu. Treenit kerryttävät vielä lupauksia ja tilastoja kauden loppuun.</p>
-            : <p style={{ margin: 0 }}>Kaikki tämän viikon iskut menevät pottiin loppupomoa vastaan.</p>}
+            : <p style={{ margin: 0 }}>Kaikki tämän viikon iskut säästyvät ensi-iskuun loppupomoa vastaan.</p>}
           {week < BOSS_WEEK ? (
             <blockquote className="boss-whisper">
               <span className="boss-whisper-eyes" aria-hidden="true" />
@@ -235,7 +235,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       ) : null}
 
       <div className="stat-row" style={{ gridTemplateColumns: '1fr' }}>
-        <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{fmt(week === BOSS_WEEK ? potBeforeBoss : ledger.pot)}</strong><span className="muted small">{week === BOSS_WEEK ? 'iski loppupomoon sen herätessä' : 'kasvaa loppupomoa vastaan, ei kattoa'}</span></div>
+        <div className="stat"><span className="muted small">Ensi-isku loppupomolle</span><strong>{fmt(week === BOSS_WEEK ? potBeforeBoss : ledger.pot)} ⚔️</strong><span className="muted small">{week === BOSS_WEEK ? 'Osui loppupomoon ensimmäisenä sen herätessä.' : 'Ylimenevä voima ja pidetyt lupaukset säästyvät tähän. Kun loppupomo herää, tämä isku osuu siihen ensimmäisenä.'}</span></div>
       </div>
 
       <section className="card">

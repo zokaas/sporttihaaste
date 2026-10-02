@@ -39,7 +39,7 @@ export default async function Bestiaario() {
         <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>{bossRevealed ? boss!.name : '???'}</h2>
         <span className="small" style={{ color: '#c9c1b4' }}>
           {bossRevealed
-            ? `${boss?.hp ? `${fmt(boss.hp)} HP. ` : ''}Potti ${fmt(b.ledgerInput ? computeLedger(b.ledgerInput, MONSTER_WEEKS).pot : 0)} vähennettiin sen HP:sta. Se kaatuu kuten muutkin: HP nollaan ja sinetti täyteen.`
+            ? `${boss?.hp ? `${fmt(boss.hp)} HP. ` : ''}Ensi-isku ${fmt(b.ledgerInput ? computeLedger(b.ledgerInput, MONSTER_WEEKS).pot : 0)} osui siihen sen herätessä. Se kaatuu kuten muutkin: HP nollaan ja sinetti täyteen.`
             : `${bossStirring(b.week)} Olette säästäneet sitä vastaan ${fmt(b.ledger?.pot ?? 0)} voimaa. Kaikki säästetty iskee heti, kun se herää.`}
         </span>
       </BossShadow>
