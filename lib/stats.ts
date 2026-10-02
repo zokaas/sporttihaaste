@@ -1,7 +1,7 @@
 import type { loadBattle } from './battle';
 import { hoursInWeek } from './battle';
-import { STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, computeLedger } from './rules';
-import { addDays, formatDay, monthDay, seasonWeek, weekRange, BOSS_WEEK } from './season';
+import { STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, computeLedger, potParts } from './rules';
+import { addDays, monthDay, seasonWeek, weekRange, BOSS_WEEK } from './season';
 
 export type Battle = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -133,6 +133,12 @@ export type WeekRecap = {
   mvp: { name: string; damage: number } | null;
   pledgesKept: number;
   participants: number;
+  /** Viikon kaatuneiden ja henkiin jääneiden monstereiden kuvat (kaksikolla ja kolmikolla osat). */
+  images: { path: string; dead: boolean }[];
+  /** Viikon ensi-iskukertymän erittely. */
+  potFrom: { label: string; value: number }[];
+  /** Lupauksensa pitäneet nimeltä. */
+  pledgeKeepers: string[];
   patrolDays: number;
   stepDays: number;
   jointTrainings: number;
@@ -161,18 +167,27 @@ export function weekRecap(b: Battle, w: number): WeekRecap | null {
   const top = [...totals].sort((a, c) => c[1] - a[1])[0];
 
   const weekEnd = weekRange(w).end;
+  const killedWeeks = after.killed.filter((k) => !killedBefore.has(k.week)).map((k) => k.week);
+  const imagesOf = (week: number, dead: boolean) => {
+    const m = b.monsters.get(week);
+    const paths = m?.parts?.length ? m.parts.map((p) => p.image_path) : [m?.image_path];
+    return paths.filter((x): x is string => Boolean(x)).map((path) => ({ path, dead }));
+  };
   return {
     week: w,
-    killed: after.killed.filter((k) => !killedBefore.has(k.week)).map((k) => nameOf(k.week)),
+    killed: killedWeeks.map(nameOf),
+    images: [...killedWeeks.flatMap((wk) => imagesOf(wk, true)), ...after.alive.flatMap((f) => imagesOf(f.week, false))],
     survived: after.alive.map((f) => ({ name: nameOf(f.week), hp: f.hp })),
     damage,
     bonusShare: damage ? Math.round((bonusDamage / damage) * 100) : 0,
     potGain: after.pot - (before?.pot ?? 0),
+    potFrom: potParts(after.pot - (before?.pot ?? 0), w === 1 ? b.ledgerInput.startPot ?? 0 : 0, b.ledgerInput.pledgeBonusesByWeek[w] ?? 0),
     pot: after.pot,
     lostToSeal: after.lostToSeal - (before?.lostToSeal ?? 0),
     mvp: top ? { name: b.heroes.find((h) => h.id === top[0])?.hero_name ?? '', damage: top[1] } : null,
     pledgesKept: b.ledgerInput.pledgeBonusesByWeek[w] ?? 0,
     participants: b.participants.length,
+    pledgeKeepers: b.participants.filter((u) => b.pledgeStatus(u, w).kept).map((u) => b.heroes.find((h) => h.id === u)?.hero_name ?? '?'),
     patrolDays: patrols.length,
     stepDays: steps.length,
     jointTrainings: hits.filter((h) => h.companions.length >= 2).length,
@@ -188,10 +203,8 @@ export function recapText(r: WeekRecap) {
   for (const s of r.survived) lines.push(`😈 Jäi henkiin: ${s.name} (${fmt(s.hp)} HP rästiin)`);
   lines.push(`💥 Voimaa yhteensä ${fmt(r.damage)} (bonusten osuus ${r.bonusShare} %)`);
   if (r.lostToSeal) lines.push(`🛡️ Sinetti jäi vajaaksi: ${fmt(r.lostToSeal)} voimaa sinettirajan yli menetettiin`);
-  lines.push(`💰 Potti +${fmt(r.potGain)} → ${fmt(r.pot)}`);
+  lines.push(`⚔️ Ensi-isku loppupomolle +${fmt(r.potGain)} → ${fmt(r.pot)}${r.potFrom.length > 1 ? ` (${r.potFrom.map((x) => `${x.label.toLowerCase()} ${fmt(x.value)}`).join(', ')})` : ''}`);
   if (r.mvp) lines.push(`🏆 Viikon sankari: ${r.mvp.name} (${fmt(r.mvp.damage)})`);
-  lines.push(`🤝 Lupauksen piti ${r.pledgesKept}/${r.participants}`);
-  lines.push(`👣 Askelpäiviä ${r.stepDays}, megamarsseja ${r.patrolDays} · yhteistreenejä ${r.jointTrainings}`);
-  if (r.celebrationsNext.length) lines.push(`🎉 Tulossa: ${r.celebrationsNext.map((c) => `${formatDay(c.day)} ${c.name}`).join(', ')}`);
+  lines.push(`🤝 Lupauksen piti ${r.pledgesKept}/${r.participants}${r.pledgeKeepers.length ? `: ${r.pledgeKeepers.join(', ')}` : ''}`);
   return lines.join('\n');
 }

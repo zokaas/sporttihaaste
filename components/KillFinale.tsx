@@ -46,7 +46,7 @@ export default function KillFinale({ killed, kills, storageKey = 'mj_killed', sh
         <strong className="display">{fresh.map((x) => x.name).join(' ja ')}</strong>
         <em>KAATUI</em>
         {k.blow ? <p>Viimeinen isku: {k.blow}</p> : null}
-        <p className="muted small">{note ?? 'Sinetti täyttyi ja monsteri kaatui. Ylijäämävoima jatkaa seuraavaan monsteriin tai pottiin.'}</p>
+        <p className="muted small">{note ?? 'Sinetti täyttyi ja monsteri kaatui. Ylijäämävoima jatkaa seuraavaan monsteriin tai ensi-iskuun.'}</p>
         <button type="button" className="btn btn-ghost">Jatka taistelua</button>
       </div>
     </div>

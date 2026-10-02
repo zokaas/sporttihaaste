@@ -264,6 +264,16 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
   };
 }
 
+/** Ensi-iskun (potin) erittely: portinvartijan ylijäämä, pidetyt lupaukset ja kaatuneiden monstereiden ylijäämä. */
+export function potParts(pot: number, gate: number, pledgesKept: number) {
+  const pledges = pledgesKept * PLEDGE_BONUS;
+  return [
+    { label: 'Ylijäämävoima', value: pot - pledges - gate },
+    { label: 'Lupaukset', value: pledges },
+    { label: 'Portinvartija', value: gate },
+  ].filter((x) => x.value > 0);
+}
+
 // ---------- Sinettiraja (näyttö) ----------
 
 /** Monsterin HP ei näy nollana, kun sinetti on kesken: jokainen puuttuva sankari pitää sille 10 HP. */

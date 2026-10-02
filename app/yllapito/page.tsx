@@ -309,14 +309,14 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
             </tbody>
           </table>
         </div>
-        <Hint id="admin-lock" className="muted">Koko potti iskee loppupomoon, kattoa ei ole. Lukitse tavoite, kun kaikki ovat ilmoittautuneet. Lukituksen voi tehdä uudelleen, jos joku ilmoittautuu myöhässä.</Hint>
+        <Hint id="admin-lock" className="muted">Koko ensi-isku osuu loppupomoon, kattoa ei ole. Lukitse tavoite, kun kaikki ovat ilmoittautuneet. Lukituksen voi tehdä uudelleen, jos joku ilmoittautuu myöhässä.</Hint>
         <form action={lockSeason}><button className="btn" type="submit">{season?.hp_locked_at ? 'Laske ja lukitse uudelleen' : 'Lukitse tavoite'}</button></form>
         {searchParams.tavoite ? <p className={`note${searchParams.tavoite.startsWith('Lukitus epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.tavoite}</p> : null}
       </section>
 
       <section className="card" id="portinvartija">
         <h2 className="display">👁️ Portinvartija (ti 29.9.–ke 30.9.)</h2>
-        <p className="muted small" style={{ margin: 0 }}>Kauden avaava taistelu ti 29.9.–ke 30.9. klo 23.59. Treenit ja askeleet lyövät, sinettiä ei ole. Jos se jää henkiin, jäljelle jäänyt HP siirtyy viikon 1 monsterille; jos se kaatuu, ylijäämä menee pottiin. Näkyy kaikille heti.</p>
+        <p className="muted small" style={{ margin: 0 }}>Kauden avaava taistelu ti 29.9.–ke 30.9. klo 23.59. Treenit ja askeleet lyövät, sinettiä ei ole. Jos se jää henkiin, jäljelle jäänyt HP siirtyy viikon 1 monsterille; jos se kaatuu, ylijäämä säästyy ensi-iskuun. Näkyy kaikille heti.</p>
         {gateError ? <p className="note threat" style={{ margin: 0 }}>Aja ensin migraatio 027_portinvartija.sql.</p> : <GateEditor gate={(gateRow ?? { name: null, description: null, image_path: null, taunt: null, hp: null }) as GateRow} />}
       </section>
 

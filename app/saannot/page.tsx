@@ -21,14 +21,14 @@ const GLOSSARY: [string, string][] = [
   ['Sinettiraja', 'Niin kauan kuin sinetti on kesken, monsterille jää 10 HP jokaista puuttuvaa sankaria kohden. Se ei siis näy koskaan nollassa ennen kuin kaikki ovat lyöneet.'],
   ['Sinetti', 'Jokaisen terveen sankarin täytyy lyödä viikon monsteria vähintään yhdellä treenillä. Askeleet eivät täytä sinettiä. Sinetti on voimassa koko viikon, mutta se tulee näkyviin vasta perjantaina.'],
   ['Rästi', 'Monsteri, joka jäi viikolla henkiin. Se jatkaa seuraavalla viikolla, ja vanhin rästi ottaa iskut ensin.'],
-  ['Potti', 'Kaatuneen monsterin yli mennyt voima ja lupausbonukset. Koko potti vähennetään loppupomon HP:sta, eikä sillä ole kattoa.'],
+  ['Ensi-isku loppupomolle', 'Kaatuneen monsterin yli mennyt voima, pidettyjen lupausten bonukset ja portinvartijan ylijäämä säästyvät tähän. Kun loppupomo herää, koko ensi-isku osuu siihen ensimmäisenä. Kattoa ei ole.'],
   ['Heikkous', 'Viikon monsterin heikko kohta: joko lajiryhmä (esim. kestävyys) tai yksittäinen laji (esim. uinti). Joskus heikkous on erikoisheikkous, esim. urheilu mamun tai lapsen kanssa, urheilija on nainen tai urheilu kenen tahansa isän kanssa: silloin laji on vapaa ja kirjauksessa merkitset itse, että ehto täyttyi. Heikkouteen osuvat treenit tekevät +50 %. Kaksikolla ja kolmikolla jokaisella osalla on oma heikkoutensa, ja bonus tulee vuorossa olevan osan heikkoudesta.'],
   ['Juhlapäivä', 'Kenen tahansa sankarin nimi- tai syntymäpäivä. Silloin kaikkien iskut tekevät +50 %.'],
   ['Yhteistreeni', 'Vähintään kolmen hengen treeni (+50 %). Koko porukka yhdessä (kaikki sinä päivänä terveet) tekee +100 %.'],
   ['Kriittinen isku', 'Isku, jonka bonukset ovat yhteensä vähintään +100 %.'],
   ['Askelkuittaus', `Päivä, jona kävelit vähintään ${STEP_GOAL.toLocaleString('fi-FI')} askelta: +${STEP_DAY_DAMAGE}.`],
   ['Megamarssi', `Päivä, jona kaikki terveet kuittaavat askeleensa: +${PATROL_DAY_DAMAGE}.`],
-  ['Lupaus', `Montako tuntia treenaat viikossa. Pidetty lupaus tuo +${PLEDGE_BONUS} pottiin.`],
+  ['Lupaus', `Montako tuntia treenaat viikossa. Pidetty lupaus tuo +${PLEDGE_BONUS} ensi-iskuun.`],
   ['Viikon sankari', 'Sankari, joka teki päättyneellä viikolla eniten voimaa.'],
   ['Viimeinen isku', 'Isku, joka kaatoi monsterin.'],
   ['Bestiaario', 'Kauden kaikki monsterit: kaatuneet, nykyinen ja tulevat.'],
@@ -43,7 +43,7 @@ const FAQ: [string, string][] = [
   ['Mitä rästi tarkoittaa?', 'Monsteri, joka jäi viikolla eloon. Se jatkaa seuraavalla viikolla, ja vanhin monsteri ottaa iskut aina ensin.'],
   ['Voinko muuttaa lupaustani?', 'Et. Lupaus lukittuu ke 30.9. ja pysyy samana koko kauden. Jos sairastut, merkitse itsesi kipeäksi Minä-sivulla: viikon tavoite pienenee sairaspäivien verran.'],
   ['Miksi en saa ilmoituksia?', 'Salli ilmoitukset Minä-sivulla. iPhonessa sovellus pitää ensin lisätä kotinäytölle (Jaa → Lisää Koti-valikkoon) ja avata sieltä. Yöllä klo 22–09 ilmoituksia ei tule, vaan ne lähtevät aamulla klo 9.'],
-  ['Mihin ylimääräinen voima menee?', `Kun viikon monsteri on kaatunut, loput iskut menevät pottiin. Potti iskee loppupomoon sen herätessä.`],
+  ['Mihin ylimääräinen voima menee?', `Kun viikon monsteri on kaatunut, loput iskut säästyvät ensi-iskuun, joka osuu loppupomoon sen herätessä.`],
 ];
 
 export default async function Saannot() {
@@ -55,7 +55,7 @@ export default async function Saannot() {
 
       <section className="card">
         <h2 className="display">Lyhyesti</h2>
-        <p style={{ margin: 0 }}>Ennen kautta, ti 29.9.–ke 30.9., porttia vartioi portinvartija Sauronin silmä. Se kaadetaan treeneillä ja askeleilla ilman sinettiä ennen ke klo 23.59. Jos se jää henkiin, jäljelle jäänyt HP siirtyy torstain monsterille; jos se kaatuu, ylijäämä menee pottiin. Ti–ke treenit eivät kerry viikon 1 lupaukseen.</p>
+        <p style={{ margin: 0 }}>Ennen kautta, ti 29.9.–ke 30.9., porttia vartioi portinvartija Sauronin silmä. Se kaadetaan treeneillä ja askeleilla ilman sinettiä ennen ke klo 23.59. Jos se jää henkiin, jäljelle jäänyt HP siirtyy torstain monsterille; jos se kaatuu, ylijäämä säästyy ensi-iskuun. Ti–ke treenit eivät kerry viikon 1 lupaukseen.</p>
         <p style={{ margin: 0 }}>Kausi kestää 1.10.–20.12. Ensimmäinen monsteri paljastuu to 1.10., ja sen jälkeen uusi joka maanantai: yhteensä 11 monsteria ja viimeisellä viikolla loppupomo. Seuraavaa pääsee lyömään vasta, kun edellinen on tuhottu. Treenit ovat iskuja: jokainen kirjattu treeni vähentää monsterin HP:ta.</p>
         <p style={{ margin: 0 }}>Monsteri kaatuu, kun sen HP loppuu <strong>ja</strong> sinetti on täynnä eli jokainen terve sankari on lyönyt sitä vähintään yhdellä treenillä. Siihen asti monsterille jää 10 HP jokaista puuttuvaa sankaria kohden.</p>
         <p style={{ margin: 0 }}>Jos sinetti jää sunnuntaina vajaaksi, sinettirajan yli mennyt voima menetetään ja monsteri jää rästiin.</p>
@@ -103,13 +103,13 @@ export default async function Saannot() {
       <section className="card">
         <h2 className="display">Lupaus</h2>
         <p style={{ margin: 0 }}>Lupaat, montako tuntia treenaat viikossa. Lupaukseen lasketaan voima ilman bonuksia jaettuna sadalla: tunti uintia on 2 h, tunti joogaa 0,5 h.</p>
-        <p style={{ margin: 0 }}>Pidetty lupaus tuo +{PLEDGE_BONUS} pottiin, kun viikko lukittuu. Tulostaulun ykkönen on se, joka pitää lupauksensa useimmin.</p>
+        <p style={{ margin: 0 }}>Pidetty lupaus tuo +{PLEDGE_BONUS} ensi-iskuun, kun viikko lukittuu. Tulostaulun ykkönen on se, joka pitää lupauksensa useimmin.</p>
         <p className="muted small" style={{ margin: 0 }}>Viikko 1 kestää 4 päivää (to 1.10.–su 4.10.), joten sen tavoite on lupaus × 4/7. Sairaspäivät pienentävät tavoitetta.</p>
       </section>
 
       <section className="card">
         <h2 className="display">Loppupomo</h2>
-        <p style={{ margin: 0 }}>Loppupomo herää ma 14.12. Se on vahvempi kuin yksikään kauden monstereista, ja vain koko porukka yhdessä voi sen kaataa. Potti iskee siihen sen herätessä. Muuta siitä ei tiedetä ennen kuin se nousee. Loppupomo kaatuu samoin kuin muut monsterit: HP nollaan ja sinetti täyteen. Jos rästejä on vielä jäljellä, ne pitää kaataa ensin.</p>
+        <p style={{ margin: 0 }}>Loppupomo herää ma 14.12. Se on vahvempi kuin yksikään kauden monstereista, ja vain koko porukka yhdessä voi sen kaataa. Ensi-isku osuu siihen sen herätessä. Muuta siitä ei tiedetä ennen kuin se nousee. Loppupomo kaatuu samoin kuin muut monsterit: HP nollaan ja sinetti täyteen. Jos rästejä on vielä jäljellä, ne pitää kaataa ensin.</p>
       </section>
 
       <section className="card">

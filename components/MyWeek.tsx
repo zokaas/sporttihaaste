@@ -85,7 +85,7 @@ export default function MyWeek(p: Props) {
         </Hint>
         {p.target > 0 ? <div className="hpbar"><span style={{ width: `${pct}%`, background: kept ? 'var(--moss-text)' : 'var(--ember)' }} /></div> : null}
         <span className="muted small">
-          {kept ? 'Lupaus pidetty! +100 pottiin, kun viikko lukittuu.' : p.target === 0 ? 'Tällä viikolla ei ole lupaustavoitetta sairauden vuoksi. Kirjatut treenit tuovat silti voimaa monsteria vastaan.' : `Vielä ${h(p.target - p.hours)}. Pidetty lupaus tuo +100 pottiin.`}
+          {kept ? 'Lupaus pidetty! +100 ensi-iskuun, kun viikko lukittuu.' : p.target === 0 ? 'Tällä viikolla ei ole lupaustavoitetta sairauden vuoksi. Kirjatut treenit tuovat silti voimaa monsteria vastaan.' : `Vielä ${h(p.target - p.hours)}. Pidetty lupaus tuo +100 ensi-iskuun.`}
         </span>
         {shortWeek ? <span className="muted small">Lyhyt viikko ({p.days.length} pv): tavoite on {p.days.length}/7 lupauksestasi ({h(p.pledge)}).</span> : null}
         {p.sickDays ? <span className="small" style={{ color: 'var(--gold)' }}>🤒 {p.sickDays} sairaspäivää: tavoite {h(p.fullTarget)} → {h(p.target)}{p.inSeal ? '' : ' · ei sinettivelvollisuutta tällä viikolla'}</span> : null}

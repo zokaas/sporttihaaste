@@ -141,3 +141,10 @@ assert.deepEqual(lbl({ bonus_pct: 200, all_together: true, companions: ['a', 'b'
 assert.deepEqual(lbl({ bonus_pct: 50, all_together: false, companions: ['a'], weakness_hit: false }), ['Juhlapäivä 50'], 'kaksin ei ole yhdessä-bonusta');
 assert.deepEqual(lbl({ bonus_pct: 50, all_together: false, companions: [] }), ['Heikkous tai juhlapäivä 50'], 'ilman heikkoustietoa');
 console.log('Bonuserittelytestit menivät läpi.');
+
+// Ensi-iskun erittely
+import { potParts } from './rules.ts';
+assert.deepEqual(potParts(2075, 400, 2), [{ label: 'Ylijäämävoima', value: 1475 }, { label: 'Lupaukset', value: 200 }, { label: 'Portinvartija', value: 400 }]);
+assert.deepEqual(potParts(300, 0, 3), [{ label: 'Lupaukset', value: 300 }], 'pelkät lupaukset');
+assert.deepEqual(potParts(0, 0, 0), []);
+console.log('Ensi-iskutestit menivät läpi.');

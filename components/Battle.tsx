@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { avatarUrl, hitPhotoUrl, monsterImageUrl, resizedImage } from '@/lib/supabase/client';
 import { ZoomImg } from '@/components/ImageViewer';
 import type { loadBattle } from '@/lib/battle';
-import { computeLedger, hitBonusText, sealView, STEP_DAY_DAMAGE } from '@/lib/rules';
+import { computeLedger, hitBonusText, potParts, sealView, STEP_DAY_DAMAGE } from '@/lib/rules';
 import { finalBlows, weekRecap } from '@/lib/stats';
 import { addDays, formatDay, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_START } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
@@ -78,6 +78,11 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
     ...data.steps.filter((s) => s.user_id !== userId && seasonWeek(s.day) === week).map((s) => ({ at: s.created_at, name: heroById.get(s.user_id)?.hero_name ?? 'Sankari', kind: 'step' as const, damage: STEP_DAY_DAMAGE })),
   ];
   const potBeforeBoss = week === BOSS_WEEK && data.ledgerInput ? computeLedger(data.ledgerInput, MONSTER_WEEKS).pot : 0;
+  // Mistä ensi-isku on kertynyt (pidetyt lupaukset vain päättyneiltä viikoilta).
+  const potShown = week === BOSS_WEEK ? potBeforeBoss : ledger?.pot ?? 0;
+  const potFrom = data.ledgerInput
+    ? potParts(potShown, data.ledgerInput.startPot ?? 0, Object.entries(data.ledgerInput.pledgeBonusesByWeek).filter(([w]) => Number(w) <= MONSTER_WEEKS).reduce((a, [, n]) => a + n, 0))
+    : [];
   const recap = week >= 2 ? weekRecap(data, week - 1) : null;
   const overdue = ledger.alive.filter((f) => f.week < week).length;
   // Ennakkoarvoitus: perjantaista alkaen varjo ja vihje seuraavasta monsterista.
@@ -154,7 +159,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         <section className="card">
           <h2 className="display">{week === BOSS_WEEK ? 'Loppupomo on kaatunut!' : 'Viikon monsteri on kaatunut!'}</h2>
           {week === BOSS_WEEK ? <p style={{ margin: 0 }}>Kausi on voitettu. Treenit kerryttävät vielä lupauksia ja tilastoja kauden loppuun.</p>
-            : <p style={{ margin: 0 }}>Kaikki tämän viikon iskut menevät pottiin loppupomoa vastaan.</p>}
+            : <p style={{ margin: 0 }}>Kaikki tämän viikon iskut säästyvät ensi-iskuun loppupomoa vastaan.</p>}
           {week < BOSS_WEEK ? (
             <blockquote className="boss-whisper">
               <span className="boss-whisper-eyes" aria-hidden="true" />
@@ -235,7 +240,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       ) : null}
 
       <div className="stat-row" style={{ gridTemplateColumns: '1fr' }}>
-        <div className="stat"><span className="muted small">Potti loppupomolle</span><strong>{fmt(week === BOSS_WEEK ? potBeforeBoss : ledger.pot)}</strong><span className="muted small">{week === BOSS_WEEK ? 'iski loppupomoon sen herätessä' : 'kasvaa loppupomoa vastaan, ei kattoa'}</span></div>
+        <div className="stat"><span className="muted small">Ensi-isku loppupomolle</span><strong>{fmt(potShown)} ⚔️</strong><span className="muted small">{week === BOSS_WEEK ? 'Osui loppupomoon ensimmäisenä sen herätessä.' : 'Ylimenevä voima ja pidetyt lupaukset säästyvät tähän. Kun loppupomo herää, tämä isku osuu siihen ensimmäisenä.'}</span>{potFrom.length ? <span className="small pot-from">{potFrom.map((x) => `${x.label} ${fmt(x.value)}`).join(' · ')}</span> : null}</div>
       </div>
 
       <section className="card">
