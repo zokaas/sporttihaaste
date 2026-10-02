@@ -126,7 +126,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
                   <div className="who">{heroName(h.user_id)} <span className="muted" style={{ fontWeight: 400 }}>· {h.sport} {h.minutes} min</span></div>
                   <div className="facts">
                     {formatDay(h.trained_on)}
-                    {h.companions.length ? ` · ${h.companions.length + 1} hengen porukka` : ''}
+                    {h.companions.length ? ` · mukana ${h.companions.map(heroName).join(', ')}` : ''}
                     {h.all_together ? ' · kaikki yhdessä!' : ''}
                   </div>
                   {hitBonusText(h) ? <div className="facts bonus">{hitBonusText(h)}</div> : null}
