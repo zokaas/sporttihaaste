@@ -89,9 +89,16 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const nextWeak = next?.teaser_weaknesses ?? [];
 
   // Taisteluloki: viikon iskut, askelkuittaukset (jokainen omana rivinään) ja megamarssit uusimmasta alkaen.
+  // Kirjaaja ja seuralaiset nimeltä: "Joar + Markiisitar", isommasta porukasta kolme nimeä ja loput lukuna.
+  const heroName = (id: string) => heroById.get(id)?.hero_name ?? '?';
+  const withCompanions = (userId: string, companions: string[]) => {
+    const names = companions.map(heroName);
+    const shown = names.length > 3 ? `${names.slice(0, 3).join(', ')} + ${names.length - 3} muuta` : names.join(', ');
+    return `${heroName(userId)}${shown ? ` + ${shown}` : ''}`;
+  };
   // Jokainen rivi samassa muodossa: toiminto otsikkona, tekijä ja päivä alla.
   const log = [
-    ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, icon: '⚔️', title: `${h.sport} ${h.minutes} min`, by: `${heroById.get(h.user_id)?.hero_name ?? ''}${h.companions.length ? ` + ${h.companions.length} muuta` : ''}`, day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, bonus: hitBonusText(h), photo: hitPhotoUrl(h.photo_path) })),
+    ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, icon: '⚔️', title: `${h.sport} ${h.minutes} min`, by: withCompanions(h.user_id, h.companions), day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, bonus: hitBonusText(h), photo: hitPhotoUrl(h.photo_path) })),
     ...data.steps.filter((st) => seasonWeek(st.day) === week).map((st) => ({ at: st.created_at, icon: '👣', title: 'Askeleet', by: heroById.get(st.user_id)?.hero_name ?? '?', day: st.day, dmg: STEP_DAY_DAMAGE, crit: false, bonus: '', photo: null })),
     ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, icon: '⭐', title: 'Megamarssi', by: 'Koko porukka', day: p.day, dmg: 250, crit: false, bonus: '', photo: null })),
   ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 6);
