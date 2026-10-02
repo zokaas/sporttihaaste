@@ -133,6 +133,8 @@ export type WeekRecap = {
   mvp: { name: string; damage: number } | null;
   pledgesKept: number;
   participants: number;
+  /** Lupauksensa pitäneet nimeltä. */
+  pledgeKeepers: string[];
   patrolDays: number;
   stepDays: number;
   jointTrainings: number;
@@ -173,6 +175,7 @@ export function weekRecap(b: Battle, w: number): WeekRecap | null {
     mvp: top ? { name: b.heroes.find((h) => h.id === top[0])?.hero_name ?? '', damage: top[1] } : null,
     pledgesKept: b.ledgerInput.pledgeBonusesByWeek[w] ?? 0,
     participants: b.participants.length,
+    pledgeKeepers: b.participants.filter((u) => b.pledgeStatus(u, w).kept).map((u) => b.heroes.find((h) => h.id === u)?.hero_name ?? '?'),
     patrolDays: patrols.length,
     stepDays: steps.length,
     jointTrainings: hits.filter((h) => h.companions.length >= 2).length,
@@ -190,8 +193,7 @@ export function recapText(r: WeekRecap) {
   if (r.lostToSeal) lines.push(`🛡️ Sinetti jäi vajaaksi: ${fmt(r.lostToSeal)} voimaa sinettirajan yli menetettiin`);
   lines.push(`⚔️ Ensi-isku loppupomolle +${fmt(r.potGain)} → ${fmt(r.pot)}`);
   if (r.mvp) lines.push(`🏆 Viikon sankari: ${r.mvp.name} (${fmt(r.mvp.damage)})`);
-  lines.push(`🤝 Lupauksen piti ${r.pledgesKept}/${r.participants}`);
-  lines.push(`👣 Askelpäiviä ${r.stepDays}, megamarsseja ${r.patrolDays} · yhteistreenejä ${r.jointTrainings}`);
+  lines.push(`🤝 Lupauksen piti ${r.pledgesKept}/${r.participants}${r.pledgeKeepers.length ? `: ${r.pledgeKeepers.join(', ')}` : ''}`);
   if (r.celebrationsNext.length) lines.push(`🎉 Tulossa: ${r.celebrationsNext.map((c) => `${formatDay(c.day)} ${c.name}`).join(', ')}`);
   return lines.join('\n');
 }
