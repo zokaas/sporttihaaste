@@ -1,7 +1,7 @@
 import type { loadBattle } from './battle';
 import { hoursInWeek } from './battle';
 import { STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, computeLedger, potParts } from './rules';
-import { addDays, formatDay, monthDay, seasonWeek, weekRange, BOSS_WEEK } from './season';
+import { addDays, monthDay, seasonWeek, weekRange, BOSS_WEEK } from './season';
 
 export type Battle = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -206,6 +206,5 @@ export function recapText(r: WeekRecap) {
   lines.push(`⚔️ Ensi-isku loppupomolle +${fmt(r.potGain)} → ${fmt(r.pot)}${r.potFrom.length > 1 ? ` (${r.potFrom.map((x) => `${x.label.toLowerCase()} ${fmt(x.value)}`).join(', ')})` : ''}`);
   if (r.mvp) lines.push(`🏆 Viikon sankari: ${r.mvp.name} (${fmt(r.mvp.damage)})`);
   lines.push(`🤝 Lupauksen piti ${r.pledgesKept}/${r.participants}${r.pledgeKeepers.length ? `: ${r.pledgeKeepers.join(', ')}` : ''}`);
-  if (r.celebrationsNext.length) lines.push(`🎉 Tulossa: ${r.celebrationsNext.map((c) => `${formatDay(c.day)} ${c.name}`).join(', ')}`);
   return lines.join('\n');
 }
