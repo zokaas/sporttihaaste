@@ -45,6 +45,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
   for (const k of kela) totals.set(k.userId, (totals.get(k.userId) ?? 0) + k.damage);
   const top = [...totals].sort((a, c) => c[1] - a[1]).slice(0, 5);
   const hits = b.hits.filter((h) => seasonWeek(h.trained_on) === week).sort((a, c) => c.created_at.localeCompare(a.created_at));
+  const photos = hits.filter((h) => h.photo_path);
 
   return (
     <>
@@ -114,6 +115,23 @@ export default async function Monsteri({ params }: { params: { week: string } })
               );
             })}
           </ul>
+        </section>
+      ) : null}
+
+      {photos.length ? (
+        <section className="card">
+          <h2 className="display">Viikon {week} treenikuvat <span className="muted small">{photos.length}</span></h2>
+          <div className="photo-grid">
+            {photos.map((h) => {
+              const src = hitPhotoUrl(h.photo_path)!;
+              return (
+                <figure key={h.id} style={{ margin: 0 }}>
+                  <ZoomImg className="photo-grid-img" src={resizedImage(src, 256)} full={src} width={110} height={110} />
+                  <figcaption className="muted small"><strong>{heroName(h.user_id)}</strong><br />{h.sport} · {formatDay(h.trained_on)}</figcaption>
+                </figure>
+              );
+            })}
+          </div>
         </section>
       ) : null}
 
