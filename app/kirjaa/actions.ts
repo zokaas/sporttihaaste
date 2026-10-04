@@ -32,6 +32,7 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
     loadBattle(supabase, today()),
     supabase.from('sick_periods').select('user_id, starts_on, ends_on'),
   ]);
+  if (isSickOn((sick ?? []) as SickPeriod[], userId, input.day)) return { error: 'Päivä on merkitty sairaspäiväksi. Poista sairausmerkintä ensin, jos treenasit.' } as const;
   const ids = new Set((heroes ?? []).filter((h) => h.pledge_locked_at).map((h) => h.id));
   // Koko porukka = kaikki sinä päivänä terveet ilmoittautuneet.
   const healthy = [...ids].filter((id) => !isSickOn((sick ?? []) as SickPeriod[], id, input.day)).length;

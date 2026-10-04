@@ -62,6 +62,16 @@ export async function toggleSickDay(day: string, sick: boolean, continuing = fal
 
   if (sick) {
     if (covering.length) return done(null);
+    // Kipeänä ei treenata eikä kävellä: päivän treenit (kuvineen) ja askeleet poistuvat.
+    const { data: trained } = await supabase.from('hits').select('*').eq('user_id', user.id).eq('trained_on', day);
+    if (trained?.length) {
+      const { error: hitError } = await supabase.from('hits').delete().eq('user_id', user.id).eq('trained_on', day);
+      if (hitError) return done(hitError);
+      const photos = trained.map((x: { photo_path?: string | null }) => x.photo_path).filter((x): x is string => Boolean(x));
+      if (photos.length) await supabase.storage.from('hit-photos').remove(photos).catch(() => {});
+    }
+    const { error: stepError } = await supabase.from('step_days').delete().eq('user_id', user.id).eq('day', day);
+    if (stepError) return done(stepError);
     const open = continuing && day === now;
     return done((await supabase.from('sick_periods').insert({ user_id: user.id, starts_on: day, ends_on: open ? null : day })).error);
   }
