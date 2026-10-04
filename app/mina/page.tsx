@@ -30,6 +30,7 @@ export default async function Mina() {
         <span className="muted small">Profiili →</span>
       </Link>
 
+      {b.grace ? <MyWeek {...myWeekProps(b, user.id, b.grace)} /> : null}
       {inSeason ? <MyWeek {...myWeekProps(b, user.id)} /> : (
         <section className="card">
           <h2 className="display">Minun viikkoni</h2>

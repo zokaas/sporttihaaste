@@ -71,7 +71,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
     const h = heroById.get(id);
     return { id, name: h?.hero_name ?? '', initial: (h?.hero_name ?? '?').slice(0, 1), avatar: avatarUrl(h?.avatar_path), hit: Boolean(target?.hitters.includes(id)), excused: !required.includes(id) };
   });
-  const endMs = helsinkiMs(weekRange(week).end);
+  // Viikko lukittuu armonajan päätteeksi ma klo 12.
+  const endMs = helsinkiMs(addDays(weekRange(week).end, 1), '12:00:00');
   // Poissaolon kooste: tämän viikon muiden iskut ja askeleet aikaleimoineen (selain valitsee edellisen käynnin jälkeiset).
   const awayEvents: AwayEvent[] = [
     ...data.hits.filter((h) => h.user_id !== userId && seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, name: heroById.get(h.user_id)?.hero_name ?? 'Sankari', kind: 'hit' as const, damage: h.damage })),
@@ -83,7 +84,9 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const potFrom = data.ledgerInput
     ? potParts(potShown, data.ledgerInput.startPot ?? 0, Object.entries(data.ledgerInput.pledgeBonusesByWeek).filter(([w]) => Number(w) <= MONSTER_WEEKS).reduce((a, [, n]) => a + n, 0))
     : [];
-  const recap = week >= 2 ? weekRecap(data, week - 1) : null;
+  // Viikkoraportti näytetään vasta, kun armonaika on ohi (ma klo 12), jolloin luvut ovat lopullisia.
+  const recap = week >= 2 && !data.grace ? weekRecap(data, week - 1) : null;
+  const lastDay = week >= 1 && week <= BOSS_WEEK && data.today === weekRange(week).end;
   const overdue = ledger.alive.filter((f) => f.week < week).length;
   // Ennakkoarvoitus: perjantaista alkaen varjo ja vihje seuraavasta monsterista.
   const teaser = week < BOSS_WEEK && data.today >= addDays(weekRange(week).end, -2)
@@ -118,6 +121,15 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         </p>
       ) : null}
       <KillFinale killed={ledger.killed.length} kills={kills} />
+      {data.grace ? (
+        <p className="note threat" style={{ margin: 0 }}>
+          ⏳ <strong>Viikko {data.grace} on vielä auki tänään klo 12 asti.</strong> Kirjaa puuttuvat treenit ja askeleet, niin ne lasketaan viikon {data.grace} monsteriin ja lupaukseen. <Link href="/kirjaa">Kirjaa →</Link>
+        </p>
+      ) : lastDay ? (
+        <p className="note" style={{ margin: 0 }}>
+          ⏳ <strong>Viikko {week} päättyy tänään.</strong> Kirjaa viikon treenit viimeistään ma klo 12, jolloin viikko lukittuu. <Link href="/kirjaa">Kirjaa →</Link>
+        </p>
+      ) : null}
       {data.today === SEASON_START && (data.gate.dealt > 0 || data.gate.left > 0) ? (
         // Portinvartijan (29.–30.9.) tulos kauden ensimmäisenä päivänä: selittää viikon 1 monsterin lisä-HP:n tai potin ylijäämän.
         <section className={`card gate-result${data.gate.killed ? '' : ' threat'}`}>
@@ -204,7 +216,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
                 </div>
               </div>
               <p style={{ margin: 0 }}>
-                Kun {missing.map((id) => heroById.get(id)?.hero_name).join(', ').replace(/, ([^,]*)$/, ' ja $1')} {missing.length > 1 ? 'lyövät' : 'lyö'}, monsteri kaatuu heti ja koko pato siirtyy eteenpäin. Jos sinetti jää su {formatDay(weekRange(week).end).split(' ')[1]} klo 23.59 vajaaksi, pato menetetään ja monsteri jää rästiin.
+                Kun {missing.map((id) => heroById.get(id)?.hero_name).join(', ').replace(/, ([^,]*)$/, ' ja $1')} {missing.length > 1 ? 'lyövät' : 'lyö'}, monsteri kaatuu heti ja koko pato siirtyy eteenpäin. Jos sinetti on vielä vajaa, kun viikko lukittuu ma {formatDay(addDays(weekRange(week).end, 1)).split(' ')[1]} klo 12, pato menetetään ja monsteri jää rästiin.
               </p>
             </>
           ) : null}

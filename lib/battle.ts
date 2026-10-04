@@ -3,7 +3,7 @@ import { activeWeaknesses, type MonsterPart } from './trio';
 import { computeLedger, pledgeHours, seasonHp, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, type Sport, type Weakness, type LedgerEvent } from './rules';
 import { loadSports } from './sports';
 import { testSkipPast } from './today';
-import { addDays, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_END, SEASON_START } from './season';
+import { addDays, graceWeek, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_END, SEASON_START } from './season';
 import { gateResult, type GateRow } from './gate';
 import { kelaDays, patrolDays, pledgeForWeek, requiredForSeal, sickDaysBetween, isSickOn, weekPledgeTarget, type SickPeriod } from './weekly';
 
@@ -125,7 +125,9 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const week1 = byWeek.get(1);
   if (gateCarry && gate.left && week1?.hp != null) byWeek.set(1, { ...week1, hp: week1.hp + gate.left });
 
-  const base = { gate, week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, kela, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
+  // Armonaika: maanantaina klo 12 asti edellinen viikko on vielä auki kirjauksille.
+  const grace = graceWeek(today);
+  const base = { gate, week, today, grace, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, kela, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
 
   if (!hpLocked && !hpPreview) return { ...base, hpLocked, hpPreview, required: participants, ledger: null, events: [] as LedgerEvent[], ledgerInput: null };
 

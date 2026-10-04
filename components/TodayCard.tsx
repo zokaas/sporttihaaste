@@ -21,7 +21,7 @@ export default function TodayCard({ b, showNextReveal = true }: { b: Battle; sho
     <section className="card">
       <h2 className="display">Tänään {formatDay(b.today)}</h2>
       {/* Uusi monsteri paljastuu aina maanantaina, sen kaikki tietävät. Loppupomon viikolla muistutetaan kauden päättymisestä. */}
-      {showNextReveal && b.week >= BOSS_WEEK ? <div className="row"><span aria-hidden="true">🏁</span><span className="muted">Kausi päättyy <strong style={{ color: 'var(--text)' }}>{formatDay(weekRange(BOSS_WEEK).end)} klo 23.59</strong></span></div> : null}
+      {showNextReveal && b.week >= BOSS_WEEK ? <div className="row"><span aria-hidden="true">🏁</span><span className="muted">Kausi päättyy <strong style={{ color: 'var(--text)' }}>{formatDay(weekRange(BOSS_WEEK).end)}</strong>, kirjaukset ma klo 12 asti</span></div> : null}
       {todays.length ? (
         <div className="row celebration-today"><span aria-hidden="true">🎉</span><span><strong>{todays.map((c) => `${c.name} (${c.kind})`).join(', ')}</strong>: kaikkien iskut tänään +50 %!</span></div>
       ) : null}

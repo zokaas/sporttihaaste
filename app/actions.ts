@@ -122,7 +122,7 @@ export async function nudgeMissing(): Promise<Result & { sent?: number }> {
   const sent = await sendOrQueue(supabase, {
     title: '⏳ Sinetti odottaa sinua',
     body: dam
-      ? `${sender} muistuttaa: ${dam.toLocaleString('fi-FI')} voimaa odottaa sinua! ${monster} on sinettirajalla ja kaatuu heti, kun lyöt. Muuten pato menetetään sunnuntaina.`
+      ? `${sender} muistuttaa: ${dam.toLocaleString('fi-FI')} voimaa odottaa sinua! ${monster} on sinettirajalla ja kaatuu heti, kun lyöt. Muuten pato menetetään, kun viikko lukittuu ma klo 12.`
       : `${sender} muistuttaa: ${monster} kaatuu vasta, kun jokainen on lyönyt. Sinun iskusi puuttuu.`,
   }, missing);
   return { ok: true, sent };

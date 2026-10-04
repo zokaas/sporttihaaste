@@ -11,6 +11,7 @@ type Day = { day: string; stepped: boolean; future: boolean; patrol: boolean; si
 
 type Props = {
   week: number;
+  grace?: boolean;
   days: Day[];
   target: number;
   hours: number;
@@ -52,7 +53,8 @@ export default function MyWeek(p: Props) {
 
   const pct = p.target > 0 ? Math.min(100, (p.hours / p.target) * 100) : 100;
   const kept = p.target > 0 && p.hours >= p.target;
-  const today = p.days.filter((d) => !d.future).at(-1)?.day;
+  // Armonaikakortissa (edellinen viikko) mikään päivä ei ole "tänään".
+  const today = p.grace ? undefined : p.days.filter((d) => !d.future).at(-1)?.day;
   const stepCount = p.days.filter((d) => d.stepped && !d.sick).length;
   const sickCount = p.days.filter((d) => d.sick).length;
   const healthyDays = p.days.length - sickCount;
@@ -67,9 +69,10 @@ export default function MyWeek(p: Props) {
   return (
     <section className="card">
       <div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <h2 className="display">Minun viikkoni</h2>
-        <span className="muted small">Viikko {p.week}</span>
+        <h2 className="display">{p.grace ? `Viikko ${p.week}` : 'Minun viikkoni'}</h2>
+        <span className="muted small">{p.grace ? 'Auki tänään klo 12 asti' : `Viikko ${p.week}`}</span>
       </div>
+      {p.grace ? <p className="note threat" style={{ margin: 0 }}>⏳ Kuittaa puuttuvat askeleet ja sairaspäivät ennen klo 12. Sen jälkeen viikko {p.week} lukittuu.</p> : null}
 
       <div className="week-power">
         <strong>⚔️ {p.weekDamage.toLocaleString('fi-FI')} voimaa</strong>

@@ -35,11 +35,11 @@ const GLOSSARY: [string, string][] = [
 ];
 
 const FAQ: [string, string][] = [
-  ['Unohdin kirjata treenin. Ehtiikö vielä?', 'Kyllä, jos treeni oli tällä viikolla. Kuluvan viikon päiville voi kirjata sunnuntaihin klo 23.59 asti. Sen jälkeen viikko lukittuu.'],
+  ['Unohdin kirjata treenin. Ehtiikö vielä?', 'Kyllä. Viikon treenit, askeleet ja sairaspäivät voi kirjata vielä seuraavana maanantaina klo 12 asti (armonaika). Sen jälkeen viikko lukittuu. Sunnuntai-iltana tulee muistutus, jos viikolta puuttuu jotain.'],
   ['Kirjasin väärin. Miten korjaan?', 'Poista isku Kirjaa treeni -sivulla ja kirjaa uudelleen. Sekin onnistuu vain kuluvan viikon aikana.'],
   ['Sairastuin. Mitä teen?', 'Merkitse Minä-sivun päivärivin alle 🤒 ne päivät, joina olit kipeä (kuluvalta viikolta). Jos merkitset tämän päivän, voit valita jatkuuko sairaus: silloin tulevat päivät merkitään itsestään, kunnes painat Olen taas terve. Jokainen sairaspäivä pienentää viikon lupausta 1/7:lla, yksikin sairaspäivä vapauttaa sen viikon sinetistä, ja megamarssiin riittävät terveet. Jokaisesta sairaspäivästä Kela iskee monsteria lupauksesi päiväosuudella (lupaus ÷ 7 × 100, esim. 4 h lupauksella 57), jotta porukka ei jää jälkeen. Kela-voima ei täytä sinettiä.'],
   ['Mitä askelkuittaus tarkoittaa?', `Kuittaa päivä, jona kävelit vähintään ${STEP_GOAL.toLocaleString('fi-FI')} askelta. Jokainen kuitattu päivä tuo ${STEP_DAY_DAMAGE} voimaa, mutta askeleet eivät täytä sinettiä.`],
-  ['Miksi monsterin HP jää 10, 20 tai 30:een?', 'Sinetti on kesken: jokainen puuttuva sankari pitää monsterille 10 HP. Ylimenevä voima kertyy patoon (näkyy etusivulla 🔒), ja monsteri kaatuu heti, kun viimeinenkin puuttuva lyö: silloin pato siirtyy eteenpäin. Jos sinetti jää sunnuntaina vajaaksi, pato menetetään.'],
+  ['Miksi monsterin HP jää 10, 20 tai 30:een?', 'Sinetti on kesken: jokainen puuttuva sankari pitää monsterille 10 HP. Ylimenevä voima kertyy patoon (näkyy etusivulla 🔒), ja monsteri kaatuu heti, kun viimeinenkin puuttuva lyö: silloin pato siirtyy eteenpäin. Jos sinetti on vielä vajaa, kun viikko lukittuu (ma klo 12), pato menetetään.'],
   ['Mitä rästi tarkoittaa?', 'Monsteri, joka jäi viikolla eloon. Se jatkaa seuraavalla viikolla, ja vanhin monsteri ottaa iskut aina ensin.'],
   ['Voinko muuttaa lupaustani?', 'Et. Lupaus lukittuu ke 30.9. ja pysyy samana koko kauden. Jos sairastut, merkitse itsesi kipeäksi Minä-sivulla: viikon tavoite pienenee sairaspäivien verran.'],
   ['Miksi en saa ilmoituksia?', 'Salli ilmoitukset Minä-sivulla. iPhonessa sovellus pitää ensin lisätä kotinäytölle (Jaa → Lisää Koti-valikkoon) ja avata sieltä. Yöllä klo 22–09 ilmoituksia ei tule, vaan ne lähtevät aamulla klo 9.'],
@@ -58,7 +58,7 @@ export default async function Saannot() {
         <p style={{ margin: 0 }}>Ennen kautta, ti 29.9.–ke 30.9., porttia vartioi portinvartija Sauronin silmä. Se kaadetaan treeneillä ja askeleilla ilman sinettiä ennen ke klo 23.59. Jos se jää henkiin, jäljelle jäänyt HP siirtyy torstain monsterille; jos se kaatuu, ylijäämä säästyy ensi-iskuun. Ti–ke treenit eivät kerry viikon 1 lupaukseen.</p>
         <p style={{ margin: 0 }}>Kausi kestää 1.10.–20.12. Ensimmäinen monsteri paljastuu to 1.10., ja sen jälkeen uusi joka maanantai: yhteensä 11 monsteria ja viimeisellä viikolla loppupomo. Seuraavaa pääsee lyömään vasta, kun edellinen on tuhottu. Treenit ovat iskuja: jokainen kirjattu treeni vähentää monsterin HP:ta.</p>
         <p style={{ margin: 0 }}>Monsteri kaatuu, kun sen HP loppuu <strong>ja</strong> sinetti on täynnä eli jokainen terve sankari on lyönyt sitä vähintään yhdellä treenillä. Siihen asti monsterille jää 10 HP jokaista puuttuvaa sankaria kohden.</p>
-        <p style={{ margin: 0 }}>Jos sinetti jää sunnuntaina vajaaksi, sinettirajan yli mennyt voima menetetään ja monsteri jää rästiin.</p>
+        <p style={{ margin: 0 }}>Viikon treenit voi kirjata vielä maanantaina klo 12 asti. Jos sinetti on silloin vajaa, sinettirajan yli mennyt voima menetetään ja monsteri jää rästiin.</p>
       </section>
 
       <section className="card">
