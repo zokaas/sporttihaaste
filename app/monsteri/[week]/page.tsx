@@ -127,7 +127,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
               return (
                 <figure key={h.id} style={{ margin: 0 }}>
                   <ZoomImg className="photo-grid-img" src={resizedImage(src, 256)} full={src} width={110} height={110} />
-                  <figcaption className="muted small"><strong>{heroName(h.user_id)}</strong><br />{h.sport} · {formatDay(h.trained_on)}</figcaption>
+                  <figcaption className="muted small"><strong>{heroName(h.user_id)}</strong><br />{formatDay(h.trained_on)} · {h.sport}</figcaption>
                 </figure>
               );
             })}
