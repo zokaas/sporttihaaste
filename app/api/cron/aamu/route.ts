@@ -4,6 +4,7 @@ import { sendPush, type PushPayload } from '@/lib/push';
 import { fridayReminders } from '@/lib/reminders';
 import { helsinkiHour, QUIET_END } from '@/lib/quiet';
 import { helsinkiToday, isGateDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
+import { cheerVoteWeek } from '@/lib/cheer';
 
 export const dynamic = 'force-dynamic';
 // Ajastus lukee aina tuoreen tilanteen: Supabase-hakuja ei tallenneta Next.js:n välimuistiin.
@@ -16,6 +17,7 @@ export const fetchCache = 'force-no-store';
  * 2. yöllä jonoon menneet ilmoitukset (monsteri kaatui, megamarssi, "vain sinä puutut", muistutukset)
  * 3. uuden monsterin paljastus viikon ensimmäisenä päivänä
  * 4. perjantaina jokaisen oma viikkomuistutus
+ * 5. sunnuntaina klo 17 viikon tsemppari -äänestyksen alku (vercel.json ajaa su klo 14 ja 15 UTC)
  * Vaatii CRON_SECRET- ja SUPABASE_SERVICE_ROLE_KEY-ympäristömuuttujat.
  */
 export async function GET(request: Request) {
@@ -91,6 +93,16 @@ export async function GET(request: Request) {
   if (weekday === 'Fri' && week >= 1 && week <= BOSS_WEEK && (await once(`friday-${week}`))) {
     const r = await fridayReminders(supabase, day);
     result.perjantai = r.sent;
+  }
+
+  // 5. Sunnuntaina klo 17: viikon tsemppari -äänestys alkaa
+  const cheerWeek = cheerVoteWeek(day, hour);
+  if (cheerWeek && (await once(`cheer-${cheerWeek}`))) {
+    result.tsemppari = await sendPush(supabase, {
+      title: '🙌 Äänestä viikon tsemppari',
+      body: 'Kuka tsemppasi, kannusti tai inspiroi tällä viikolla? Äänestys on auki tänään klo 23.59 asti.',
+      url: '/',
+    });
   }
 
   return NextResponse.json(result);

@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { activeWeaknesses, type MonsterPart } from './trio';
 import { computeLedger, pledgeHours, seasonHp, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, type Sport, type Weakness, type LedgerEvent } from './rules';
 import { loadSports } from './sports';
+import type { CheerVote } from './cheer';
 import { testSkipPast } from './today';
 import { addDays, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_START } from './season';
 import { gateResult, type GateRow } from './gate';
@@ -58,7 +59,7 @@ export function hoursInWeek(hits: Hit[], userId: string, week: number, sports: S
 
 /** Lataa kauden tilanteen ja laskee sen kirjauksista. Kuluva viikko on vielä auki. */
 export async function loadBattle(supabase: SupabaseClient, today: string) {
-  const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }, sports, { data: gateRow }] = await Promise.all([
+  const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }, sports, { data: gateRow }, { data: votes }] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at'),
     // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot. Haetaan rinnakkain.
     supabase.from('monsters').select('week, hp, name, description, weakness, image_path, parts, taunt_half, taunt_low, teaser, boss_whisper, hit_lines, hit_crit, taunt_full').order('week'),
@@ -70,6 +71,8 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     loadSports(supabase),
     // Portinvartija (migraatio 027). Ilman taulua käytetään oletuksia.
     supabase.from('gate').select('name, description, image_path, hp, taunt').eq('id', 1).maybeSingle(),
+    // Tsemppariäänet (migraatio 030): RLS näyttää oman äänen ja päättyneiden viikkojen äänet.
+    supabase.from('cheer_votes').select('week, voter, nominee'),
   ]);
   const heroList = (heroes ?? []) as Hero[];
   let monsterList = (monsters ?? []) as PublicMonster[];
@@ -120,7 +123,8 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const week1 = byWeek.get(1);
   if (gateCarry && gate.left && week1?.hp != null) byWeek.set(1, { ...week1, hp: week1.hp + gate.left });
 
-  const base = { gate, week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
+  const cheerVotes = (votes ?? []) as CheerVote[];
+  const base = { gate, cheerVotes, week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
 
   if (!hpLocked && !hpPreview) return { ...base, hpLocked, hpPreview, required: participants, ledger: null, events: [] as LedgerEvent[], ledgerInput: null };
 

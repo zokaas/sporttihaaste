@@ -18,6 +18,8 @@ import RecapCard from '@/components/RecapCard';
 import { activeWeaknesses, stageParts } from '@/lib/trio';
 import Hint from '@/components/Hint';
 import TodayCard from '@/components/TodayCard';
+import CheerVote from '@/components/CheerVote';
+import { cheerVoteWeek } from '@/lib/cheer';
 import { isSickOn } from '@/lib/weekly';
 
 type BattleData = Awaited<ReturnType<typeof loadBattle>>;
@@ -89,6 +91,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const teaser = week < BOSS_WEEK && data.today >= addDays(weekRange(week).end, -2)
     ? monsters.get(week + 1)?.teaser || (week + 1 === BOSS_WEEK ? 'Maa tärisee. Jokin valtava heräilee unestaan…' : 'Jotain liikkuu varjoissa. Se tietää jo nimesi…')
     : null;
+  // Viikon tsemppari -äänestys sunnuntaina klo 17–23.59.
+  const cheerWeek = cheerVoteWeek(data.today);
   // Tulevan viikon heikkoudet vihjeeseen (kaksikolla ja kolmikolla kaikkien osien heikkoudet).
   const next = teaser ? monsters.get(week + 1) : undefined;
   const nextWeak = next?.teaser_weaknesses ?? [];
@@ -169,6 +173,13 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           ) : null}
         </section>
       )}
+
+      {cheerWeek && data.participants.includes(userId) ? (
+        <CheerVote
+          candidates={data.participants.filter((id) => id !== userId).map((id) => { const h = heroById.get(id); return { id, name: h?.hero_name ?? '?', avatar: avatarUrl(h?.avatar_path) }; })}
+          myVote={data.cheerVotes.find((v) => v.week === cheerWeek && v.voter === userId)?.nominee ?? null}
+        />
+      ) : null}
 
       {teaser ? (
         <section className="card teaser">

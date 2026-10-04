@@ -1,6 +1,7 @@
 import type { loadBattle } from './battle';
 import { hoursInWeek } from './battle';
 import { STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, computeLedger, potParts } from './rules';
+import { cheerWinner } from './cheer';
 import { addDays, monthDay, seasonWeek, weekRange, BOSS_WEEK } from './season';
 
 export type Battle = Awaited<ReturnType<typeof loadBattle>>;
@@ -137,6 +138,8 @@ export type WeekRecap = {
   images: { path: string; dead: boolean }[];
   /** Viikon ensi-iskukertymän erittely. */
   potFrom: { label: string; value: number }[];
+  /** Viikon tsemppari äänestyksestä (tasapelissä useampi). */
+  cheer: { names: string[]; votes: number } | null;
   /** Lupauksensa pitäneet nimeltä. */
   pledgeKeepers: string[];
   patrolDays: number;
@@ -187,6 +190,10 @@ export function weekRecap(b: Battle, w: number): WeekRecap | null {
     mvp: top ? { name: b.heroes.find((h) => h.id === top[0])?.hero_name ?? '', damage: top[1] } : null,
     pledgesKept: b.ledgerInput.pledgeBonusesByWeek[w] ?? 0,
     participants: b.participants.length,
+    cheer: (() => {
+      const c = cheerWinner(b.cheerVotes, w);
+      return c ? { names: c.ids.map((id) => b.heroes.find((h) => h.id === id)?.hero_name ?? '?'), votes: c.votes } : null;
+    })(),
     pledgeKeepers: b.participants.filter((u) => b.pledgeStatus(u, w).kept).map((u) => b.heroes.find((h) => h.id === u)?.hero_name ?? '?'),
     patrolDays: patrols.length,
     stepDays: steps.length,
@@ -205,6 +212,7 @@ export function recapText(r: WeekRecap) {
   if (r.lostToSeal) lines.push(`🛡️ Sinetti jäi vajaaksi: ${fmt(r.lostToSeal)} voimaa sinettirajan yli menetettiin`);
   lines.push(`⚔️ Ensi-isku loppupomolle +${fmt(r.potGain)} → ${fmt(r.pot)}${r.potFrom.length > 1 ? ` (${r.potFrom.map((x) => `${x.label.toLowerCase()} ${fmt(x.value)}`).join(', ')})` : ''}`);
   if (r.mvp) lines.push(`🏆 Viikon sankari: ${r.mvp.name} (${fmt(r.mvp.damage)})`);
+  if (r.cheer) lines.push(`🙌 Viikon tsemppari: ${r.cheer.names.join(' ja ')} (${r.cheer.votes} ${r.cheer.votes === 1 ? 'ääni' : 'ääntä'})`);
   lines.push(`🤝 Lupauksen piti ${r.pledgesKept}/${r.participants}${r.pledgeKeepers.length ? `: ${r.pledgeKeepers.join(', ')}` : ''}`);
   return lines.join('\n');
 }

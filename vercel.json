@@ -11,6 +11,14 @@
     {
       "path": "/api/cron/aamu?ajo=2",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/aamu?ajo=su1",
+      "schedule": "0 14 * * 0"
+    },
+    {
+      "path": "/api/cron/aamu?ajo=su2",
+      "schedule": "0 15 * * 0"
     }
   ]
 }

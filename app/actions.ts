@@ -10,6 +10,7 @@ import { isQuietHour } from '@/lib/quiet';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
 import { strikeSummary, type StrikeSummary } from '@/lib/strike';
 import { sealView } from '@/lib/rules';
+import { cheerVoteWeek } from '@/lib/cheer';
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -160,4 +161,16 @@ export async function currentStrike(): Promise<StrikeSummary> {
   const { supabase, user } = await me();
   if (!user) return null;
   return strikeSummary(supabase, today()).catch(() => null);
+}
+
+/** Viikon tsemppari: ääni toiselle sankarille (su klo 17–23.59). Ääntä voi vaihtaa äänestyksen aikana. */
+export async function voteCheer(nominee: string): Promise<Result> {
+  if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
+  const { supabase, user } = await me();
+  if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
+  const week = cheerVoteWeek(today());
+  if (!week) return { ok: false, error: 'Äänestys on auki sunnuntaisin klo 17–23.59.' };
+  if (nominee === user.id) return { ok: false, error: 'Et voi äänestää itseäsi.' };
+  const { error } = await supabase.from('cheer_votes').upsert({ week, voter: user.id, nominee }, { onConflict: 'week,voter' });
+  return done(error ? { message: error.message.includes('row-level security') ? 'Äänestys ei ole auki.' : error.message } : null);
 }

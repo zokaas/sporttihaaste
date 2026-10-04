@@ -26,6 +26,7 @@ export default function RecapCard({ r }: { r: WeekRecap }) {
       {r.potFrom.length ? <p className="small pot-from" style={{ margin: 0 }}>Ensi-iskuun kertyi: {r.potFrom.map((x) => `${x.label.toLowerCase()} ${fmt(x.value)}`).join(' · ')}</p> : null}
       {r.lostToSeal ? <p className="note threat" style={{ margin: 0 }}>🛡️ Sinetti jäi vajaaksi: {fmt(r.lostToSeal)} voimaa sinettirajan yli menetettiin.</p> : null}
       {r.mvp ? <p style={{ margin: 0 }}>🏆 Viikon sankari: <strong>{r.mvp.name}</strong> ({fmt(r.mvp.damage)})</p> : null}
+      {r.cheer ? <p style={{ margin: 0 }}>🙌 Viikon tsemppari: <strong>{r.cheer.names.join(' ja ')}</strong> ({r.cheer.votes} {r.cheer.votes === 1 ? 'ääni' : 'ääntä'})</p> : null}
       <p style={{ margin: 0 }}>🤝 Lupauksen piti {r.pledgesKept}/{r.participants}{r.pledgeKeepers.length ? <>: <strong>{r.pledgeKeepers.join(', ')}</strong></> : null}</p>
     </div>
   );

@@ -108,6 +108,11 @@ export default async function Saannot() {
       </section>
 
       <section className="card">
+        <h2 className="display">Viikon tsemppari</h2>
+        <p style={{ margin: 0 }}>Joka sunnuntai klo 17–23.59 jokainen äänestää yhtä toista sankaria, joka tsemppasi, kannusti tai inspiroi viikon aikana. Ääntä voi vaihtaa äänestyksen aikana, eikä muiden ääniä näe. Tulos paljastuu maanantaina viikkoraportissa.</p>
+      </section>
+
+      <section className="card">
         <h2 className="display">Loppupomo</h2>
         <p style={{ margin: 0 }}>Loppupomo herää ma 14.12. Se on vahvempi kuin yksikään kauden monstereista, ja vain koko porukka yhdessä voi sen kaataa. Ensi-isku osuu siihen sen herätessä. Muuta siitä ei tiedetä ennen kuin se nousee. Loppupomo kaatuu samoin kuin muut monsterit: HP nollaan ja sinetti täyteen. Jos rästejä on vielä jäljellä, ne pitää kaataa ensin.</p>
       </section>
@@ -120,6 +125,7 @@ export default async function Saannot() {
           <li><strong>👁️ Portinvartija</strong>: ke 30.9. klo {QUIET_END} muistutus, jos portti on vielä kiinni, ja ilmoitus kun se kaatuu.</li>
           <li><strong>👁️ Uusi monsteri</strong>: to 1.10. ja sen jälkeen joka maanantai klo {QUIET_END}.</li>
           <li><strong>⚔️ Perjantaimuistutus</strong>: pe klo {QUIET_END}, vain jos sinulta puuttuu vielä jotain (lupauksen tunnit, isku sinettiin tai askelkuittauksia).</li>
+          <li><strong>🙌 Viikon tsemppari</strong>: su klo 17, kun äänestys alkaa.</li>
           <li><strong>💀 Monsteri kaatui</strong> ja <strong>⭐ Megamarssi</strong>: heti kaikille.</li>
           <li><strong>⚔️ Vain sinä puutut sinetistä</strong>: perjantaista alkaen sille, jonka isku viimeisenä puuttuu.</li>
           <li><strong>⏳ Sinetti odottaa sinua</strong>: kun joku painaa Muistuta puuttuvia (kukin voi muistuttaa kerran kolmessa tunnissa).</li>

@@ -148,3 +148,14 @@ assert.deepEqual(potParts(2075, 400, 2), [{ label: 'Ylijäämävoima', value: 14
 assert.deepEqual(potParts(300, 0, 3), [{ label: 'Lupaukset', value: 300 }], 'pelkät lupaukset');
 assert.deepEqual(potParts(0, 0, 0), []);
 console.log('Ensi-iskutestit menivät läpi.');
+
+// Viikon tsemppari
+import { cheerVoteWeek, cheerWinner } from './cheer.ts';
+assert.equal(cheerVoteWeek('2026-10-04', 17), 1, 'su 4.10. klo 17 äänestetään viikko 1');
+assert.equal(cheerVoteWeek('2026-10-04', 16), null, 'ennen klo 17 ei');
+assert.equal(cheerVoteWeek('2026-10-10', 18), null, 'lauantaina ei');
+assert.equal(cheerVoteWeek('2026-12-20', 20), 12, 'loppupomoviikon sunnuntai');
+assert.deepEqual(cheerWinner([{ week: 1, voter: 'a', nominee: 'b' }, { week: 1, voter: 'c', nominee: 'b' }, { week: 1, voter: 'b', nominee: 'a' }, { week: 2, voter: 'a', nominee: 'c' }], 1), { ids: ['b'], votes: 2 });
+assert.deepEqual(cheerWinner([{ week: 1, voter: 'a', nominee: 'b' }, { week: 1, voter: 'b', nominee: 'a' }], 1), { ids: ['b', 'a'], votes: 1 }, 'tasapeli');
+assert.equal(cheerWinner([], 1), null);
+console.log('Tsemppariäänestyksen testit menivät läpi.');
