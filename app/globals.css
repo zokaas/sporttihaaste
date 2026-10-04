@@ -236,7 +236,9 @@ table.plain th, table.plain td { text-align: left; padding: 6px 4px; border-bott
 .seal-dot { width: 28px; height: 28px; border-radius: 999px; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; background: rgba(42, 35, 32, 0.9); color: #8a7f74; border: 2px solid rgba(255, 255, 255, 0.08); filter: grayscale(1); opacity: 0.55; }
 .seal-dot img { width: 100%; height: 100%; object-fit: cover; }
 .seal-dot.hit { filter: none; opacity: 1; color: var(--light); border-color: var(--ember); box-shadow: 0 0 8px rgba(224, 122, 69, 0.6); }
-.seal-dot.excused { border-style: dashed; opacity: 0.35; }
+/* Kipeänä vapautettu: punainen rinkula, sisältö haalea. */
+.seal-dot.excused { filter: none; opacity: 1; border-color: var(--blood-text); color: rgba(138, 127, 116, 0.4); }
+.seal-dot.excused img { opacity: 0.3; filter: grayscale(1); }
 .stage-seal.done .seal-dot.hit { border-color: var(--gold); box-shadow: 0 0 10px rgba(232, 176, 74, 0.8); }
 .stage-damage.crit { color: var(--gold); font-size: 68px; text-shadow: 0 0 24px #ff7a2e, 0 0 48px var(--blood), 0 3px 0 #5a0d08; }
 .stage-damage.crit small { font-size: 20px; color: #fff; letter-spacing: 0.1em; }

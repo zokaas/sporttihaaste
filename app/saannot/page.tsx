@@ -19,7 +19,7 @@ const GLOSSARY: [string, string][] = [
   ['Voima', 'Iskun voima: kesto tunteina × lajin arvo, ja päälle bonukset.'],
   ['HP', 'Monsterin elinvoima. Kun se loppuu ja sinetti on täynnä, monsteri kaatuu.'],
   ['Sinettiraja', 'Niin kauan kuin sinetti on kesken, monsterille jää 10 HP jokaista puuttuvaa sankaria kohden. Se ei siis näy koskaan nollassa ennen kuin kaikki ovat lyöneet.'],
-  ['Sinetti', 'Jokaisen terveen sankarin täytyy lyödä viikon monsteria vähintään yhdellä treenillä. Askeleet eivät täytä sinettiä. Sinetti on voimassa koko viikon, mutta se tulee näkyviin vasta perjantaina.'],
+  ['Sinetti', 'Jokaisen terveen sankarin täytyy lyödä viikon monsteria vähintään yhdellä treenillä. Askeleet eivät täytä sinettiä. Viikolla kipeänä ollut on vapautettu sinetistä: hänen pallossaan on punainen rinkula. Sinetti on voimassa koko viikon, mutta se tulee näkyviin vasta perjantaina.'],
   ['Rästi', 'Monsteri, joka jäi viikolla henkiin. Se jatkaa seuraavalla viikolla, ja vanhin rästi ottaa iskut ensin.'],
   ['Ensi-isku loppupomolle', 'Kaatuneen monsterin yli mennyt voima, pidettyjen lupausten bonukset ja portinvartijan ylijäämä säästyvät tähän. Kun loppupomo herää, koko ensi-isku osuu siihen ensimmäisenä. Kattoa ei ole.'],
   ['Heikkous', 'Viikon monsterin heikko kohta: joko lajiryhmä (esim. kestävyys) tai yksittäinen laji (esim. uinti). Joskus heikkous on erikoisheikkous, esim. urheilu mamun tai lapsen kanssa, urheilija on nainen tai urheilu kenen tahansa isän kanssa: silloin laji on vapaa ja kirjauksessa merkitset itse, että ehto täyttyi. Heikkouteen osuvat treenit tekevät +50 %. Kaksikolla ja kolmikolla jokaisella osalla on oma heikkoutensa, ja bonus tulee vuorossa olevan osan heikkoudesta.'],
