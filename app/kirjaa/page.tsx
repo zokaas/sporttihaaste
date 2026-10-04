@@ -43,6 +43,8 @@ export default async function Kirjaa() {
     loadSports(supabase),
   ]);
   const participants = (heroes ?? []).filter((h) => h.pledge_locked_at);
+  // Kela-iskut omilta sairaspäiviltä tällä viikolla (tulevat sairausmerkinnöistä, ei poistettavissa).
+  const myKela = battle.kela.filter((k) => k.userId === user.id && k.day >= start && k.day <= end).sort((a, c) => c.day.localeCompare(a.day));
   const celebrations: Record<string, string[]> = {};
   for (const d of days) {
     const md = monthDay(d);
@@ -68,7 +70,7 @@ export default async function Kirjaa() {
 
       <section className="card">
         <h2 className="display">{week === 0 ? 'Iskusi portinvartijaan' : `Iskusi viikolla ${week}`}</h2>
-        {(myHits ?? []).length === 0 ? (
+        {(myHits ?? []).length === 0 && myKela.length === 0 ? (
           <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla.</p>
         ) : (
           <ul className="people">
@@ -86,6 +88,14 @@ export default async function Kirjaa() {
                 <DeleteHitButton id={h.id} />
               </li>
             ))}
+            {myKela.map((k) => (
+                <li key={`kela-${k.day}`}>
+                  <div className="grow" style={{ minWidth: 0 }}>
+                    <div className="who">🏥 Kela <span className="ok">{k.damage}</span></div>
+                    <div className="facts">{formatDay(k.day)} · sairaspäivä</div>
+                  </div>
+                </li>
+              ))}
           </ul>
         )}
         <Hint id="week-lock">Viikko lukittuu su {+end.slice(8, 10)}.{+end.slice(5, 7)}. klo 23.59. Sen jälkeen iskuja ei voi enää lisätä tai poistaa.</Hint>

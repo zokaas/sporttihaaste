@@ -37,10 +37,12 @@ export default async function Monsteri({ params }: { params: { week: string } })
   const partImages = (parts ?? []).map((x) => x.image).filter((x): x is string => Boolean(x));
   const images = partImages.length ? partImages : [monsterImageUrl(m?.image_path)].filter((x): x is string => Boolean(x));
 
-  // Vahinko monsterin viikolla (iskut + askeleet) sankareittain
+  // Vahinko monsterin viikolla (iskut, askeleet ja Kela) sankareittain
   const totals = new Map<string, number>();
   for (const h of b.hits) if (seasonWeek(h.trained_on) === week) totals.set(h.user_id, (totals.get(h.user_id) ?? 0) + h.damage);
   for (const s of b.steps) if (seasonWeek(s.day) === week) totals.set(s.user_id, (totals.get(s.user_id) ?? 0) + STEP_DAY_DAMAGE);
+  const kela = b.kela.filter((k) => seasonWeek(k.day) === week).sort((a, c) => c.day.localeCompare(a.day));
+  for (const k of kela) totals.set(k.userId, (totals.get(k.userId) ?? 0) + k.damage);
   const top = [...totals].sort((a, c) => c[1] - a[1]).slice(0, 5);
   const hits = b.hits.filter((h) => seasonWeek(h.trained_on) === week).sort((a, c) => c.created_at.localeCompare(a.created_at));
 
@@ -117,7 +119,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
 
       <section className="card">
         <h2 className="display">Iskut</h2>
-        {hits.length ? (
+        {hits.length || kela.length ? (
           <ul className="people">
             {hits.map((h, i) => (
               <li key={i}>
@@ -132,6 +134,15 @@ export default async function Monsteri({ params }: { params: { week: string } })
                   {hitBonusText(h) ? <div className="facts bonus">{hitBonusText(h)}</div> : null}
                 </div>
                 <strong>{fmt(h.damage)}</strong>
+              </li>
+            ))}
+            {kela.map((k) => (
+              <li key={`kela-${k.userId}-${k.day}`}>
+                <div className="grow" style={{ minWidth: 0 }}>
+                  <div className="who">{heroName(k.userId)} <span className="muted" style={{ fontWeight: 400 }}>· 🏥 Kela</span></div>
+                  <div className="facts">{formatDay(k.day)} · sairaspäivä</div>
+                </div>
+                <strong>{fmt(k.damage)}</strong>
               </li>
             ))}
           </ul>

@@ -26,6 +26,7 @@ export default async function Sankari({ params }: { params: { id: string } }) {
   const rank = ranked.findIndex((x) => x.id === s.id) + 1;
   const weekHits = b.hits.filter((x) => x.user_id === s.id && seasonWeek(x.trained_on) === b.week).sort((a, c) => c.trained_on.localeCompare(a.trained_on));
   const status = b.pledgeStatus(s.id, b.week);
+  const weekKela = b.kela.filter((k) => k.userId === s.id && seasonWeek(k.day) === b.week);
 
   const rows: [string, (x: HeroStats) => string][] = [
     ['Voima', (x) => fmt(x.damage)],
@@ -53,7 +54,13 @@ export default async function Sankari({ params }: { params: { id: string } }) {
             <span>{formatDay(x.trained_on)} {x.sport} {x.minutes} min{x.companions.length ? ` · ${x.companions.length + 1} hengen porukka` : ''}{hitBonusText(x) ? <span className="bonus-text"> · {hitBonusText(x)}</span> : null}</span>
             <strong>{x.damage}</strong>
           </div>
-        )) : <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla.</p>}
+        )) : weekKela.length ? null : <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla.</p>}
+        {weekKela.map((k) => (
+          <div key={`kela-${k.day}`} className="row" style={{ justifyContent: 'space-between' }}>
+            <span>{formatDay(k.day)} 🏥 Kela · sairaspäivä</span>
+            <strong>{k.damage}</strong>
+          </div>
+        ))}
       </section>
 
       <section className="card">
