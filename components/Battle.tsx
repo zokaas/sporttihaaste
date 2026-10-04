@@ -71,8 +71,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
     const h = heroById.get(id);
     return { id, name: h?.hero_name ?? '', initial: (h?.hero_name ?? '?').slice(0, 1), avatar: avatarUrl(h?.avatar_path), hit: Boolean(target?.hitters.includes(id)), excused: !required.includes(id) };
   });
-  // Viikko lukittuu armonajan päätteeksi ma klo 12.
-  const endMs = helsinkiMs(addDays(weekRange(week).end, 1), '12:00:00');
+  // Lähtölaskenta päättyy, kun uusi monsteri paljastuu (su klo 24). Kirjaukset ovat auki ma klo 12 asti.
+  const endMs = helsinkiMs(weekRange(week).end);
   // Poissaolon kooste: tämän viikon muiden iskut ja askeleet aikaleimoineen (selain valitsee edellisen käynnin jälkeiset).
   const awayEvents: AwayEvent[] = [
     ...data.hits.filter((h) => h.user_id !== userId && seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, name: heroById.get(h.user_id)?.hero_name ?? 'Sankari', kind: 'hit' as const, damage: h.damage })),
