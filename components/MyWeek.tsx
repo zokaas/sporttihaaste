@@ -6,6 +6,7 @@ import { showStrike } from '@/components/StrikeToastHost';
 import { STEP_DAY_DAMAGE } from '@/lib/rules';
 import { formatDay } from '@/lib/season';
 import Hint from '@/components/Hint';
+import { kelaDayDamage } from '@/lib/weekly';
 
 type Day = { day: string; stepped: boolean; future: boolean; patrol: boolean; sick: boolean };
 
@@ -88,7 +89,7 @@ export default function MyWeek(p: Props) {
           {kept ? 'Lupaus pidetty! +100 ensi-iskuun, kun viikko lukittuu.' : p.target === 0 ? 'Tällä viikolla ei ole lupaustavoitetta sairauden vuoksi. Kirjatut treenit tuovat silti voimaa monsteria vastaan.' : `Vielä ${h(p.target - p.hours)}. Pidetty lupaus tuo +100 ensi-iskuun.`}
         </span>
         {shortWeek ? <span className="muted small">Lyhyt viikko ({p.days.length} pv): tavoite on {p.days.length}/7 lupauksestasi ({h(p.pledge)}).</span> : null}
-        {p.sickDays ? <span className="small" style={{ color: 'var(--gold)' }}>🤒 {p.sickDays} sairaspäivää: tavoite {h(p.fullTarget)} → {h(p.target)}{p.inSeal ? '' : ' · ei sinettivelvollisuutta tällä viikolla'}</span> : null}
+        {p.sickDays ? <span className="small" style={{ color: 'var(--gold)' }}>🤒 {p.sickDays} sairaspäivää: tavoite {h(p.fullTarget)} → {h(p.target)} · 🏥 Kela +{p.sickDays * kelaDayDamage(p.pledge)}{p.inSeal ? '' : ' · ei sinettivelvollisuutta tällä viikolla'}</span> : null}
       </div>
 
       <div className="myweek-block">
@@ -142,6 +143,7 @@ export default function MyWeek(p: Props) {
           })}
         </div>
         <span className="muted small">Jokainen sairaspäivä pienentää viikon lupausta 1/7:lla, ja yksikin sairaspäivä vapauttaa sinut sen viikon sinetistä.</span>
+        <p className="small note" style={{ margin: 0 }}>🏥 <strong>Kela auttaa:</strong> jokaisesta sairaspäivästä Kela iskee monsteria puolestasi <strong>{kelaDayDamage(p.pledge)}</strong> voimalla (lupauksesi ÷ 7 × 100), jotta porukka ei jää jälkeen. Sinun ei tarvitse tehdä mitään: merkitse vain sairaspäivä. Kela-isku ei täytä sinettiä.</p>
         {askContinue ? (
           <div className="sick-box">
             <strong>Onko paha?</strong>
