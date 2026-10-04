@@ -159,7 +159,8 @@ export function weekRecap(b: Battle, w: number): WeekRecap | null {
   const patrols = b.patrols.filter((p) => seasonWeek(p.day) === w);
   const hitDamage = hits.reduce((a, h) => a + h.damage, 0);
   const bonusDamage = hits.reduce((a, h) => a + (h.damage - Math.round(h.damage / (1 + (h.bonus_pct ?? 0) / 100))), 0);
-  const damage = hitDamage + steps.length * STEP_DAY_DAMAGE + patrols.length * PATROL_DAY_DAMAGE;
+  const kela = b.kela.filter((k) => seasonWeek(k.day) === w).reduce((a, k) => a + k.damage, 0);
+  const damage = hitDamage + steps.length * STEP_DAY_DAMAGE + patrols.length * PATROL_DAY_DAMAGE + kela;
 
   const totals = new Map<string, number>();
   for (const h of hits) totals.set(h.user_id, (totals.get(h.user_id) ?? 0) + h.damage);

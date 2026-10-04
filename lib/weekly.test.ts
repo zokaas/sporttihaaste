@@ -63,3 +63,19 @@ assert.deepEqual(activeWeaknesses(trio, 100), ['Padel']);
 assert.deepEqual(activeWeaknesses(trio, 0), ['Padel']);
 assert.deepEqual(activeWeaknesses({ hp: 5000, weakness: 'Uinti' }, 100), ['Uinti']);
 console.log('Kolmikko- ja kaksikkotestit menivät läpi.');
+
+// Kela: sairaspäivästä oman lupauksen päiväosuus
+import { kelaDays, kelaDayDamage } from './weekly.ts';
+assert.equal(kelaDayDamage(4), 57);
+assert.equal(kelaDayDamage(3.5), 50);
+{
+  const periods = [{ user_id: 'a', starts_on: '2026-10-06', ends_on: '2026-10-07' }, { user_id: 'b', starts_on: '2026-10-07', ends_on: null }];
+  const k = kelaDays(['a', 'b', 'c'], periods, '2026-10-05', '2026-10-08', (u) => (u === 'a' ? 4 : 6));
+  assert.deepEqual(k, [
+    { userId: 'a', day: '2026-10-06', damage: 57 },
+    { userId: 'a', day: '2026-10-07', damage: 57 },
+    { userId: 'b', day: '2026-10-07', damage: 86 },
+    { userId: 'b', day: '2026-10-08', damage: 86 },
+  ]);
+}
+console.log('Kela-testit menivät läpi.');
