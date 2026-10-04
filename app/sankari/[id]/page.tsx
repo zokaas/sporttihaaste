@@ -73,8 +73,8 @@ export default async function Sankari({ params }: { params: { id: string } }) {
               const src = hitPhotoUrl(x.photo_path)!;
               return (
                 <figure key={x.id} style={{ margin: 0 }}>
-                  <ZoomImg className="photo-grid-img" src={resizedImage(src, 256)} full={src} width={110} height={110} />
-                  <figcaption className="muted small">{x.sport} · {formatDay(x.trained_on)}</figcaption>
+                  <ZoomImg className="photo-grid-img" src={resizedImage(src, 384)} full={src} width={170} height={170} />
+                  <figcaption className="muted small">{formatDay(x.trained_on)} · {x.sport}</figcaption>
                 </figure>
               );
             })}
