@@ -36,6 +36,11 @@ export async function adminSetSick(userId: string, startsOn: string, endsOn: str
   const supabase = await admin();
   if (!supabase) return { ok: false, error: 'Vain ylläpitäjä.' };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startsOn) || (endsOn && (!/^\d{4}-\d{2}-\d{2}$/.test(endsOn) || endsOn < startsOn))) return { ok: false, error: 'Tarkista päivämäärät.' };
+  // Kipeänä ei treenata: ajanjakson treenit pitää poistaa ensin (askeleet ohitetaan laskennassa).
+  let trained = supabase.from('hits').select('trained_on').eq('user_id', userId).gte('trained_on', startsOn);
+  if (endsOn) trained = trained.lte('trained_on', endsOn);
+  const { data: hits } = await trained.limit(1);
+  if (hits?.length) return { ok: false, error: `Sankarilla on treeni ${hits[0].trained_on}. Poista treeni ensin.` };
   return done((await supabase.from('sick_periods').insert({ user_id: userId, starts_on: startsOn, ends_on: endsOn })).error);
 }
 

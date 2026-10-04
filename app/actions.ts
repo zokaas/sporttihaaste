@@ -62,6 +62,11 @@ export async function toggleSickDay(day: string, sick: boolean, continuing = fal
 
   if (sick) {
     if (covering.length) return done(null);
+    // Kipeänä ei treenata: päivälle kirjattu treeni pitää poistaa ensin, askeleet poistuvat automaattisesti.
+    const { data: trained } = await supabase.from('hits').select('id').eq('user_id', user.id).eq('trained_on', day).limit(1);
+    if (trained?.length) return { ok: false, error: 'Päivälle on kirjattu treeni. Poista treeni ensin, jos olit kipeä.' };
+    const { error: stepError } = await supabase.from('step_days').delete().eq('user_id', user.id).eq('day', day);
+    if (stepError) return done(stepError);
     const open = continuing && day === now;
     return done((await supabase.from('sick_periods').insert({ user_id: user.id, starts_on: day, ends_on: open ? null : day })).error);
   }
