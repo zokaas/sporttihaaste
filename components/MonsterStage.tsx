@@ -286,9 +286,9 @@ export default function MonsterStage(p: Props) {
           <span className="stage-state">{state === 'dead' ? 'Kaatunut' : state === 'shielded' ? 'Sinetti kesken' : state === 'dying' ? 'Horjuu!' : state === 'hurt' ? 'Haavoittunut' : ''}</span>
         </div>
         {p.seal?.length ? (
-          <div className={`stage-seal${sealDone ? ' done' : ''}`} aria-label={`Sinetti: ${p.seal.filter((s) => s.hit).length} / ${p.seal.filter((s) => !s.excused).length} lyönyt`}>
+          <div className={`stage-seal${sealDone ? ' done' : ''}`} aria-label={`Sinetti: ${p.seal.filter((s) => s.hit).length} / ${p.seal.filter((s) => !s.excused || s.hit).length} lyönyt`}>
             {p.seal.map((s) => (
-              <span key={s.id} className={`seal-dot${s.hit ? ' hit' : ''}${s.excused ? ' excused' : ''}`} title={`${s.name}${s.excused ? ' (kipeä)' : s.hit ? ' – lyönyt' : ' – puuttuu'}`}>
+              <span key={s.id} className={`seal-dot${s.hit ? ' hit' : ''}${s.excused && !s.hit ? ' excused' : ''}`} title={`${s.name}${s.hit ? ' – lyönyt' : s.excused ? ' (kipeä)' : ' – puuttuu'}`}>
                 {s.avatar ? <img src={s.avatar} alt="" /> : s.initial}
               </span>
             ))}
