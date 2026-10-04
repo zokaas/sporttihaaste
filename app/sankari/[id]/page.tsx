@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import { notFound } from 'next/navigation';
 import Nav from '@/components/Nav';
 import { requireHero } from '@/lib/page';
-import { avatarUrl, resizedImage } from '@/lib/supabase/client';
+import { avatarUrl, hitPhotoUrl, resizedImage } from '@/lib/supabase/client';
 import { hitBonusText } from '@/lib/rules';
 import { ZoomImg } from '@/components/ImageViewer';
 import { heroStats, rankByPledges, type HeroStats } from '@/lib/stats';
@@ -26,6 +26,9 @@ export default async function Sankari({ params }: { params: { id: string } }) {
   const rank = ranked.findIndex((x) => x.id === s.id) + 1;
   const weekHits = b.hits.filter((x) => x.user_id === s.id && seasonWeek(x.trained_on) === b.week).sort((a, c) => c.trained_on.localeCompare(a.trained_on));
   const status = b.pledgeStatus(s.id, b.week);
+  const weekKela = b.kela.filter((k) => k.userId === s.id && seasonWeek(k.day) === b.week);
+  // Treenikuvat koko kaudelta, uusin ensin.
+  const photos = b.hits.filter((x) => x.user_id === s.id && x.photo_path).sort((a, c) => c.created_at.localeCompare(a.created_at));
 
   const rows: [string, (x: HeroStats) => string][] = [
     ['Voima', (x) => fmt(x.damage)],
@@ -53,8 +56,31 @@ export default async function Sankari({ params }: { params: { id: string } }) {
             <span>{formatDay(x.trained_on)} {x.sport} {x.minutes} min{x.companions.length ? ` · ${x.companions.length + 1} hengen porukka` : ''}{hitBonusText(x) ? <span className="bonus-text"> · {hitBonusText(x)}</span> : null}</span>
             <strong>{x.damage}</strong>
           </div>
-        )) : <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla.</p>}
+        )) : weekKela.length ? null : <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla.</p>}
+        {weekKela.map((k) => (
+          <div key={`kela-${k.day}`} className="row" style={{ justifyContent: 'space-between' }}>
+            <span>{formatDay(k.day)} 🏥 Kela · sairaspäivä</span>
+            <strong>{k.damage}</strong>
+          </div>
+        ))}
       </section>
+
+      {photos.length ? (
+        <section className="card">
+          <h2 className="display">Treenikuvat <span className="muted small">{photos.length}</span></h2>
+          <div className="photo-grid">
+            {photos.map((x) => {
+              const src = hitPhotoUrl(x.photo_path)!;
+              return (
+                <figure key={x.id} style={{ margin: 0 }}>
+                  <ZoomImg className="photo-grid-img" src={resizedImage(src, 384)} full={src} width={170} height={170} />
+                  <figcaption className="muted small">{formatDay(x.trained_on)} · {x.sport}</figcaption>
+                </figure>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
       <section className="card">
         <h2 className="display">Kausi</h2>

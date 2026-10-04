@@ -1,6 +1,9 @@
 // Viikkokohtaiset säännöt: sairaus, askeleet, megamarssit ja lupaukset. Puhtaita funktioita.
 import { addDays, weekRange } from './season.ts';
 
+/** Kela: sairaspäivän korvaus on oma lupaus ÷ 7 × 100 eli se, minkä HP olettaa kipeän tuovan treeneistä sinä päivänä. */
+export const kelaDayDamage = (pledgeHours: number) => Math.round((pledgeHours * 100) / 7);
+
 export type SickPeriod = { user_id: string; starts_on: string; ends_on: string | null };
 
 /** Oliko sankari kipeä annettuna päivänä? ends_on on viimeinen sairaspäivä, null = yhä kipeä. */
@@ -66,4 +69,17 @@ export function requiredForSeal(participants: string[], periods: SickPeriod[], w
   const { start, end } = weekRange(week);
   const last = end < today ? end : today;
   return participants.filter((u) => sickDaysBetween(periods, u, start, last) === 0);
+}
+
+/** Kela-päivät välillä from–to: jokainen ilmoittautuneen sairaspäivä, korvaus päivän viikon lupauksesta. */
+export function kelaDays(participants: string[], periods: SickPeriod[], from: string, to: string, pledgeOn: (userId: string, day: string) => number) {
+  const out: { userId: string; day: string; damage: number }[] = [];
+  for (const u of participants) {
+    for (let d = from; d <= to; d = addDays(d, 1)) {
+      if (!isSickOn(periods, u, d)) continue;
+      const damage = kelaDayDamage(pledgeOn(u, d));
+      if (damage > 0) out.push({ userId: u, day: d, damage });
+    }
+  }
+  return out;
 }

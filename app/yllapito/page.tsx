@@ -2,13 +2,14 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { TEST_DAY_COOKIE, TEST_SKIP_COOKIE, testDay, testSkipPast } from '@/lib/today';
-import { helsinkiToday, formatDay, SEASON_START, SEASON_END, BOSS_WEEK } from '@/lib/season';
+import { helsinkiToday, formatDay, seasonWeek, SEASON_START, SEASON_END, BOSS_WEEK } from '@/lib/season';
 import { revalidatePath } from 'next/cache';
 import webpush from 'web-push';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl } from '@/lib/supabase/client';
-import { CATEGORIES, SPORT_VALUES, seasonHp, type Category } from '@/lib/rules';
+import { CATEGORIES, SPORT_VALUES, PATROL_DAY_DAMAGE, STEP_DAY_DAMAGE, seasonHp, type Category } from '@/lib/rules';
 import { loadBattle } from '@/lib/battle';
+import { hpPlan, weekActual, type WeekActual } from '@/lib/hpcheck';
 import { weekRecap } from '@/lib/stats';
 import { today } from '@/lib/today';
 import { fridayReminders } from '@/lib/reminders';
@@ -177,6 +178,28 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
   const locked = (heroes ?? []).filter((h) => h.pledge_locked_at);
   const total = locked.reduce((a, h) => a + Number(h.pledge_hours), 0);
   const preview = seasonHp(total);
+  // HP:n realismi: tarvittavat bonukset lupausten ja askelten päälle, sekä toteutunut tahti päättyneiltä viikoilta.
+  const planHours = season?.hp_locked_at ? Number(season.total_pledge_hours) : total;
+  const hpByWeek = Array.from({ length: BOSS_WEEK }, (_, i) => battle.monsters.get(i + 1)?.hp ?? (i + 1 === BOSS_WEEK ? preview.boss : preview.monsters[i]));
+  const actuals: Record<number, WeekActual> = {};
+  for (let w = 1; w <= Math.min(battle.week, BOSS_WEEK); w++) {
+    actuals[w] = weekActual(
+      battle.hits.filter((x) => seasonWeek(x.trained_on) === w),
+      battle.steps.filter((x) => seasonWeek(x.day) === w).length,
+      battle.patrols.filter((x) => seasonWeek(x.day) === w).length,
+      STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE,
+    );
+  }
+  const closedWeeks = Object.keys(actuals).map(Number).filter((w) => w < battle.week);
+  const plan = hpPlan(planHours, hpByWeek, actuals, closedWeeks);
+  const pace = closedWeeks.length ? {
+    pledges: Math.round((closedWeeks.reduce((a, w) => a + actuals[w].trainingBase, 0) / closedWeeks.reduce((a, w) => a + plan[w - 1].pledgeBase, 0)) * 100),
+    steps: Math.round((closedWeeks.reduce((a, w) => a + actuals[w].steps, 0) / closedWeeks.reduce((a, w) => a + plan[w - 1].stepsEst, 0)) * 100),
+  } : null;
+  const avgNeed = (key: 'needPct' | 'needPctAtPace') => {
+    const xs = plan.filter((p) => p.week >= 2 && p.week < BOSS_WEEK).map((p) => p[key]).filter((x): x is number => x != null);
+    return xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : null;
+  };
 
   return (
     <>
@@ -284,6 +307,35 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
           </label>
           <ConfirmButton className="btn" message="Lähetetäänkö varjojen ääni kaikille sankareille?">Lähetä kaikille</ConfirmButton>
         </form>
+      </section>
+
+      <section className="card">
+        <h2 className="display">HP:n realismi</h2>
+        <p style={{ margin: 0 }}>Paljonko bonuksia monsterin kaatamiseen tarvitaan lupausten ({String(planHours).replace('.', ',')} h viikossa) ja askelten päälle. Prosentti on tarvittava bonus suhteessa treenien voimaan ilman bonuksia. Yksi bonus (3 hengen porukka tai heikkous) on +50 %.</p>
+        <p style={{ margin: 0 }}>Jos kaikki pitävät lupauksensa ja askeleet toteutuvat arvion mukaan (10 × 5 päivää + megamarssi): viikoilla 2–11 tarvitaan keskimäärin <strong>{avgNeed('needPct')} %</strong> bonusta.</p>
+        {pace ? (
+          <p className={avgNeed('needPctAtPace')! > 50 ? 'note threat' : 'note'} style={{ margin: 0 }}>
+            Päättyneillä viikoilla treenit ovat olleet <strong>{pace.pledges} %</strong> lupauksista ja askeleet <strong>{pace.steps} %</strong> arviosta. Tällä tahdilla viikoilla 2–11 tarvitaan keskimäärin <strong>{avgNeed('needPctAtPace')} %</strong> bonusta{avgNeed('needPctAtPace')! > 50 ? '. ⚠️ Vaikea: monsterit jäävät helposti rästiin.' : '.'}
+          </p>
+        ) : <p className="muted small" style={{ margin: 0 }}>Toteutunut tahti näkyy, kun ensimmäinen viikko on päättynyt.</p>}
+        <div className="scroll">
+          <table className="admin">
+            <thead><tr><th>Vk</th><th>HP</th><th>Lupaukset + askeleet</th><th>Bonusta tarvitaan</th><th>Tällä tahdilla</th><th>Toteutui</th></tr></thead>
+            <tbody>
+              {plan.map((p) => (
+                <tr key={p.week}>
+                  <td>{p.week === BOSS_WEEK ? 'LP' : p.week}</td>
+                  <td>{fmt(p.hp)}</td>
+                  <td>{fmt(p.pledgeBase)} + {fmt(p.stepsEst)}</td>
+                  <td>{fmt(p.need)} ({p.needPct} %)</td>
+                  <td>{p.needPctAtPace != null ? `${p.needPctAtPace} %` : '–'}</td>
+                  <td>{p.actual ? <>{fmt(p.actual.trainingBase + p.actual.bonus + p.actual.steps)}<br /><span className="muted small">bonus {p.actual.trainingBase ? Math.round((p.actual.bonus / p.actual.trainingBase) * 100) : 0} %</span></> : '–'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Hint id="admin-hpcheck" className="muted">Loppupomon (LP) HP:sta vähennetään vielä ensi-isku, joten sen todellinen tarve on pienempi. Viikko 1 on 4 päivää ja sen HP sisältää portinvartijan jäännöksen.</Hint>
       </section>
 
       <section className="card">

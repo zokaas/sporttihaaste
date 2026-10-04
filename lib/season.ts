@@ -43,13 +43,27 @@ export function weekRange(week: number) {
   return { start, end: addDays(start, 6) };
 }
 
-/** Viikon päivät, joille voi vielä kirjata: viikon alusta tähän päivään asti. */
-export function loggableDays(today: string) {
+/** Armonaika: päättyneelle viikolle voi vielä kirjata maanantaihin klo 12 asti (Suomen aikaa). */
+export const GRACE_HOURS = 12;
+
+/**
+ * Viikko, jolle armonaika on juuri nyt auki (maanantaina klo 0–12 edellinen viikko), muuten null.
+ * Testipäivänä (today ≠ oikea päivä) armonaikaa ei ole. Sama laskenta on tietokannassa (grace_day).
+ */
+export function graceWeek(today: string, now = new Date()) {
+  if (today !== helsinkiToday(now)) return null;
+  const w = seasonWeek(helsinkiToday(new Date(now.getTime() - GRACE_HOURS * 3_600_000)));
+  return w >= 1 && w <= BOSS_WEEK && w < seasonWeek(today) ? w : null;
+}
+
+/** Päivät, joille voi vielä kirjata: kuluvan viikon alusta tähän päivään, armonaikana myös edellinen viikko. */
+export function loggableDays(today: string, grace: number | null = graceWeek(today)) {
   if (isGateDay(today)) return today === GATE_DAY ? [GATE_START, GATE_DAY] : [GATE_START];
   const week = seasonWeek(today);
-  if (week < 1 || week > BOSS_WEEK) return [];
+  const first = grace ?? week;
+  if (first < 1 || first > BOSS_WEEK) return [];
   const days: string[] = [];
-  for (let d = weekRange(week).start; d <= today; d = addDays(d, 1)) days.push(d);
+  for (let d = weekRange(first).start; d <= today && d <= SEASON_END; d = addDays(d, 1)) days.push(d);
   return days;
 }
 

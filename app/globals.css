@@ -598,3 +598,9 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .recap-images > .zoom-img:only-child { flex: 1; }
 .recap-images > .zoom-img:only-child .recap-img { width: 100%; height: 180px; }
 .pot-from { color: var(--gold); margin-top: 4px; }
+/* Sankarin treenikuvat */
+.photo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.photo-grid figure { min-width: 0; }
+.photo-grid .zoom-img { width: 100%; border-radius: 10px; }
+.photo-grid-img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 10px; display: block; }
+.photo-grid figcaption { margin-top: 4px; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }

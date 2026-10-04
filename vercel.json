@@ -19,6 +19,10 @@
     {
       "path": "/api/cron/aamu?ajo=su2",
       "schedule": "0 15 * * 0"
+    },
+    {
+      "path": "/api/cron/ilta",
+      "schedule": "0 17 * * 0"
     }
   ]
 }

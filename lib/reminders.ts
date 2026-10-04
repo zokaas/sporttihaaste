@@ -9,11 +9,12 @@ import { isSickOn } from './weekly';
 const h = (n: number) => `${String(Math.round(n * 10) / 10).replace('.', ',')} h`;
 
 /**
- * Perjantaiaamun muistutus: jokaiselle terveelle sankarille oma viesti siitä, mitä viikolta vielä puuttuu
- * (lupauksen tunnit, isku sinettiin, askelkuittaukset). Ei lähetä mitään sille, jolla kaikki on kunnossa.
+ * Viikkomuistutus: jokaiselle terveelle sankarille oma viesti siitä, mitä viikolta vielä puuttuu
+ * (lupauksen tunnit, isku sinettiin, askelkuittaukset). Perjantaiaamuna ja sunnuntai-iltana.
+ * Sunnuntaina viestiä ei lähetetä sille, jolla kaikki on kunnossa; perjantaina hänelle tulee kehu.
  * onlyUser: lähetä vain tälle sankarille (ylläpitäjän testi).
  */
-export async function fridayReminders(supabase: SupabaseClient, day: string, onlyUser?: string) {
+export async function fridayReminders(supabase: SupabaseClient, day: string, onlyUser?: string, kind: 'friday' | 'sunday' = 'friday') {
   const b = await loadBattle(supabase, day);
   if (!b.ledger) return { sent: 0, skipped: 'Taistelu ei ole käynnissä.' };
   const target = b.ledger.alive[0];
@@ -33,12 +34,17 @@ export async function fridayReminders(supabase: SupabaseClient, day: string, onl
     for (let d = start; d <= day && d <= end; d = addDays(d, 1)) if (!isSickOn(b.periods, id, d)) healthyDays++;
     const steps = b.steps.filter((s) => s.user_id === id && s.day >= start && s.day <= day && !isSickOn(b.periods, id, s.day)).length;
     if (steps < healthyDays) lines.push(`Askelkuittauksia ${steps}/${healthyDays} (${STEP_GOAL.toLocaleString('fi-FI')} askelta = +50).`);
-    if (!lines.length && !onlyUser) continue;
+    if (!lines.length && (!onlyUser || kind === 'sunday')) continue;
     sent += await sendPush(
       supabase,
       {
-        title: lines.length ? `⚔️ Viikonloppu tulee – viikko ${b.week} päättyy sunnuntaina` : '⚔️ Kaikki kunnossa tällä viikolla!',
-        body: lines.length ? lines.join(' ') : 'Lupaus, sinetti ja askeleet ovat ajan tasalla. Hyvää viikonloppua, sankari!',
+        title: kind === 'sunday'
+          ? `⏳ Viikko ${b.week} lukittuu ma klo 12`
+          : lines.length ? `⚔️ Viikonloppu tulee – viikko ${b.week} päättyy sunnuntaina` : '⚔️ Kaikki kunnossa tällä viikolla!',
+        body: lines.length
+          ? `${lines.join(' ')}${kind === 'sunday' ? ' Kirjaa puuttuvat viimeistään ma klo 12.' : ''}`
+          : 'Lupaus, sinetti ja askeleet ovat ajan tasalla. Hyvää viikonloppua, sankari!',
+        ...(kind === 'sunday' ? { url: '/kirjaa' } : {}),
       },
       [id],
     );

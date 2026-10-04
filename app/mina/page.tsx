@@ -18,6 +18,8 @@ export default async function Mina() {
   const inSeason = seasonWeek(b.today) >= 1 && seasonWeek(b.today) <= BOSS_WEEK;
   const names = new Map(b.heroes.map((h) => [h.id, h.hero_name ?? '']));
   const myHits = b.hits.filter((h) => h.user_id === user.id && seasonWeek(h.trained_on) === b.week).sort((a, c) => c.trained_on.localeCompare(a.trained_on) || c.created_at.localeCompare(a.created_at));
+  // Kela-iskut sairaspäiviltä (ei poistettavissa: ne tulevat sairausmerkinnöistä).
+  const myKela = b.kela.filter((k) => k.userId === user.id && seasonWeek(k.day) === b.week).sort((a, c) => c.day.localeCompare(a.day));
 
   return (
     <>
@@ -28,6 +30,7 @@ export default async function Mina() {
         <span className="muted small">Profiili →</span>
       </Link>
 
+      {b.grace ? <MyWeek {...myWeekProps(b, user.id, b.grace)} /> : null}
       {inSeason ? <MyWeek {...myWeekProps(b, user.id)} /> : (
         <section className="card">
           <h2 className="display">Minun viikkoni</h2>
@@ -38,7 +41,7 @@ export default async function Mina() {
       {inSeason ? (
         <section className="card">
           <h2 className="display">Iskusi viikolla {b.week}</h2>
-          {myHits.length ? (
+          {myHits.length || myKela.length ? (
             <ul className="people">
               {myHits.map((h) => (
                 <li key={h.id}>
@@ -51,6 +54,14 @@ export default async function Mina() {
                     </div>
                   </div>
                   <DeleteHitButton id={h.id} />
+                </li>
+              ))}
+              {myKela.map((k) => (
+                <li key={`kela-${k.day}`}>
+                  <div className="grow" style={{ minWidth: 0 }}>
+                    <div className="who">🏥 Kela <span className="ok">{k.damage}</span></div>
+                    <div className="facts">{formatDay(k.day)} · sairaspäivä</div>
+                  </div>
                 </li>
               ))}
             </ul>

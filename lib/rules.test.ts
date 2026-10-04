@@ -159,3 +159,17 @@ assert.deepEqual(cheerWinner([{ week: 1, voter: 'a', nominee: 'b' }, { week: 1, 
 assert.deepEqual(cheerWinner([{ week: 1, voter: 'a', nominee: 'b' }, { week: 1, voter: 'b', nominee: 'a' }], 1), { ids: ['b', 'a'], votes: 1 }, 'tasapeli');
 assert.equal(cheerWinner([], 1), null);
 console.log('Tsemppariäänestyksen testit menivät läpi.');
+
+// HP:n realismi
+import { hpPlan, weekActual } from './hpcheck.ts';
+{
+  const plan = hpPlan(40, [4500, 7000], {}, []);
+  assert.deepEqual([plan[0].pledgeBase, plan[0].stepsEst, plan[1].pledgeBase, plan[1].stepsEst], [2286, 1571, 4000, 2750], 'viikko 1 on 4/7');
+  assert.deepEqual([plan[1].need, plan[1].needPct, plan[1].needPctAtPace], [250, 6, null]);
+  const a = weekActual([{ damage: 150, bonus_pct: 50 }, { damage: 100, bonus_pct: 0 }], 10, 1, 50, 250);
+  assert.deepEqual(a, { trainingBase: 200, bonus: 50, steps: 750 });
+  // Toteutunut tahti: treenit puolet lupauksista ja askeleet puolet arviosta
+  const half = hpPlan(40, [4500, 7000], { 1: { trainingBase: 1143, bonus: 0, steps: 786 } }, [1]);
+  assert.equal(half[1].needPctAtPace, Math.round(((7000 - 2000.25 - 1375.3) / 2000.25) * 100));
+}
+console.log('HP-realismitestit menivät läpi.');
