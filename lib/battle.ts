@@ -3,9 +3,9 @@ import { activeWeaknesses, type MonsterPart } from './trio';
 import { computeLedger, pledgeHours, seasonHp, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, type Sport, type Weakness, type LedgerEvent } from './rules';
 import { loadSports } from './sports';
 import { testSkipPast } from './today';
-import { addDays, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_START } from './season';
+import { addDays, helsinkiMs, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_END, SEASON_START } from './season';
 import { gateResult, type GateRow } from './gate';
-import { patrolDays, pledgeForWeek, requiredForSeal, sickDaysBetween, isSickOn, weekPledgeTarget, type SickPeriod } from './weekly';
+import { kelaDays, patrolDays, pledgeForWeek, requiredForSeal, sickDaysBetween, isSickOn, weekPledgeTarget, type SickPeriod } from './weekly';
 
 export type Hero = {
   id: string;
@@ -113,6 +113,10 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   };
 
   const patrols = patrolDays(stepList, participants, periods);
+  // Kela: sairaspäivistä tulee oman lupauksen päiväosuus (kauden päivät tähän päivään asti).
+  const kela = today >= SEASON_START
+    ? kelaDays(participants, periods, SEASON_START, today < SEASON_END ? today : SEASON_END, (u, d) => pledgeOf(u, seasonWeek(d)))
+    : [];
   const sickNow = participants.filter((u) => isSickOn(periods, u, today));
   // Portinvartija: kauden alettua sen jäljelle jäänyt HP lisätään viikon 1 monsterille ja ylijäämä on potissa.
   const gate = gateResult((gateRow ?? null) as GateRow | null, hitList, stepList);
@@ -120,7 +124,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const week1 = byWeek.get(1);
   if (gateCarry && gate.left && week1?.hp != null) byWeek.set(1, { ...week1, hp: week1.hp + gate.left });
 
-  const base = { gate, week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
+  const base = { gate, week, today, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, kela, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
 
   if (!hpLocked && !hpPreview) return { ...base, hpLocked, hpPreview, required: participants, ledger: null, events: [] as LedgerEvent[], ledgerInput: null };
 
@@ -128,6 +132,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     ...hitList.map((h) => ({ week: seasonWeek(h.trained_on), at: Date.parse(h.created_at), userId: h.user_id, damage: h.damage, isTraining: true, allTogether: h.all_together })),
     ...stepList.map((s) => ({ week: seasonWeek(s.day), at: Date.parse(s.created_at), userId: s.user_id, damage: STEP_DAY_DAMAGE, isTraining: false })),
     ...patrols.map((p) => ({ week: seasonWeek(p.day), at: Date.parse(p.at) + 1, userId: 'partio', damage: PATROL_DAY_DAMAGE, isTraining: false })),
+    ...kela.map((k) => ({ week: seasonWeek(k.day), at: helsinkiMs(k.day, '00:01:00'), userId: k.userId, damage: k.damage, isTraining: false })),
   ];
   const requiredByWeek: Record<number, string[]> = {};
   const pledgeBonusesByWeek: Record<number, number> = {};

@@ -106,6 +106,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
     ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, icon: '⚔️', title: `${h.sport} ${h.minutes} min`, by: withCompanions(h.user_id, h.companions), day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, bonus: hitBonusText(h), photo: hitPhotoUrl(h.photo_path) })),
     ...data.steps.filter((st) => seasonWeek(st.day) === week).map((st) => ({ at: st.created_at, icon: '👣', title: 'Askeleet', by: heroById.get(st.user_id)?.hero_name ?? '?', day: st.day, dmg: STEP_DAY_DAMAGE, crit: false, bonus: '', photo: null })),
     ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, icon: '⭐', title: 'Megamarssi', by: 'Koko porukka', day: p.day, dmg: 250, crit: false, bonus: '', photo: null })),
+    ...data.kela.filter((k) => seasonWeek(k.day) === week).map((k) => ({ at: new Date(helsinkiMs(k.day, '00:01:00')).toISOString(), icon: '🏥', title: 'Kela', by: heroName(k.userId), day: k.day, dmg: k.damage, crit: false, bonus: '', photo: null })),
   ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 6);
 
   return (
