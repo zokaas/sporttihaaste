@@ -75,8 +75,9 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   let monsterList = (monsters ?? []) as PublicMonster[];
   if (monsterList.length === 0) monsterList = (publicMonsters ?? []) as PublicMonster[];
   const hitList = (hits ?? []) as unknown as Hit[];
-  const stepList = (steps ?? []) as Step[];
   const periods = (sick ?? []) as SickPeriod[];
+  // Sairaspäivänä ei tule askelvoimaa (Kela korvaa), vaikka vanha merkintä olisi jäänyt tietokantaan.
+  const stepList = ((steps ?? []) as Step[]).filter((s) => !isSickOn(periods, s.user_id, s.day));
   const changeList = (changes ?? []) as PledgeChange[];
   const participants = heroList.filter((h) => h.pledge_locked_at).map((h) => h.id);
   const week = Math.min(BOSS_WEEK, Math.max(1, seasonWeek(today)));

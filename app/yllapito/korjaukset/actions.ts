@@ -36,6 +36,16 @@ export async function adminSetSick(userId: string, startsOn: string, endsOn: str
   const supabase = await admin();
   if (!supabase) return { ok: false, error: 'Vain ylläpitäjä.' };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startsOn) || (endsOn && (!/^\d{4}-\d{2}-\d{2}$/.test(endsOn) || endsOn < startsOn))) return { ok: false, error: 'Tarkista päivämäärät.' };
+  // Kipeänä ei treenata: ajanjakson treenit (kuvineen) poistuvat. Askeleet ohitetaan laskennassa.
+  let trained = supabase.from('hits').select('*').eq('user_id', userId).gte('trained_on', startsOn);
+  if (endsOn) trained = trained.lte('trained_on', endsOn);
+  const { data: hits } = await trained;
+  if (hits?.length) {
+    const { error } = await supabase.from('hits').delete().in('id', hits.map((x: { id: number }) => x.id));
+    if (error) return done(error);
+    const photos = hits.map((x: { photo_path?: string | null }) => x.photo_path).filter((x): x is string => Boolean(x));
+    if (photos.length) await supabase.storage.from('hit-photos').remove(photos).catch(() => {});
+  }
   return done((await supabase.from('sick_periods').insert({ user_id: userId, starts_on: startsOn, ends_on: endsOn })).error);
 }
 
