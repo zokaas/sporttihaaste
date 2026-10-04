@@ -141,7 +141,7 @@ export default function MyWeek(p: Props) {
             );
           })}
         </div>
-        <span className="muted small">Jokainen sairaspäivä pienentää viikon lupausta 1/7:lla, ja yksikin sairaspäivä vapauttaa sinut sen viikon sinetistä.</span>
+        <span className="muted small">Jokainen sairaspäivä pienentää viikon lupausta 1/7:lla, ja yksikin sairaspäivä vapauttaa sinut sen viikon sinetistä. Sairaspäivältä poistuvat askeleet ja treenit.</span>
         {askContinue ? (
           <div className="sick-box">
             <strong>Onko paha?</strong>
