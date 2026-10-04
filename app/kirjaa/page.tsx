@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { avatarUrl } from '@/lib/supabase/client';
 import { SPECIAL_WEAKNESSES, type Category } from '@/lib/rules';
 import { activeSports, loadSports } from '@/lib/sports';
-import { formatDay, loggableDays, monthDay, seasonWeek, weekRange, SEASON_START } from '@/lib/season';
+import { addDays, formatDay, graceWeek, loggableDays, monthDay, seasonWeek, weekRange, SEASON_START } from '@/lib/season';
 import { today } from '@/lib/today';
 import { currentWeaknesses, loadBattle } from '@/lib/battle';
 import HitForm from '@/components/HitForm';
@@ -34,17 +34,21 @@ export default async function Kirjaa() {
   }
 
   const week = seasonWeek(now);
-  const { start, end } = weekRange(week);
+  // Armonaikana (ma klo 12 asti) myös edellisen viikon iskut näkyvät ja ovat poistettavissa.
+  const grace = graceWeek(now);
+  const start = weekRange(grace ?? week).start;
+  const lockWeek = grace ?? week;
+  const lockDay = addDays(weekRange(lockWeek).end, 1);
   const [{ data: heroes }, battle, { data: myHits }, { data: sick }, sports] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, birthday, name_day').order('hero_name'),
     loadBattle(supabase, now),
-    supabase.from('hits').select('*').eq('user_id', user.id).gte('trained_on', start).lte('trained_on', end).order('trained_on', { ascending: false }).order('created_at', { ascending: false }),
+    supabase.from('hits').select('*').eq('user_id', user.id).gte('trained_on', start).lte('trained_on', now).order('trained_on', { ascending: false }).order('created_at', { ascending: false }),
     supabase.from('sick_periods').select('user_id, starts_on, ends_on'),
     loadSports(supabase),
   ]);
   const participants = (heroes ?? []).filter((h) => h.pledge_locked_at);
   // Kela-iskut omilta sairaspäiviltä tällä viikolla (tulevat sairausmerkinnöistä, ei poistettavissa).
-  const myKela = battle.kela.filter((k) => k.userId === user.id && k.day >= start && k.day <= end).sort((a, c) => c.day.localeCompare(a.day));
+  const myKela = battle.kela.filter((k) => k.userId === user.id && k.day >= start && k.day <= now).sort((a, c) => c.day.localeCompare(a.day));
   const celebrations: Record<string, string[]> = {};
   for (const d of days) {
     const md = monthDay(d);
@@ -69,7 +73,7 @@ export default async function Kirjaa() {
       />
 
       <section className="card">
-        <h2 className="display">{week === 0 ? 'Iskusi portinvartijaan' : `Iskusi viikolla ${week}`}</h2>
+        <h2 className="display">{week === 0 ? 'Iskusi portinvartijaan' : grace ? `Iskusi viikoilla ${grace}–${week}` : `Iskusi viikolla ${week}`}</h2>
         {(myHits ?? []).length === 0 && myKela.length === 0 ? (
           <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla.</p>
         ) : (
@@ -98,7 +102,7 @@ export default async function Kirjaa() {
               ))}
           </ul>
         )}
-        <Hint id="week-lock">Viikko lukittuu su {+end.slice(8, 10)}.{+end.slice(5, 7)}. klo 23.59. Sen jälkeen iskuja ei voi enää lisätä tai poistaa.</Hint>
+        <Hint id="week-lock">{grace ? `Viikko ${grace} on vielä auki tänään klo 12 asti.` : `Viikon ${week} treenejä voi kirjata ma ${formatDay(lockDay).slice(3)} klo 12 asti.`} Sen jälkeen viikko lukittuu, eikä iskuja voi enää lisätä tai poistaa.</Hint>
       </section>
     </>
   );

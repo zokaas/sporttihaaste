@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 
 /** Aikaa viikon loppuun (tai muuhun hetkeen). offsetMs siirtää "nyt"-hetkeä (testitila). */
-export default function Countdown({ endMs, offsetMs = 0, title = 'Aikaa siihen, kun viikko lukittuu su klo 23.59', done = 'Viikko päättyi', suffix = 'jäljellä' }: { endMs: number; offsetMs?: number; title?: string; done?: string; suffix?: string }) {
+export default function Countdown({ endMs, offsetMs = 0, title = 'Aikaa siihen, kun viikko lukittuu ma klo 12', done = 'Viikko päättyi', suffix = 'jäljellä' }: { endMs: number; offsetMs?: number; title?: string; done?: string; suffix?: string }) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     const tick = () => setNow(Date.now() + offsetMs);
