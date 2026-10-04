@@ -71,7 +71,7 @@ export default async function Sankarit({ searchParams }: { searchParams: { tab?:
                         const trained = b.hits.some((h) => h.user_id === u && h.trained_on === d);
                         return (
                           <td key={d} title={`${formatDay(d)}${trained ? ' · treeni' : ''}${done ? ' · askeleet' : ''}${sick ? ' · kipeä' : ''}`}>
-                            <span className={`mcell${trained ? ' trained' : ''}`}>{sick && !trained && !done ? '🤒' : done ? '✓' : trained ? '' : '·'}</span>
+                            <span className={`mcell${trained ? ' trained' : ''}`}>{sick ? '🤒' : done ? '✓' : trained ? '' : '·'}</span>
                           </td>
                         );
                       })}
