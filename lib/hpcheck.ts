@@ -16,6 +16,8 @@ export type WeekPlan = {
   needPct: number;
   /** Sama, jos treenit ja askeleet toteutuvat tähänastisella tahdilla (null, jos tahtia ei vielä tiedetä). */
   needPctAtPace: number | null;
+  /** Bonusta tarvitaan voimana tällä tahdilla (null, jos tahtia ei vielä tiedetä). */
+  needAtPace: number | null;
   actual: WeekActual | null;
 };
 
@@ -38,13 +40,18 @@ export function hpPlan(totalPledgeHours: number, hpByWeek: number[], actuals: Re
     const stepsEst = Math.round(steps(week));
     const need = Math.max(0, hp - pledgeBase - stepsEst);
     let needPctAtPace: number | null = null;
+    let needAtPace: number | null = null;
     if (pledgeRate != null && stepRate != null && pledgeRate > 0) {
       const trained = pledgeRate * pledgeBase;
-      needPctAtPace = Math.round((Math.max(0, hp - trained - stepRate * stepsEst) / trained) * 100);
+      needAtPace = Math.round(Math.max(0, hp - trained - stepRate * stepsEst));
+      needPctAtPace = Math.round((needAtPace / trained) * 100);
     }
-    return { week, hp, pledgeBase, stepsEst, need, needPct: pledgeBase ? Math.round((need / pledgeBase) * 100) : 0, needPctAtPace, actual: actuals[week] ?? null };
+    return { week, hp, pledgeBase, stepsEst, need, needPct: pledgeBase ? Math.round((need / pledgeBase) * 100) : 0, needPctAtPace, needAtPace, actual: actuals[week] ?? null };
   }).filter((p) => p.week <= BOSS_WEEK);
 }
+
+/** Kuinka moni treeni kymmenestä tarvitsee yhden bonuksen (+50 %), kun bonusta tarvitaan pct % treenien päälle. */
+export const bonusTenths = (pct: number) => Math.round(pct / 5);
 
 /** Toteutunut viikko: treenien voima ilman bonuksia, bonukset, askeleet (+ megamarssit) ja Kela. */
 export function weekActual(hits: { damage: number; bonus_pct: number | null }[], stepDays: number, patrolDays: number, stepDamage: number, patrolDamage: number, kela = 0): WeekActual {
