@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { TEST_DAY_COOKIE, TEST_SKIP_COOKIE, testDay, testSkipPast } from '@/lib/today';
-import { helsinkiToday, formatDay, seasonWeek, SEASON_START, SEASON_END, BOSS_WEEK } from '@/lib/season';
+import { helsinkiToday, formatDay, seasonWeek, weekRange, SEASON_START, SEASON_END, BOSS_WEEK } from '@/lib/season';
 import { revalidatePath } from 'next/cache';
 import webpush from 'web-push';
 import { createClient } from '@/lib/supabase/server';
@@ -191,7 +191,8 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
       battle.kela.filter((x) => seasonWeek(x.day) === w).reduce((a, x) => a + x.damage, 0),
     );
   }
-  const closedWeeks = Object.keys(actuals).map(Number).filter((w) => w < battle.week);
+  // Tahti vain oikeasti päättyneiltä viikoilta (esikatselun testipäivänä kesken oleva viikko ei vääristä sitä).
+  const closedWeeks = Object.keys(actuals).map(Number).filter((w) => w < battle.week && weekRange(w).end < helsinkiToday());
   const plan = hpPlan(planHours, hpByWeek, actuals, closedWeeks);
   // Viikkokortin vertailu: paljonko bonusta HP olettaa päättyneelle viikolle (voimana).
   const lastNeed = lastRecap ? plan[lastRecap.week - 1]?.need ?? null : null;
@@ -203,7 +204,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
   const avgNeedPower = midWeeks.length ? midWeeks.reduce((a, p) => a + (p.needAtPace ?? p.need), 0) / midWeeks.length : 0;
   const heroCount = Math.max(1, battle.participants.length);
   const bonusTrainingsPerHero = avgNeedPower > 0 ? Math.max(1, Math.ceil(avgNeedPower / heroCount / (avgHitBase * 0.5))) : 0;
-  const tenths = (pct: number) => (bonusTenths(pct) >= 10 ? 'jokainen treeni bonuksella, ja vielä lisää' : `noin ${bonusTenths(pct)}/10 treenistä bonuksella`);
+  const tenths = (pct: number) => (bonusTenths(pct) >= 10 ? 'bonuksia lähes joka treeniin tai lisätreeniä' : `noin ${bonusTenths(pct)}/10 treenistä bonuksella`);
   const pace = closedWeeks.length ? {
     pledges: Math.round((closedWeeks.reduce((a, w) => a + actuals[w].trainingBase, 0) / closedWeeks.reduce((a, w) => a + plan[w - 1].pledgeBase, 0)) * 100),
     steps: Math.round((closedWeeks.reduce((a, w) => a + actuals[w].steps, 0) / closedWeeks.reduce((a, w) => a + plan[w - 1].stepsEst, 0)) * 100),
