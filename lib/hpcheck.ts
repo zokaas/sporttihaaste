@@ -2,7 +2,7 @@
 import { STEPS_WEEKLY_ESTIMATE } from './rules.ts';
 import { BOSS_WEEK } from './season.ts';
 
-export type WeekActual = { trainingBase: number; bonus: number; steps: number };
+export type WeekActual = { trainingBase: number; bonus: number; steps: number; kela: number };
 export type WeekPlan = {
   week: number;
   hp: number;
@@ -46,9 +46,9 @@ export function hpPlan(totalPledgeHours: number, hpByWeek: number[], actuals: Re
   }).filter((p) => p.week <= BOSS_WEEK);
 }
 
-/** Toteutunut viikko: treenien voima ilman bonuksia, bonusten osuus ja askeleet (+ megamarssit). */
-export function weekActual(hits: { damage: number; bonus_pct: number | null }[], stepDays: number, patrolDays: number, stepDamage: number, patrolDamage: number): WeekActual {
+/** Toteutunut viikko: treenien voima ilman bonuksia, bonukset, askeleet (+ megamarssit) ja Kela. */
+export function weekActual(hits: { damage: number; bonus_pct: number | null }[], stepDays: number, patrolDays: number, stepDamage: number, patrolDamage: number, kela = 0): WeekActual {
   const trainingBase = hits.reduce((a, h) => a + Math.round(h.damage / (1 + (h.bonus_pct ?? 0) / 100)), 0);
   const total = hits.reduce((a, h) => a + h.damage, 0);
-  return { trainingBase, bonus: total - trainingBase, steps: stepDays * stepDamage + patrolDays * patrolDamage };
+  return { trainingBase, bonus: total - trainingBase, steps: stepDays * stepDamage + patrolDays * patrolDamage, kela };
 }
