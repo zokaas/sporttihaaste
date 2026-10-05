@@ -19,7 +19,6 @@ import { activeWeaknesses, stageParts } from '@/lib/trio';
 import Hint from '@/components/Hint';
 import TodayCard from '@/components/TodayCard';
 import { isSickOn } from '@/lib/weekly';
-import { weekDifficulty } from '@/lib/outlook';
 
 type BattleData = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -87,9 +86,6 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
     : [];
   // Viikkoraportti näytetään vasta, kun armonaika on ohi (ma klo 12), jolloin luvut ovat lopullisia.
   const recap = week >= 2 && !data.grace ? weekRecap(data, week - 1) : null;
-  // Viikon vaikeus: kuinka moni treeni tarvitsee bonuksen, jotta viikon monsteri kaatuu.
-  const difficulty = weekDifficulty(data);
-  const thisWeak = activeWeaknesses(monsters.get(week), monsters.get(week)?.hp ?? 0).join(', ');
   const lastDay = week >= 1 && week <= BOSS_WEEK && data.today === weekRange(week).end;
   const overdue = ledger.alive.filter((f) => f.week < week).length;
   // Ennakkoarvoitus: perjantaista alkaen varjo ja vihje seuraavasta monsterista.
@@ -145,21 +141,6 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         </section>
       ) : null}
       {target ? <AwaySummary events={awayEvents} skip={ownHit != null} strike={{ name: nameOf(target.week), image: monsterImageUrl(targetMonster?.image_path), hp: view!.hp, maxHp: targetMonster?.hp ?? 1, reaction: hitReaction(targetMonster?.hit_lines, targetMonster?.hit_crit, false) }} /> : null}
-      {difficulty ? (
-        <p className={`difficulty ${difficulty.level}`}>
-          <strong>{difficulty.level === 'easy' ? '🟢 Helppo viikko' : difficulty.level === 'medium' ? '🟡 Keskivaikea viikko' : '🔴 Vaikea viikko'}</strong>
-          <span>
-            {difficulty.tenths === 0
-              ? 'Lupaukset ja askeleet riittävät, bonuksia ei tarvita.'
-              : difficulty.tenths >= 10
-                ? 'Jokainen treeni tarvitsee bonuksen, ja vielä vähän lisää.'
-                : difficulty.tenths === 5
-                  ? 'Noin joka toinen treeni tarvitsee bonuksen.'
-                  : `Noin ${difficulty.tenths} treeniä kymmenestä tarvitsee bonuksen.`}
-            {difficulty.tenths > 0 ? ` Bonus = 3 hengen porukka${thisWeak ? ` tai heikkous (${thisWeak})` : ''}.` : ''}
-          </span>
-        </p>
-      ) : null}
       {recap ? <RecapPrompt week={recap.week}><RecapCard r={recap} /></RecapPrompt> : null}
 
       {target ? (
