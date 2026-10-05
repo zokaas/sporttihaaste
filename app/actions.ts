@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { addDays, loggableDays, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { PREVIEW_ERROR, previewOnly, today } from '@/lib/today';
-import { afterStep } from '@/lib/events';
+import { afterStep, checkKills } from '@/lib/events';
 import { loadBattle } from '@/lib/battle';
 import { sendOrQueue, sendPush } from '@/lib/push';
 import { isQuietHour } from '@/lib/quiet';
@@ -73,7 +73,10 @@ export async function toggleSickDay(day: string, sick: boolean, continuing = fal
     const { error: stepError } = await supabase.from('step_days').delete().eq('user_id', user.id).eq('day', day);
     if (stepError) return done(stepError);
     const open = continuing && day === now;
-    return done((await supabase.from('sick_periods').insert({ user_id: user.id, starts_on: day, ends_on: open ? null : day })).error);
+    const res = done((await supabase.from('sick_periods').insert({ user_id: user.id, starts_on: day, ends_on: open ? null : day })).error);
+    // Kela-isku voi kaataa monsterin heti merkinnän hetkellä.
+    if (res.ok) await checkKills(supabase).catch(() => {});
+    return res;
   }
 
   for (const x of covering) {
