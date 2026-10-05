@@ -3,14 +3,15 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Finale } from '@/lib/finale';
 import ShareRecap from '@/components/ShareRecap';
+import { localKey } from '@/lib/localKey';
 
 const fmt = (n: number) => n.toLocaleString('fi-FI');
 
 function read(key: string) {
-  try { return localStorage.getItem(key); } catch { return null; }
+  try { return localStorage.getItem(localKey(key)); } catch { return null; }
 }
 function write(key: string, value: string) {
-  try { localStorage.setItem(key, value); } catch { /* ei tallennusta */ }
+  try { localStorage.setItem(localKey(key), value); } catch { /* ei tallennusta */ }
 }
 
 /** Kauden loppugaala: kunniamerkit paljastetaan yksi kerrallaan napauttamalla. */
