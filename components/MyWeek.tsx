@@ -60,6 +60,9 @@ export default function MyWeek(p: Props) {
   const stepCount = p.days.filter((d) => d.stepped && !d.sick).length;
   const sickCount = p.days.filter((d) => d.sick).length;
   const healthyDays = p.days.length - sickCount;
+  // Askeltavoite: 5 päivää viikossa (sama arvio kuin HP:ssa), suhteessa terveisiin päiviin. Loput päivät ovat bonusta.
+  const stepGoal = Math.round((5 * healthyDays) / 7);
+  const stepsOk = stepCount >= stepGoal && stepGoal > 0;
   const shortWeek = p.days.length < 7;
 
   function tapSick(d: Day) {
@@ -120,8 +123,8 @@ export default function MyWeek(p: Props) {
       })() : null}
 
       <div className="myweek-block">
-        <Hint id="steps" title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Askeleet (10 000 / pv)</span><strong>{stepCount} / {healthyDays} pv</strong></div>}>
-          Napauta päivää, kun olet kävellyt 10 000 askelta: +50. Jos kaikki terveet kuittaavat saman päivän, siitä tulee megamarssi ⭐ +250.
+        <Hint id="steps" title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Askeleet (10 000 / pv)</span><strong className={stepsOk ? 'ok' : ''}>{stepCount} / {stepGoal} pv{stepsOk ? ' ✓' : ''}{stepCount > stepGoal ? ` +${stepCount - stepGoal} ⭐` : ''}</strong></div>}>
+          Napauta päivää, kun olet kävellyt 10 000 askelta: +50. Tavoite on 5 päivää viikossa (vähemmän sairaspäivinä ja lyhyellä viikolla), mutta jokainen päivä tavoitteen yli on lisävoimaa. Jos kaikki terveet kuittaavat saman päivän, siitä tulee megamarssi ⭐ +250.
         </Hint>
         <div className="weekstrip" style={{ gridTemplateColumns: `repeat(${p.days.length}, 1fr)` }}>
           {p.days.map((d) => {
