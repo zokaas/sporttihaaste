@@ -55,12 +55,11 @@ assert.deepEqual(weaknessesOf({ parts: [{ name: 'a', weakness: 'Voimailu' }, { n
 // Kaksikko: 7 500 HP → 2 × 3 750; 4 000 vahinkoa → ensimmäinen kaatunut, toisesta 250 pois
 assert.deepEqual(partHps(7500, 2), [3750, 3750]);
 assert.deepEqual(partStates(7500, 3500, 2, false).map((p) => [p.left, p.dead]), [[0, true], [3500, false]]);
-// Heikkous on osakohtainen: bonus vain vuorossa olevan osan heikkoudesta
+// Kolmikko, jonka osilla eri heikkoudet
 const trio = { hp: 8400, parts: [{ name: 'Zom', weakness: 'Crossfit' }, { name: 'Zam', weakness: 'HIIT' }, { name: 'Zom Zam', weakness: 'Padel' }] };
-assert.deepEqual(activeWeaknesses(trio, 8400), ['Crossfit']);
-assert.deepEqual(activeWeaknesses(trio, 5600), ['HIIT']);
-assert.deepEqual(activeWeaknesses(trio, 100), ['Padel']);
-assert.deepEqual(activeWeaknesses(trio, 0), ['Padel']);
+// Kaikkien osien heikkoudet ovat voimassa koko viikon
+assert.deepEqual(activeWeaknesses(trio, 8400), ['Crossfit', 'HIIT', 'Padel']);
+assert.deepEqual(activeWeaknesses(trio, 100), ['Crossfit', 'HIIT', 'Padel']);
 assert.deepEqual(activeWeaknesses({ hp: 5000, weakness: 'Uinti' }, 100), ['Uinti']);
 console.log('Kolmikko- ja kaksikkotestit menivät läpi.');
 

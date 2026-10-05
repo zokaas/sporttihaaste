@@ -81,7 +81,7 @@ export const SPECIAL_WEAKNESSES: Record<string, { check: string; log: string }> 
   'Urheilu kenen tahansa isän kanssa': { check: 'Urheilin jonkun isän kanssa', log: 'isän kanssa' },
 };
 export const FAMILY_WEAKNESS = 'Urheilu mamun tai lapsen kanssa';
-/** Viikon erikoisheikkous (vuorossa olevan osan), jos sellainen on. */
+/** Viikon erikoisheikkous, jos sellainen on (moniosaisella ensimmäinen). */
 export const specialOf = (weaknesses: Weakness[]) => weaknesses.find((w) => w in SPECIAL_WEAKNESSES) ?? null;
 
 /** Osuuko isku heikkouteen: juuri tämä laji, sen lajiryhmä tai kirjaajan merkitsemä erikoisheikkous. Palauttaa osuman nimen. */

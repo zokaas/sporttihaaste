@@ -41,7 +41,7 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
   const celebration = (heroes ?? []).some((h) => h.pledge_locked_at && (h.birthday === md || h.name_day === md));
   const groupSize = 1 + companions.length;
   const weaknesses = currentWeaknesses(battle, seasonWeek(input.day));
-  // Erikoisheikkouden merkintä hyväksytään vain, kun se on viikon (vuorossa olevan osan) heikkous.
+  // Erikoisheikkouden merkintä hyväksytään vain, kun se on viikon heikkous.
   const special = input.special && input.special === specialOf(weaknesses) ? input.special : null;
   const result = hitDamage({
     minutes: input.minutes,

@@ -29,7 +29,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
   const blow = finalBlows(b)[week];
   const heroName = (id: string) => b.heroes.find((h) => h.id === id)?.hero_name ?? 'Megamarssi';
   const { start, end } = weekRange(week);
-  // Kaatuneella ei näytetä heikkoutta; elossa olevalla vain vuorossa olevan osan heikkous (kuten taistelussa).
+  // Kaatuneella ei näytetä heikkoutta; elossa olevalla kaikkien osien heikkoudet (voimassa koko viikon).
   const weak = killed ? '' : activeWeaknesses(m, view ? view.hp : m?.hp ?? 0).join(', ');
   const parts = stageParts(m, killed ? 0 : view?.hp ?? m?.hp ?? 0, Boolean(killed), monsterImageUrl);
 
