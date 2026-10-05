@@ -127,6 +127,8 @@ export type WeekRecap = {
   survived: { name: string; hp: number }[];
   damage: number;
   bonusShare: number;
+  /** Voiman erittely: treenit ilman bonuksia, bonukset, askeleet (+ megamarssit) ja Kela. */
+  parts: { training: number; bonus: number; steps: number; kela: number };
   potGain: number;
   pot: number;
   lostToSeal: number;
@@ -182,6 +184,8 @@ export function weekRecap(b: Battle, w: number): WeekRecap | null {
     damage,
     // Bonukset prosentteina treenien perusvoiman päälle (sama luku kuin ylläpidon HP-laskurissa).
     bonusShare: hitDamage - bonusDamage ? Math.round((bonusDamage / (hitDamage - bonusDamage)) * 100) : 0,
+    // Voiman erittely: treenit ilman bonuksia, bonukset, askeleet (+ megamarssit) ja Kela.
+    parts: { training: hitDamage - bonusDamage, bonus: bonusDamage, steps: steps.length * STEP_DAY_DAMAGE + patrols.length * PATROL_DAY_DAMAGE, kela },
     potGain: after.pot - (before?.pot ?? 0),
     potFrom: potParts(after.pot - (before?.pot ?? 0), w === 1 ? b.ledgerInput.startPot ?? 0 : 0, b.ledgerInput.pledgeBonusesByWeek[w] ?? 0),
     pot: after.pot,
@@ -197,13 +201,20 @@ export function weekRecap(b: Battle, w: number): WeekRecap | null {
   };
 }
 
+/** Voiman erittely tekstinä, nollat pois: ["treenit 2 376", "bonukset 540", …]. */
+export function powerParts(r: Pick<WeekRecap, 'parts'>) {
+  const fmt = (n: number) => n.toLocaleString('fi-FI');
+  return ([['treenit', r.parts.training], ['bonukset', r.parts.bonus], ['askeleet', r.parts.steps], ['Kela', r.parts.kela]] as const)
+    .filter(([, v]) => v > 0).map(([k, v]) => `${k} ${fmt(v)}`);
+}
+
 /** Raportti tekstinä WhatsAppiin. */
 export function recapText(r: WeekRecap) {
   const fmt = (n: number) => n.toLocaleString('fi-FI');
   const lines = [`⚔️ MONSTERIJAHTI – viikko ${r.week}`, ''];
   if (r.killed.length) lines.push(`💀 Kaatui: ${r.killed.join(', ')}`);
   for (const s of r.survived) lines.push(`😈 Jäi henkiin: ${s.name} (${fmt(s.hp)} HP rästiin)`);
-  lines.push(`💥 Voimaa yhteensä ${fmt(r.damage)} (bonukset +${r.bonusShare} % treenien päälle)`);
+  lines.push(`💥 Voimaa ${fmt(r.damage)} = ${powerParts(r).join(' + ')}`);
   if (r.lostToSeal) lines.push(`🛡️ Sinetti jäi vajaaksi: ${fmt(r.lostToSeal)} voimaa sinettirajan yli menetettiin`);
   lines.push(`⚔️ Ensi-isku loppupomolle +${fmt(r.potGain)} → ${fmt(r.pot)}${r.potFrom.length > 1 ? ` (${r.potFrom.map((x) => `${x.label.toLowerCase()} ${fmt(x.value)}`).join(', ')})` : ''}`);
   if (r.mvp) lines.push(`🏆 Viikon sankari: ${r.mvp.name} (${fmt(r.mvp.damage)})`);

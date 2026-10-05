@@ -1,4 +1,4 @@
-import type { WeekRecap } from '@/lib/stats';
+import { powerParts, type WeekRecap } from '@/lib/stats';
 import { monsterImageUrl, resizedImage } from '@/lib/supabase/client';
 import { ZoomImg } from '@/components/ImageViewer';
 
@@ -20,9 +20,10 @@ export default function RecapCard({ r }: { r: WeekRecap }) {
         </div>
       ) : null}
       <div className="stat-row">
-        <div className="stat"><span className="muted small">Voimaa</span><strong>{fmt(r.damage)}</strong><span className="muted small">bonukset +{r.bonusShare} % treeneihin</span></div>
+        <div className="stat"><span className="muted small">Voimaa</span><strong>{fmt(r.damage)}</strong></div>
         <div className="stat"><span className="muted small">Ensi-isku</span><strong>+{fmt(r.potGain)}</strong><span className="muted small">yhteensä {fmt(r.pot)}</span></div>
       </div>
+      <p className="small muted" style={{ margin: 0 }}>💥 Voima: {powerParts(r).join(' · ')}</p>
       {r.potFrom.length ? <p className="small pot-from" style={{ margin: 0 }}>Ensi-iskuun kertyi: {r.potFrom.map((x) => `${x.label.toLowerCase()} ${fmt(x.value)}`).join(' · ')}</p> : null}
       {r.lostToSeal ? <p className="note threat" style={{ margin: 0 }}>🛡️ Sinetti jäi vajaaksi: {fmt(r.lostToSeal)} voimaa sinettirajan yli menetettiin.</p> : null}
       {r.mvp ? <p style={{ margin: 0 }}>🏆 Viikon sankari: <strong>{r.mvp.name}</strong> ({fmt(r.mvp.damage)})</p> : null}
