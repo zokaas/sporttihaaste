@@ -3,6 +3,8 @@ import { upcomingCelebrations } from '@/lib/stats';
 import { BOSS_WEEK, formatDay, weekRange } from '@/lib/season';
 import { isSickOn } from '@/lib/weekly';
 import { avatarUrl } from '@/lib/supabase/client';
+import { weekDifficulty } from '@/lib/outlook';
+import { activeWeaknesses } from '@/lib/trio';
 
 /** Tänään: päivän askeltilanne ja juhlapäivä. Tulevat juhlapäivät ilmoitetaan viikkoa etukäteen. */
 export default function TodayCard({ b, showNextReveal = true }: { b: Battle; showNextReveal?: boolean }) {
@@ -16,10 +18,27 @@ export default function TodayCard({ b, showNextReveal = true }: { b: Battle; sho
     return { id: u, name: h?.hero_name ?? '?', avatar: avatarUrl(h?.avatar_path), done: stepped.has(u), sick: !healthy.includes(u) };
   });
   const patrol = b.patrols.some((p) => p.day === b.today);
+  // Viikon vaikeus: kuinka moni treeni kymmenestä tarvitsee bonuksen, jotta viikon monsteri kaatuu.
+  const difficulty = b.ledger ? weekDifficulty(b) : null;
+  const weak = activeWeaknesses(b.monsters.get(b.week), b.monsters.get(b.week)?.hp ?? 0).join(', ');
 
   return (
     <section className="card">
       <h2 className="display">Tänään {formatDay(b.today)}</h2>
+      {difficulty ? (
+        <div className={`row difficulty ${difficulty.level}`}>
+          <span aria-hidden="true">{difficulty.level === 'easy' ? '🟢' : difficulty.level === 'medium' ? '🟡' : '🔴'}</span>
+          <span>
+            <strong>{difficulty.level === 'easy' ? 'Helppo viikko' : difficulty.level === 'medium' ? 'Keskivaikea viikko' : 'Vaikea viikko'}</strong>
+            {' · '}
+            {difficulty.tenths === 0
+              ? 'lupaukset ja askeleet riittävät'
+              : difficulty.tenths >= 10
+                ? 'jokainen treeni tarvitsee bonuksen'
+                : `noin ${difficulty.tenths}/10 treenistä tarvitsee bonuksen (porukka${weak ? ` tai ${weak}` : ''})`}
+          </span>
+        </div>
+      ) : null}
       {/* Uusi monsteri paljastuu aina maanantaina, sen kaikki tietävät. Loppupomon viikolla muistutetaan kauden päättymisestä. */}
       {showNextReveal && b.week >= BOSS_WEEK ? <div className="row"><span aria-hidden="true">🏁</span><span className="muted">Kausi päättyy <strong style={{ color: 'var(--text)' }}>{formatDay(weekRange(BOSS_WEEK).end)}</strong>, kirjaukset ma klo 12 asti</span></div> : null}
       {todays.length ? (
