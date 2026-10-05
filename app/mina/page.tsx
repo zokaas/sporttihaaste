@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Nav from '@/components/Nav';
 import MyWeek from '@/components/MyWeek';
+import WeekTabs from '@/components/WeekTabs';
 import PushToggle from '@/components/PushToggle';
 import DeleteHitButton from '@/components/DeleteHitButton';
 import { requireHero } from '@/lib/page';
@@ -30,8 +31,13 @@ export default async function Mina() {
         <span className="muted small">Profiili →</span>
       </Link>
 
-      {b.grace ? <MyWeek {...myWeekProps(b, user.id, b.grace)} /> : null}
-      {inSeason ? <MyWeek {...myWeekProps(b, user.id)} /> : (
+      {b.grace && inSeason ? (
+        // Armonaikana (ma klo 12 asti) edellinen ja kuluva viikko välilehtinä, edellinen ensin.
+        <WeekTabs tabs={[
+          { label: `Viikko ${b.grace} · auki klo 12 asti`, content: <MyWeek {...myWeekProps(b, user.id, b.grace)} /> },
+          { label: `Viikko ${b.week}`, content: <MyWeek {...myWeekProps(b, user.id)} /> },
+        ]} />
+      ) : inSeason ? <MyWeek {...myWeekProps(b, user.id)} /> : (
         <section className="card">
           <h2 className="display">Minun viikkoni</h2>
           <p style={{ margin: 0 }}>{isGateDay(b.today) ? 'Portti aukesi etuajassa: Sauronin silmä on kaadettava ke klo 23.59 mennessä. Kirjaa treenit ja askeleet Lyö-napista. Viikkodata alkaa to 1.10.' : 'Kausi alkaa to 1.10. Silloin täällä näkyy enemmän dataa.'}</p>
