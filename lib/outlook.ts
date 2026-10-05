@@ -1,7 +1,8 @@
 // Viikon vaikeus ja oma bonustavoite HP-laskurin (lib/hpcheck.ts) pohjalta.
 import type { Battle } from './stats';
 import { PATROL_DAY_DAMAGE, STEP_DAY_DAMAGE } from './rules';
-import { BOSS_WEEK, helsinkiToday, seasonWeek, weekRange } from './season';
+import { addDays, BOSS_WEEK, helsinkiToday, seasonWeek, weekRange } from './season';
+import { isSickOn } from './weekly';
 import { bonusTenths, hpPlan, weekActual, type WeekActual } from './hpcheck';
 
 export type Difficulty = { level: 'easy' | 'medium' | 'hard'; tenths: number; need: number };
@@ -63,6 +64,12 @@ export function heroBonusGoal(b: NonNullable<Battle>, userId: string, week = b.w
   const status = b.pledgeStatus(userId, week);
   // Lupauksen ylittävä osa voimana: perusvoima, josta vähennetään lupaustavoitteen osuus (100 / tunti).
   const extra = Math.max(0, base - Math.round(status.target * 100));
+  // Askelpäivät yli tavoitteen (5 / 7 terveistä päivistä) ovat myös lisävoimaa.
+  const { start, end } = weekRange(week);
+  let healthy = 0;
+  for (let d = start; d <= end; d = addDays(d, 1)) if (!isSickOn(b.periods, userId, d)) healthy++;
+  const stepDays = b.steps.filter((s) => s.user_id === userId && s.day >= start && s.day <= end && !isSickOn(b.periods, userId, s.day)).length;
+  const steps = Math.max(0, stepDays - Math.round((5 * healthy) / 7)) * STEP_DAY_DAMAGE;
   const perBonus = Math.round(sp.avgHitBase * 0.5);
-  return { goal, done: bonus + extra, bonus, extra, perBonus };
+  return { goal, done: bonus + extra + steps, bonus, extra: extra + steps, perBonus };
 }
