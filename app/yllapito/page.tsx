@@ -204,7 +204,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
   const avgNeedPower = midWeeks.length ? midWeeks.reduce((a, p) => a + (p.needAtPace ?? p.need), 0) / midWeeks.length : 0;
   const heroCount = Math.max(1, battle.participants.length);
   const bonusTrainingsPerHero = avgNeedPower > 0 ? Math.max(1, Math.ceil(avgNeedPower / heroCount / (avgHitBase * 0.5))) : 0;
-  const tenths = (pct: number) => (bonusTenths(pct) >= 10 ? 'jokainen treeni bonuksella, ja vielä lisää' : `noin ${bonusTenths(pct)}/10 treenistä bonuksella`);
+  const tenths = (pct: number) => (bonusTenths(pct) >= 10 ? 'bonuksia lähes joka treeniin tai lisätreeniä' : `noin ${bonusTenths(pct)}/10 treenistä bonuksella`);
   const pace = closedWeeks.length ? {
     pledges: Math.round((closedWeeks.reduce((a, w) => a + actuals[w].trainingBase, 0) / closedWeeks.reduce((a, w) => a + plan[w - 1].pledgeBase, 0)) * 100),
     steps: Math.round((closedWeeks.reduce((a, w) => a + actuals[w].steps, 0) / closedWeeks.reduce((a, w) => a + plan[w - 1].stepsEst, 0)) * 100),

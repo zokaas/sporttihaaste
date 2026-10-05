@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Battle } from '@/lib/stats';
 import { upcomingCelebrations } from '@/lib/stats';
 import { BOSS_WEEK, formatDay, weekRange } from '@/lib/season';
@@ -31,11 +32,12 @@ export default function TodayCard({ b, showNextReveal = true }: { b: Battle; sho
           <span>
             <strong>{difficulty.level === 'easy' ? 'Helppo viikko' : difficulty.level === 'medium' ? 'Keskivaikea viikko' : 'Vaikea viikko'}</strong>
             {' · '}
-            {difficulty.tenths === 0
-              ? 'lupaukset ja askeleet riittävät'
-              : difficulty.tenths >= 10
-                ? 'jokainen treeni tarvitsee bonuksen'
-                : `noin ${difficulty.tenths}/10 treenistä tarvitsee bonuksen (porukka${weak ? ` tai ${weak}` : ''})`}
+            {difficulty.level === 'easy'
+              ? 'Lupaukset ja askeleet riittävät melkein.'
+              : difficulty.level === 'medium'
+                ? 'Tarvitaan bonustreenejä.'
+                : `Tarvitaan paljon bonustreenejä ja lisätreeniä. Yhteistreenit${weak ? ` ja ${weak}` : ''} auttavat eniten.`}
+            {' '}<Link href="/mina" className="nowrap">Oma tavoitteesi →</Link>
           </span>
         </div>
       ) : null}
