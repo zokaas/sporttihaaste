@@ -176,7 +176,7 @@ export interface LedgerInput {
   startPot?: number; // portinvartijan ylijäämä, joka on jo potissa kauden alkaessa
 }
 
-interface Fighter { week: number; hp: number; hitters: Set<string>; killedAt?: number; boss?: boolean }
+interface Fighter { week: number; hp: number; hitters: Set<string>; killedAt?: number; boss?: boolean; sealed?: boolean }
 
 /**
  * Laskee kauden tilanteen viikon uptoWeek loppuun. Jos weekOpen on tosi, viimeinen viikko on vielä
@@ -191,9 +191,11 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
   const sealFull = (f: Fighter, week: number) =>
     (input.requiredByWeek[week] ?? []).every((u) => f.hitters.has(u));
 
+  // Kerran täyttynyt sinetti pysyy täynnä: rästiin jäänyt monsteri ei vaadi seuraavan viikon uusia lyöjiä.
   const tryKill = (f: Fighter, week: number, at: number) => {
+    if (!f.sealed && sealFull(f, week)) f.sealed = true;
     if (f.hp > 0) return false;
-    if (!sealFull(f, week)) return false;
+    if (!f.sealed) return false;
     f.killedAt = at;
     return true;
   };
@@ -259,7 +261,14 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
   return {
     pot,
     lostToSeal,
-    alive: queue.map((f) => ({ week: f.week, hp: Math.max(1, f.hp), padded: f.hp <= 0 ? -f.hp : 0, hitters: [...f.hitters] })),
+    // Sinetöidyllä kaikki viikon vaaditut lasketaan lyöneiksi, joten näkymissä ei näy puuttuvia.
+    alive: queue.map((f) => ({
+      week: f.week,
+      hp: Math.max(1, f.hp),
+      padded: f.hp <= 0 ? -f.hp : 0,
+      hitters: f.sealed ? [...new Set([...f.hitters, ...(input.requiredByWeek[Math.min(uptoWeek, BOSS_WEEK)] ?? [])])] : [...f.hitters],
+      sealed: Boolean(f.sealed),
+    })),
     killed: done.map((f) => ({ week: f.week, killedAt: f.killedAt })),
   };
 }
