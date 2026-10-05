@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { localKey } from '@/lib/localKey';
 
 type Kill = { week: number; name: string; image: string | null; images?: string[]; blow: string | null };
 
@@ -18,10 +19,11 @@ export default function KillFinale({ killed, kills, storageKey = 'mj_killed', sh
   const [fresh, setFresh] = useState<Kill[]>([]);
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(storageKey);
+      const key = localKey(storageKey);
+      const stored = localStorage.getItem(key);
       const last = stored ?? (showFirst ? '0' : null);
       if (last !== null && killed > Number(last)) setFresh(kills.slice(Number(last)));
-      localStorage.setItem(storageKey, String(killed));
+      localStorage.setItem(key, String(killed));
     } catch {
       // Selaimen tallennus ei ole käytettävissä.
     }

@@ -1,13 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { localKey } from '@/lib/localKey';
 
 /** Näyttää edellisen viikon yhteenvedon kerran, kun sovellus avataan uudella viikolla. */
 export default function RecapPrompt({ week, children }: { week: number; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   useEffect(() => {
     try {
-      const key = `mj_recap_${week}`;
+      const key = localKey(`mj_recap_${week}`);
       if (!localStorage.getItem(key)) {
         // Monsterin paljastus odottaa, kunnes yhteenveto suljetaan.
         (window as unknown as { __mjModalOpen?: boolean }).__mjModalOpen = true;

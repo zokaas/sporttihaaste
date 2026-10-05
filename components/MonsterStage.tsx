@@ -5,6 +5,7 @@ import Countdown from '@/components/Countdown';
 import { groupName } from '@/lib/trio';
 import { resizedImage } from '@/lib/supabase/client';
 import { Viewer } from '@/components/ImageViewer';
+import { localKey } from '@/lib/localKey';
 
 export type StagePart = { name: string; image: string | null; hp: number; left: number; dead: boolean };
 
@@ -70,10 +71,10 @@ function stateOf(hp: number, maxHp: number, padded: number, dead: boolean) {
 }
 
 function read(key: string) {
-  try { return localStorage.getItem(key); } catch { return null; }
+  try { return localStorage.getItem(localKey(key)); } catch { return null; }
 }
 function write(key: string, value: string) {
-  try { localStorage.setItem(key, value); } catch { /* ei tallennusta */ }
+  try { localStorage.setItem(localKey(key), value); } catch { /* ei tallennusta */ }
 }
 
 const TAUNT_MS = 4000;
