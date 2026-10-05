@@ -42,19 +42,25 @@ export function weekDifficulty(b: NonNullable<Battle>, week = b.week): Difficult
 }
 
 /**
- * Oma bonustavoite viikolle: ryhmän bonustarve jaettuna lupausten suhteessa, yksi bonustreeni = +50 %
- * keskimääräisen treenin perusvoimasta. Tehdyt = viikon omat iskut, joissa on bonusta.
- * Tavoite olettaa, että lupaukset pidetään ja askeleet kuitataan (kuten ohjerivi sanoo), joten se lasketaan
- * teoreettisesta tarpeesta eikä toteutuneesta tahdista.
+ * Oma lisävoimatavoite viikolle: osuus porukan bonustarpeesta lupauksen koon mukaan. Sen voi kattaa
+ * bonuksilla (porukka, heikkous, juhlapäivä) tai treenaamalla yli lupauksen. Tavoite olettaa, että lupaus
+ * pidetään ja askeleet kuitataan, joten se lasketaan HP-laskurin teoreettisesta tarpeesta.
+ * Kertynyt = omien iskujen bonukset + treenien perusvoima lupauksen ylittävältä osalta.
+ * Vertailuluvut: yksi bonustreeni ≈ +50 % keskimääräisestä treenistä, yksi lisätunti ≈ 100.
  */
 export function heroBonusGoal(b: NonNullable<Battle>, userId: string, week = b.week) {
   if (week < 1 || week >= BOSS_WEEK) return null;
   const sp = seasonPlan(b);
   const p = sp.plan[week - 1];
   if (!p || !sp.totalPledgeHours) return null;
-  const need = p.need;
   const share = b.pledgeOf(userId, week) / sp.totalPledgeHours;
-  const goal = need > 0 ? Math.max(1, Math.ceil((need * share) / (sp.avgHitBase * 0.5))) : 0;
-  const done = b.hits.filter((h) => h.user_id === userId && seasonWeek(h.trained_on) === week && (h.bonus_pct ?? 0) > 0).length;
-  return { goal, done };
+  const goal = Math.round(p.need * share);
+  const mine = b.hits.filter((h) => h.user_id === userId && seasonWeek(h.trained_on) === week);
+  const base = mine.reduce((a, h) => a + Math.round(h.damage / (1 + (h.bonus_pct ?? 0) / 100)), 0);
+  const bonus = mine.reduce((a, h) => a + h.damage, 0) - base;
+  const status = b.pledgeStatus(userId, week);
+  // Lupauksen ylittävä osa voimana: perusvoima, josta vähennetään lupaustavoitteen osuus (100 / tunti).
+  const extra = Math.max(0, base - Math.round(status.target * 100));
+  const perBonus = Math.round(sp.avgHitBase * 0.5);
+  return { goal, done: bonus + extra, bonus, extra, perBonus };
 }

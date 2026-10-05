@@ -12,8 +12,8 @@ type Day = { day: string; stepped: boolean; future: boolean; patrol: boolean; si
 type Props = {
   week: number;
   grace?: boolean;
-  /** Oma bonustavoite (bonustreenit) ja tehdyt; null, kun tavoitetta ei lasketa. */
-  bonusGoal?: { goal: number; done: number } | null;
+  /** Oma lisävoimatavoite (bonukset tai treenit yli lupauksen) ja kertynyt; null, kun tavoitetta ei lasketa. */
+  bonusGoal?: { goal: number; done: number; bonus: number; extra: number; perBonus: number } | null;
   days: Day[];
   target: number;
   hours: number;
@@ -96,18 +96,28 @@ export default function MyWeek(p: Props) {
         {p.sickDays ? <span className="small" style={{ color: 'var(--gold)' }}>🤒 {p.sickDays} sairaspäivää: tavoite {h(p.fullTarget)} → {h(p.target)}{p.inSeal ? '' : ' · ei sinettivelvollisuutta tällä viikolla'}</span> : null}
       </div>
 
-      {p.bonusGoal && p.bonusGoal.goal > 0 ? (
-        <div className="myweek-block">
-          <Hint
-            id="bonus-goal"
-            title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">⭐ Bonustreenit</span><strong className={p.bonusGoal.done >= p.bonusGoal.goal ? 'ok' : ''} style={{ fontSize: 22 }}>{p.bonusGoal.done} / {p.bonusGoal.goal}{p.bonusGoal.done >= p.bonusGoal.goal ? ' ✓' : ''}</strong></div>}
-          >
-            Treenit ja askeleet eivät yksin riitä kaatamaan monsteria. Bonustreeni on treeni, jossa on bonus: 3 hengen porukka, viikon heikkous tai juhlapäivä. Tavoite on sinun osuutesi porukan bonustarpeesta lupauksesi koon mukaan.
-          </Hint>
-          <div className="hpbar"><span style={{ width: `${Math.min(100, (p.bonusGoal.done / p.bonusGoal.goal) * 100)}%`, background: p.bonusGoal.done >= p.bonusGoal.goal ? 'var(--moss-text)' : 'var(--gold)' }} /></div>
-          <span className="muted small">Tällä viikolla: lupaus {h(p.target)} · askeleet 5 päivänä · {p.bonusGoal.goal} bonustreeni{p.bonusGoal.goal > 1 ? 'ä' : ''}.</span>
-        </div>
-      ) : null}
+      {p.bonusGoal && p.bonusGoal.goal > 0 ? (() => {
+        const g = p.bonusGoal;
+        const ok = g.done >= g.goal;
+        const left = Math.max(0, g.goal - g.done);
+        return (
+          <div className="myweek-block">
+            <Hint
+              id="bonus-goal"
+              title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">⭐ Lisävoima</span><strong className={ok ? 'ok' : ''} style={{ fontSize: 22 }}>{g.done.toLocaleString('fi-FI')} / {g.goal.toLocaleString('fi-FI')}{ok ? ' ✓' : ''}</strong></div>}
+            >
+              Lupaukset ja askeleet eivät yksin riitä kaatamaan monsteria. Lisävoimaa saat bonuksista (3 hengen porukka, viikon heikkous, juhlapäivä) tai treenaamalla yli lupauksesi. Tavoite on sinun osuutesi porukan tarpeesta lupauksesi koon mukaan.
+            </Hint>
+            <div className="hpbar"><span style={{ width: `${Math.min(100, (g.done / g.goal) * 100)}%`, background: ok ? 'var(--moss-text)' : 'var(--gold)' }} /></div>
+            <span className="muted small">
+              {ok
+                ? 'Osuutesi on kasassa. Kaikki lisä auttaa porukkaa.'
+                : `Vielä ${left.toLocaleString('fi-FI')}: noin ${Math.max(1, Math.ceil(left / Math.max(1, g.perBonus)))} bonustreeniä tai ${String(Math.max(0.5, Math.ceil((left / 100) * 2) / 2)).replace('.', ',')} h treeniä yli lupauksen.`}
+              {g.bonus || g.extra ? ` Kertynyt: bonukset ${g.bonus.toLocaleString('fi-FI')} · yli lupauksen ${g.extra.toLocaleString('fi-FI')}.` : ''}
+            </span>
+          </div>
+        );
+      })() : null}
 
       <div className="myweek-block">
         <Hint id="steps" title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Askeleet (10 000 / pv)</span><strong>{stepCount} / {healthyDays} pv</strong></div>}>
