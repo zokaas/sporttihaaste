@@ -33,7 +33,7 @@ export default function TodayCard({ b, showNextReveal = true }: { b: Battle; sho
             <strong>{difficulty.level === 'easy' ? 'Helppo viikko' : difficulty.level === 'medium' ? 'Keskivaikea viikko' : 'Vaikea viikko'}</strong>
             {' · '}
             {difficulty.level === 'easy'
-              ? 'Lupaukset ja askeleet riittävät melkein.'
+              ? 'Lupaukset ja askeleet riittävät.'
               : difficulty.level === 'medium'
                 ? 'Tarvitaan bonustreenejä.'
                 : `Tarvitaan paljon bonustreenejä ja lisätreeniä. Yhteistreenit${weak ? ` ja ${weak}` : ''} auttavat eniten.`}
