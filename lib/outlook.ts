@@ -44,13 +44,15 @@ export function weekDifficulty(b: NonNullable<Battle>, week = b.week): Difficult
 /**
  * Oma bonustavoite viikolle: ryhmän bonustarve jaettuna lupausten suhteessa, yksi bonustreeni = +50 %
  * keskimääräisen treenin perusvoimasta. Tehdyt = viikon omat iskut, joissa on bonusta.
+ * Tavoite olettaa, että lupaukset pidetään ja askeleet kuitataan (kuten ohjerivi sanoo), joten se lasketaan
+ * teoreettisesta tarpeesta eikä toteutuneesta tahdista.
  */
 export function heroBonusGoal(b: NonNullable<Battle>, userId: string, week = b.week) {
   if (week < 1 || week >= BOSS_WEEK) return null;
   const sp = seasonPlan(b);
   const p = sp.plan[week - 1];
   if (!p || !sp.totalPledgeHours) return null;
-  const need = p.needAtPace ?? p.need;
+  const need = p.need;
   const share = b.pledgeOf(userId, week) / sp.totalPledgeHours;
   const goal = need > 0 ? Math.max(1, Math.ceil((need * share) / (sp.avgHitBase * 0.5))) : 0;
   const done = b.hits.filter((h) => h.user_id === userId && seasonWeek(h.trained_on) === week && (h.bonus_pct ?? 0) > 0).length;
