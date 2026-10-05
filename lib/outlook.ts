@@ -32,12 +32,15 @@ export function seasonPlan(b: NonNullable<Battle>, totalPledgeHours = b.particip
   return { plan: hpPlan(totalPledgeHours, hpByWeek, actuals, closedWeeks), actuals, closedWeeks, totalPledgeHours, avgHitBase: avgHitBase(b) };
 }
 
+/** Onko viikon oma monsteri jo kaatunut (silloin vaikeutta tai lisävoimaa ei enää näytetä). */
+const weekKilled = (b: NonNullable<Battle>, week: number) => Boolean(b.ledger?.killed.some((k) => k.week === week));
+
 /**
  * Viikon vaikeus: kuinka moni treeni kymmenestä tarvitsee bonuksen (tällä tahdilla, jos tiedossa).
  * Helppo alle 3/10, keski 3–6/10, vaikea yli 6/10. Loppupomolle ei lasketa (ensi-isku muuttaa tarpeen).
  */
 export function weekDifficulty(b: NonNullable<Battle>, week = b.week): Difficulty | null {
-  if (week < 1 || week >= BOSS_WEEK || !b.monsters.get(week)?.hp) return null;
+  if (week < 1 || week >= BOSS_WEEK || !b.monsters.get(week)?.hp || weekKilled(b, week)) return null;
   const p = seasonPlan(b).plan[week - 1];
   if (!p) return null;
   const tenths = bonusTenths(p.needPctAtPace ?? p.needPct);
@@ -62,13 +65,15 @@ function heroExtra(b: NonNullable<Battle>, userId: string, week: number) {
 }
 
 /**
- * Porukan yhteinen lisävoima viikolle: tavoite on HP-laskurin teoreettinen bonustarve (lupaukset pidetään ja
- * askeleet kuitataan), kertynyt on kaikkien sankarien lisävoima. `mine` on sankarin oma osuus (ei tavoitetta).
+ * Porukan yhteinen lisävoima viikolle: tavoite on HP-laskurin bonustarve tähänastisella tahdilla (ennen ensimmäistä
+ * päättynyttä viikkoa teoreettinen), kertynyt on kaikkien sankarien lisävoima. `mine` on sankarin oma osuus (ei tavoitetta).
  */
 export function teamExtra(b: NonNullable<Battle>, userId: string, week = b.week) {
-  if (week < 1 || week >= BOSS_WEEK) return null;
+  if (week < 1 || week >= BOSS_WEEK || weekKilled(b, week)) return null;
   const p = seasonPlan(b).plan[week - 1];
-  if (!p || p.need <= 0) return null;
+  // Tarve samalla tahdilla kuin viikon vaikeudessa; jos lisävoimaa ei tarvita, palkkia ei näytetä.
+  const need = p ? p.needAtPace ?? p.need : 0;
+  if (need <= 0) return null;
   const done = b.participants.reduce((a, u) => a + heroExtra(b, u, week), 0);
-  return { goal: p.need, done, mine: heroExtra(b, userId, week) };
+  return { goal: need, done, mine: heroExtra(b, userId, week) };
 }
