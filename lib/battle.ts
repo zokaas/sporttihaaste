@@ -158,7 +158,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   return { ...base, hpLocked, hpPreview, required: requiredByWeek[week], ledger, events, ledgerInput };
 }
 
-/** Viikon heikkous iskuhetkellä: moniosaisella vain vuorossa olevan osan. Kaatuneella viikolla viimeisen osan. */
+/** Viikon heikkoudet iskuhetkellä: moniosaisella kaikkien osien heikkoudet koko viikon. */
 export function currentWeaknesses(b: { monsters: Map<number, PublicMonster>; ledger: { alive: { week: number; hp: number }[] } | null }, week: number) {
   const m = b.monsters.get(week);
   const f = b.ledger?.alive.find((x) => x.week === week);

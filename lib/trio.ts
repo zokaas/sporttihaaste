@@ -33,18 +33,12 @@ export function weaknessesOf(m: { weakness?: Weakness | null; parts?: MonsterPar
 }
 
 /**
- * Heikkous iskuhetkellä. Moniosaisella heikkous on osakohtainen: bonus tulee vain vuorossa olevan osan
- * heikkoudesta (sama osa kuin näyttämöllä). `hpLeft` on viikon monsterin jäljellä oleva HP.
+ * Heikkous iskuhetkellä. Kaksikolla ja kolmikolla kaikkien osien heikkoudet ovat voimassa koko viikon
+ * (myös jo kaatuneiden osien). Yksi treeni saa silti enintään yhden heikkousbonuksen (+50 %).
+ * `hpLeft` säilyy kutsujien yhteensopivuuden vuoksi.
  */
-export function activeWeaknesses(m: { hp?: number | null; weakness?: Weakness | null; parts?: MonsterPart[] | null } | null | undefined, hpLeft: number): Weakness[] {
-  if (!m?.parts?.length) return weaknessesOf(m);
-  let i = 0;
-  if (m.hp) {
-    i = partStates(m.hp, hpLeft, m.parts.length, false).findIndex((x) => !x.dead);
-    if (i < 0) i = m.parts.length - 1;
-  }
-  const w = m.parts[i].weakness;
-  return w ? [w] : [];
+export function activeWeaknesses(m: { hp?: number | null; weakness?: Weakness | null; parts?: MonsterPart[] | null } | null | undefined, _hpLeft?: number): Weakness[] {
+  return weaknessesOf(m);
 }
 
 /** Näyttämön osat: HP-tila ja kuva osittain. `image` muuntaa tallennuspolun osoitteeksi. */
