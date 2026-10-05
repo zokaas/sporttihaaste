@@ -1,14 +1,14 @@
 // Viikon vaikeus ja oma bonustavoite HP-laskurin (lib/hpcheck.ts) pohjalta.
 import type { Battle } from './stats';
 import { PATROL_DAY_DAMAGE, STEP_DAY_DAMAGE } from './rules';
-import { BOSS_WEEK, seasonWeek } from './season';
+import { BOSS_WEEK, helsinkiToday, seasonWeek, weekRange } from './season';
 import { bonusTenths, hpPlan, weekActual, type WeekActual } from './hpcheck';
 
 export type Difficulty = { level: 'easy' | 'medium' | 'hard'; tenths: number; need: number };
 
 /** Treenin keskimääräinen perusvoima päättyneiltä viikoilta (ennen ensimmäistä viikkoa arvio 90). */
 function avgHitBase(b: NonNullable<Battle>) {
-  const xs = b.hits.filter((h) => seasonWeek(h.trained_on) < b.week).map((h) => h.damage / (1 + (h.bonus_pct ?? 0) / 100));
+  const xs = b.hits.filter((h) => seasonWeek(h.trained_on) < b.week && weekRange(seasonWeek(h.trained_on)).end < helsinkiToday()).map((h) => h.damage / (1 + (h.bonus_pct ?? 0) / 100));
   return xs.length ? xs.reduce((a, x) => a + x, 0) / xs.length : 90;
 }
 
@@ -25,7 +25,9 @@ export function seasonPlan(b: NonNullable<Battle>, totalPledgeHours = b.particip
       b.kela.filter((x) => seasonWeek(x.day) === w).reduce((a, x) => a + x.damage, 0),
     );
   }
-  const closedWeeks = Object.keys(actuals).map(Number).filter((w) => w < b.week);
+  // Tahti vain oikeasti päättyneiltä viikoilta: esikatselun testipäivänä kesken oleva viikko ei vääristä sitä.
+  const realToday = helsinkiToday();
+  const closedWeeks = Object.keys(actuals).map(Number).filter((w) => w < b.week && weekRange(w).end < realToday);
   return { plan: hpPlan(totalPledgeHours, hpByWeek, actuals, closedWeeks), actuals, closedWeeks, totalPledgeHours, avgHitBase: avgHitBase(b) };
 }
 
