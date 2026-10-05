@@ -12,6 +12,8 @@ type Day = { day: string; stepped: boolean; future: boolean; patrol: boolean; si
 type Props = {
   week: number;
   grace?: boolean;
+  /** Oma bonustavoite (bonustreenit) ja tehdyt; null, kun tavoitetta ei lasketa. */
+  bonusGoal?: { goal: number; done: number } | null;
   days: Day[];
   target: number;
   hours: number;
@@ -93,6 +95,19 @@ export default function MyWeek(p: Props) {
         {shortWeek ? <span className="muted small">Lyhyt viikko ({p.days.length} pv): tavoite on {p.days.length}/7 lupauksestasi ({h(p.pledge)}).</span> : null}
         {p.sickDays ? <span className="small" style={{ color: 'var(--gold)' }}>🤒 {p.sickDays} sairaspäivää: tavoite {h(p.fullTarget)} → {h(p.target)}{p.inSeal ? '' : ' · ei sinettivelvollisuutta tällä viikolla'}</span> : null}
       </div>
+
+      {p.bonusGoal && p.bonusGoal.goal > 0 ? (
+        <div className="myweek-block">
+          <Hint
+            id="bonus-goal"
+            title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">⭐ Bonustreenit</span><strong className={p.bonusGoal.done >= p.bonusGoal.goal ? 'ok' : ''} style={{ fontSize: 22 }}>{p.bonusGoal.done} / {p.bonusGoal.goal}{p.bonusGoal.done >= p.bonusGoal.goal ? ' ✓' : ''}</strong></div>}
+          >
+            Treenit ja askeleet eivät yksin riitä kaatamaan monsteria. Bonustreeni on treeni, jossa on bonus: 3 hengen porukka, viikon heikkous tai juhlapäivä. Tavoite on sinun osuutesi porukan bonustarpeesta lupauksesi koon mukaan.
+          </Hint>
+          <div className="hpbar"><span style={{ width: `${Math.min(100, (p.bonusGoal.done / p.bonusGoal.goal) * 100)}%`, background: p.bonusGoal.done >= p.bonusGoal.goal ? 'var(--moss-text)' : 'var(--gold)' }} /></div>
+          <span className="muted small">Tällä viikolla: lupaus {h(p.target)} · askeleet 5 päivänä · {p.bonusGoal.goal} bonustreeni{p.bonusGoal.goal > 1 ? 'ä' : ''}.</span>
+        </div>
+      ) : null}
 
       <div className="myweek-block">
         <Hint id="steps" title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Askeleet (10 000 / pv)</span><strong>{stepCount} / {healthyDays} pv</strong></div>}>

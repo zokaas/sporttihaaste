@@ -1,6 +1,7 @@
 import type { loadBattle } from './battle';
 import { addDays, seasonWeek, weekRange } from './season';
 import { isSickOn, weekPledgeTarget } from './weekly';
+import { heroBonusGoal } from './outlook';
 
 /** Minun viikkoni -kortin tiedot. */
 export function myWeekProps(b: NonNullable<Awaited<ReturnType<typeof loadBattle>>>, userId: string, week = b.week) {
@@ -34,5 +35,6 @@ export function myWeekProps(b: NonNullable<Awaited<ReturnType<typeof loadBattle>
     stepDamage,
     togetherCount: b.hits.filter((h) => seasonWeek(h.trained_on) === week && h.companions.length >= 2 && (h.user_id === userId || h.companions.includes(userId))).length,
     pledge: b.pledgeOf(userId, week),
+    bonusGoal: heroBonusGoal(b, userId, week),
   };
 }
