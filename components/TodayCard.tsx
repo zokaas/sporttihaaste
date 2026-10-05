@@ -37,7 +37,7 @@ export default function TodayCard({ b, showNextReveal = true }: { b: Battle; sho
               : difficulty.level === 'medium'
                 ? 'Tarvitaan bonustreenejä.'
                 : `Tarvitaan paljon bonustreenejä ja lisätreeniä. Yhteistreenit${weak ? ` ja ${weak}` : ''} auttavat eniten.`}
-            {' '}<Link href="/mina" className="nowrap">Porukan lisävoima →</Link>
+            {difficulty.tenths > 0 ? <>{' '}<Link href="/mina" className="nowrap">Porukan lisävoima →</Link></> : null}
           </span>
         </div>
       ) : null}

@@ -108,7 +108,7 @@ export default function MyWeek(p: Props) {
               id="team-extra"
               title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">⭐ Porukan lisävoima</span><strong className={ok ? 'ok' : ''} style={{ fontSize: 22 }}>{g.done.toLocaleString('fi-FI')} / {g.goal.toLocaleString('fi-FI')}{ok ? ' ✓' : ''}</strong></div>}
             >
-              Lupaukset ja askeleet eivät yksin riitä kaatamaan monsteria. Loput kerätään yhdessä: bonuksilla (3 hengen porukka, viikon heikkous, juhlapäivä), treenaamalla yli lupauksen ja kuittaamalla askeleita yli 5 päivän. Tavoite olettaa, että kaikki pitävät lupauksensa.
+              Lupaukset ja askeleet eivät yksin riitä kaatamaan monsteria. Loput kerätään yhdessä: bonuksilla (3 hengen porukka, viikon heikkous, juhlapäivä), treenaamalla yli lupauksen ja kuittaamalla askeleita yli 5 päivän. Tavoite lasketaan tähänastisella tahdilla, ja palkki katoaa, kun viikon monsteri on kaatunut.
             </Hint>
             <div className="hpbar"><span style={{ width: `${Math.min(100, (g.done / g.goal) * 100)}%`, background: ok ? 'var(--moss-text)' : 'var(--gold)' }} /></div>
             <span className="muted small">
