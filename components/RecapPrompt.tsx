@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { localKey } from '@/lib/localKey';
+import { release, requestTurn } from '@/lib/overlayQueue';
 
 /** Näyttää edellisen viikon yhteenvedon kerran, kun sovellus avataan uudella viikolla. */
 export default function RecapPrompt({ week, children }: { week: number; children: React.ReactNode }) {
@@ -10,9 +11,8 @@ export default function RecapPrompt({ week, children }: { week: number; children
     try {
       const key = localKey(`mj_recap_${week}`);
       if (!localStorage.getItem(key)) {
-        // Monsterin paljastus odottaa, kunnes yhteenveto suljetaan.
-        (window as unknown as { __mjModalOpen?: boolean }).__mjModalOpen = true;
-        setOpen(true);
+        // Jonossa kaatumisruudun kanssa; monsterin paljastus odottaa, kunnes jono tyhjenee.
+        requestTurn('recap', 2, () => setOpen(true));
         localStorage.setItem(key, '1');
       }
     } catch {
@@ -21,8 +21,7 @@ export default function RecapPrompt({ week, children }: { week: number; children
   }, [week]);
   function close() {
     setOpen(false);
-    (window as unknown as { __mjModalOpen?: boolean }).__mjModalOpen = false;
-    window.dispatchEvent(new Event('mj:modal-closed'));
+    release('recap');
   }
   if (!open) return null;
   return (

@@ -53,7 +53,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const heroById = new Map(heroes.map((h) => [h.id, h]));
   const nameOf = (w: number) => monsters.get(w)?.name ?? (w === BOSS_WEEK ? 'Loppupomo' : `Viikon ${w} monsteri`);
   const blows = finalBlows(data);
-  const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), images: (monsters.get(k.week)?.parts ?? []).map((x) => monsterImageUrl(x.image_path)).filter((x): x is string => Boolean(x)), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Megamarssi' : null }));
+  const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), images: (monsters.get(k.week)?.parts ?? []).map((x) => monsterImageUrl(x.image_path)).filter((x): x is string => Boolean(x)), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Megamarssi' : null, killedAt: k.killedAt }));
   const missing = target ? required.filter((id) => !target.hitters.includes(id)) : [];
   const view = target ? sealView(target, required) : null;
   // Monsterin repliikki HP:n mukaan: ylläpidon kirjoittama tai oletus.
@@ -120,7 +120,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           HP-esikatselu: tavoitetta ei ole lukittu, joten HP:t on laskettu nykyisistä lupauksista. <Link href="/yllapito">Lukitse tavoite ylläpidossa</Link> ke 30.9.
         </p>
       ) : null}
-      <KillFinale killed={ledger.killed.length} kills={kills} />
+      <KillFinale killed={ledger.killed.length} kills={kills} recapEndMs={recap ? helsinkiMs(weekRange(recap.week).end) : undefined} />
       {data.grace ? (
         <p className="note threat" style={{ margin: 0 }}>
           ⏳ <strong>Viikko {data.grace} on vielä auki tänään klo 12 asti.</strong> Kirjaa puuttuvat treenit ja askeleet, niin ne lasketaan viikon {data.grace} monsteriin ja lupaukseen. <Link href="/kirjaa">Kirjaa →</Link>
