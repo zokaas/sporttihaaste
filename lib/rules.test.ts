@@ -74,6 +74,15 @@ assert.equal(r.alive[0].padded, 300);
 assert.deepEqual(r.alive[0].hitters.sort(), ['a', 'b']);
 assert.equal(r.lostToSeal, 0);
 
+// 2c) Kerran täyttynyt sinetti pysyy: viikolla 1 vapautettu c ei estä rästin kaatumista viikolla 2
+r = computeLedger({ ...base, requiredByWeek: { 1: ['a', 'b'], 2: ['a', 'b', 'c'] }, events: [ev(1, 1, 'a', 300), ev(1, 2, 'b', 300), ev(2, 1, 'a', 500)] }, 2, true);
+assert.deepEqual(r.killed.map((k) => k.week), [1], 'sinetöity rästi kaatuu ilman c:tä');
+assert.equal(r.alive[0].week, 2);
+// Sinetöity, mutta HP jäljellä: kaikki lasketaan lyöneiksi
+r = computeLedger({ ...base, requiredByWeek: { 1: ['a', 'b'], 2: ['a', 'b', 'c'] }, events: [ev(1, 1, 'a', 300), ev(1, 2, 'b', 300)] }, 2, true);
+assert.equal(r.alive[0].sealed, true);
+assert.deepEqual(r.alive[0].hitters.sort(), ['a', 'b', 'c']);
+
 // 3) Rästi kaadetaan ensin, sitten viikon oma
 r = computeLedger({ ...base, events: [ev(1, 1, 'a', 500), ev(2, 1, 'a', 100), ev(2, 2, 'b', 100), ev(2, 3, 'c', 1500)] }, 2);
 assert.deepEqual(r.killed.map((k) => k.week), [1, 2]);
