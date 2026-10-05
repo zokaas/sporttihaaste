@@ -167,13 +167,23 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
   const supabase = await requireAdmin();
   const battle = await loadBattle(supabase, today());
   const lastRecap = battle.week >= 2 ? weekRecap(battle, battle.week - 1) : null;
-  const [{ data: heroes }, { data: subs }, { data: season }, { data: monsters }, { data: gateRow, error: gateError }] = await Promise.all([
+  const [{ data: heroes }, { data: subs }, { data: season }, { data: monsters }, { data: gateRow, error: gateError }, { data: seenRows }] = await Promise.all([
     supabase.from('profiles').select('*').order('created_at'),
     supabase.from('push_subscriptions').select('user_id'),
     supabase.from('season').select('*').single(),
     supabase.from('monsters').select('*').order('week'),
     supabase.from('gate').select('name, description, image_path, taunt, hp').eq('id', 1).maybeSingle(),
+    // Viimeksi paikalla (migraatio 032); ilman taulua tyhjä.
+    supabase.from('last_seen').select('user_id, seen_at'),
   ]);
+  const seenAt = new Map(((seenRows ?? []) as { user_id: string; seen_at: string }[]).map((r) => [r.user_id, r.seen_at]));
+  const seenText = (iso: string | undefined) => {
+    if (!iso) return 'ei tietoa';
+    const day = helsinkiToday(new Date(iso));
+    const time = new Intl.DateTimeFormat('fi-FI', { timeZone: 'Europe/Helsinki', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
+    const diff = Math.round((Date.parse(helsinkiToday()) - Date.parse(day)) / 86_400_000);
+    return diff === 0 ? `tänään ${time}` : diff === 1 ? `eilen ${time}` : `${diff} pv sitten`;
+  };
   const withPush = new Set((subs ?? []).map((s) => s.user_id));
   const locked = (heroes ?? []).filter((h) => h.pledge_locked_at);
   const total = locked.reduce((a, h) => a + Number(h.pledge_hours), 0);
@@ -290,7 +300,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
                     {' · '}Synt. {dm(h.birthday)}{h.birthday && h.birth_year ? h.birth_year : ''}
                     {' · '}Nimip. {dm(h.name_day)}
                   </div>
-                  <div className="facts">Ilmoitukset: {withPush.has(h.id) ? <span className="ok">päällä</span> : <span className="error">pois</span>}</div>
+                  <div className="facts">Ilmoitukset: {withPush.has(h.id) ? <span className="ok">päällä</span> : <span className="error">pois</span>} · Viimeksi paikalla: {seenText(seenAt.get(h.id))}</div>
                 </div>
               </li>
             );

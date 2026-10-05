@@ -14,9 +14,11 @@ export async function requireHero() {
   const user = await currentUser();
   if (!user) redirect('/kirjaudu');
   // Profiili ja kauden tilanne haetaan rinnakkain, jotta sivu ei odota kahta peräkkäistä kierrosta.
+  // Viimeisin käynti (migraatio 032) tallentuu samalla, korkeintaan kerran 15 minuutissa. Virhe ei estä sivua.
   const [{ data: me }, battle] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).single(),
     loadBattle(supabase, today()),
+    Promise.resolve(supabase.rpc('touch_last_seen')).catch(() => null),
   ]);
   if (!me?.hero_name || !me?.pledge_locked_at) redirect('/ilmoittaudu');
   return { supabase, user, me, battle };
