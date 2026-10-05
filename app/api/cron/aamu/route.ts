@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendPush, type PushPayload } from '@/lib/push';
 import { fridayReminders } from '@/lib/reminders';
+import { checkKills } from '@/lib/events';
 import { helsinkiHour, QUIET_END } from '@/lib/quiet';
 import { helsinkiToday, isGateDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 
@@ -63,6 +64,9 @@ export async function GET(request: Request) {
   // 3. Uusi monsteri paljastuu (viikon ensimmäinen päivä: to 1.10. ja sen jälkeen maanantait)
   const day = helsinkiToday();
   const week = seasonWeek(day);
+
+  // 2b. Klo 9 Kela-iskut tulevat voimaan: kaatoiko jokin niistä monsterin?
+  await checkKills(supabase, day).catch((e) => console.error('Kaatumistarkistus epäonnistui', e));
   if (week >= 1 && week <= BOSS_WEEK && weekRange(week).start === day) {
     const { data: m } = await supabase.from('monsters').select('name, weakness').eq('week', week).maybeSingle();
     const { data: season } = await supabase.from('season').select('hp_locked_at').eq('id', 1).maybeSingle();

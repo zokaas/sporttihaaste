@@ -16,15 +16,31 @@ async function gateKill(supabase: SupabaseClient, b: Awaited<ReturnType<typeof l
   await sendOnce(supabase, 'gate-kill', { title: `🗝️ ${b.gate.name} kaatui!`, body: 'Portti on auki. Torstaina klo 00.00 ensimmäinen monsteri astuu esiin.' });
 }
 
+/**
+ * Kaatumisilmoitus kaikille kerran per monsteri. Kaatumisen voi aiheuttaa treeni, askelkuittaus, sairausmerkintä
+ * tai aamun Kela-isku (klo 9), joten tarkistus ajetaan niiden kaikkien jälkeen. Viikon raja estää vanhojen
+ * kaatumisten ilmoittamisen, ja sendOnce estää tuplat.
+ */
+async function notifyKills(supabase: SupabaseClient, b: Battle) {
+  if (!b.ledger || !b.hpLocked) return;
+  for (const k of b.ledger.killed) {
+    if (!k.killedAt || k.killedAt < Date.now() - 7 * 24 * 3600_000 || k.killedAt > Date.now()) continue;
+    await sendOnce(supabase, `kill-${k.week}`, { title: `💀 ${nameOf(b, k.week)} kaatui!`, body: 'Sinetti täyttyi ja voima riitti. Katso, kuka löi viimeisen iskun.' });
+  }
+}
+
+/** Kaatumisten tarkistus ilman iskua (sairausmerkintä, aamuajastus). */
+export async function checkKills(supabase: SupabaseClient, day = today()) {
+  if (testDay()) return;
+  await notifyKills(supabase, await loadBattle(supabase, day));
+}
+
 export async function afterHit(supabase: SupabaseClient) {
   if (testDay()) return;
   const b = await loadBattle(supabase, today());
   await gateKill(supabase, b);
   if (!b.ledger || !b.hpLocked) return;
-  for (const k of b.ledger.killed) {
-    if (!k.killedAt || k.killedAt < Date.now() - 15 * 60_000) continue;
-    await sendOnce(supabase, `kill-${k.week}`, { title: `💀 ${nameOf(b, k.week)} kaatui!`, body: 'Sinetti täyttyi ja voima riitti. Katso, kuka löi viimeisen iskun.' });
-  }
+  await notifyKills(supabase, b);
   const target = b.ledger.alive[0];
   if (!target) return;
   const missing = b.required.filter((id) => !target.hitters.includes(id));
@@ -44,6 +60,7 @@ export async function afterStep(supabase: SupabaseClient, day: string) {
   if (testDay()) return;
   const b = await loadBattle(supabase, today());
   await gateKill(supabase, b);
+  await notifyKills(supabase, b);
   if (!b.hpLocked || !b.patrols.some((p) => p.day === day)) return;
   await sendOnce(supabase, `patrol-${day}`, { title: '⭐ Megamarssi!', body: 'Kaikki terveet kuittasivat askeleensa. +250 voimaa monsterille.' });
 }

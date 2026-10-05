@@ -43,6 +43,10 @@ export function weekRange(week: number) {
   return { start, end: addDays(start, 6) };
 }
 
+/** Kela-isku tulee sairaspäivälle klo 9 (aamuilmoitusten kanssa). */
+export const KELA_TIME = '09:00:00';
+export const KELA_HOUR = 9;
+
 /** Armonaika: päättyneelle viikolle voi vielä kirjata maanantaihin klo 12 asti (Suomen aikaa). */
 export const GRACE_HOURS = 12;
 
