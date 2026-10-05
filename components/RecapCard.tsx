@@ -20,7 +20,7 @@ export default function RecapCard({ r }: { r: WeekRecap }) {
         </div>
       ) : null}
       <div className="stat-row">
-        <div className="stat"><span className="muted small">Voimaa</span><strong>{fmt(r.damage)}</strong><span className="muted small">bonuksista {r.bonusShare} %</span></div>
+        <div className="stat"><span className="muted small">Voimaa</span><strong>{fmt(r.damage)}</strong><span className="muted small">bonukset +{r.bonusShare} % treeneihin</span></div>
         <div className="stat"><span className="muted small">Ensi-isku</span><strong>+{fmt(r.potGain)}</strong><span className="muted small">yhteensä {fmt(r.pot)}</span></div>
       </div>
       {r.potFrom.length ? <p className="small pot-from" style={{ margin: 0 }}>Ensi-iskuun kertyi: {r.potFrom.map((x) => `${x.label.toLowerCase()} ${fmt(x.value)}`).join(' · ')}</p> : null}

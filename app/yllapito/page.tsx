@@ -188,10 +188,13 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
       battle.steps.filter((x) => seasonWeek(x.day) === w).length,
       battle.patrols.filter((x) => seasonWeek(x.day) === w).length,
       STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE,
+      battle.kela.filter((x) => seasonWeek(x.day) === w).reduce((a, x) => a + x.damage, 0),
     );
   }
   const closedWeeks = Object.keys(actuals).map(Number).filter((w) => w < battle.week);
   const plan = hpPlan(planHours, hpByWeek, actuals, closedWeeks);
+  // Viikkokortin vertailu: paljonko bonusta HP olettaa päättyneelle viikolle (lupausten treenivoiman päälle).
+  const lastNeed = lastRecap ? plan[lastRecap.week - 1]?.needPct ?? null : null;
   const pace = closedWeeks.length ? {
     pledges: Math.round((closedWeeks.reduce((a, w) => a + actuals[w].trainingBase, 0) / closedWeeks.reduce((a, w) => a + plan[w - 1].pledgeBase, 0)) * 100),
     steps: Math.round((closedWeeks.reduce((a, w) => a + actuals[w].steps, 0) / closedWeeks.reduce((a, w) => a + plan[w - 1].stepsEst, 0)) * 100),
@@ -207,9 +210,9 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
       <h1 className="display">Ylläpito</h1>
       <Link className="btn btn-ghost" href="/yllapito/korjaukset">🛠️ Korjaukset: iskut, sairaudet ja varmuuskopio</Link>
       {lastRecap ? (
-        <section className={`card${lastRecap.bonusShare > 25 ? ' threat' : ''}`}>
+        <section className={`card${lastNeed != null && lastRecap.bonusShare > lastNeed ? ' threat' : ''}`}>
           <h2 className="display">Viikko {lastRecap.week}</h2>
-          <p style={{ margin: 0 }}>Bonusten osuus voimasta: <strong>{lastRecap.bonusShare} %</strong>{lastRecap.bonusShare > 25 ? ' ⚠️ yli 25 %. Monsterit kaatuvat bonuksilla helpommin kuin HP:t olettavat.' : ' (tavoite alle 25 %)'}</p>
+          <p style={{ margin: 0 }}>Bonukset treenien päälle: <strong>+{lastRecap.bonusShare} %</strong>{lastNeed != null ? (lastRecap.bonusShare > lastNeed ? ` ⚠️ enemmän kuin HP olettaa (${lastNeed} %). Monsterit kaatuvat bonuksilla helpommin.` : ` (HP olettaa ${lastNeed} %)`) : ''}</p>
           <a className="tap" href={`/raportti/${lastRecap.week}`}>Viikon raportti ja jako WhatsAppiin →</a>
         </section>
       ) : null}
@@ -329,7 +332,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
                   <td>{fmt(p.pledgeBase)} + {fmt(p.stepsEst)}</td>
                   <td>{fmt(p.need)} ({p.needPct} %)</td>
                   <td>{p.needPctAtPace != null ? `${p.needPctAtPace} %` : '–'}</td>
-                  <td>{p.actual ? <>{fmt(p.actual.trainingBase + p.actual.bonus + p.actual.steps)}<br /><span className="muted small">bonus {p.actual.trainingBase ? Math.round((p.actual.bonus / p.actual.trainingBase) * 100) : 0} %</span></> : '–'}</td>
+                  <td>{p.actual ? <>{fmt(p.actual.trainingBase + p.actual.bonus + p.actual.steps + p.actual.kela)}<br /><span className="muted small">bonus +{p.actual.trainingBase ? Math.round((p.actual.bonus / p.actual.trainingBase) * 100) : 0} %{p.actual.kela ? ` · Kela ${fmt(p.actual.kela)}` : ''}</span></> : '–'}</td>
                 </tr>
               ))}
             </tbody>

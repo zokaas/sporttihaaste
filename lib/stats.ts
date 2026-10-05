@@ -180,7 +180,8 @@ export function weekRecap(b: Battle, w: number): WeekRecap | null {
     images: [...killedWeeks.flatMap((wk) => imagesOf(wk, true)), ...after.alive.flatMap((f) => imagesOf(f.week, false))],
     survived: after.alive.map((f) => ({ name: nameOf(f.week), hp: f.hp })),
     damage,
-    bonusShare: damage ? Math.round((bonusDamage / damage) * 100) : 0,
+    // Bonukset prosentteina treenien perusvoiman päälle (sama luku kuin ylläpidon HP-laskurissa).
+    bonusShare: hitDamage - bonusDamage ? Math.round((bonusDamage / (hitDamage - bonusDamage)) * 100) : 0,
     potGain: after.pot - (before?.pot ?? 0),
     potFrom: potParts(after.pot - (before?.pot ?? 0), w === 1 ? b.ledgerInput.startPot ?? 0 : 0, b.ledgerInput.pledgeBonusesByWeek[w] ?? 0),
     pot: after.pot,
@@ -202,7 +203,7 @@ export function recapText(r: WeekRecap) {
   const lines = [`⚔️ MONSTERIJAHTI – viikko ${r.week}`, ''];
   if (r.killed.length) lines.push(`💀 Kaatui: ${r.killed.join(', ')}`);
   for (const s of r.survived) lines.push(`😈 Jäi henkiin: ${s.name} (${fmt(s.hp)} HP rästiin)`);
-  lines.push(`💥 Voimaa yhteensä ${fmt(r.damage)} (bonusten osuus ${r.bonusShare} %)`);
+  lines.push(`💥 Voimaa yhteensä ${fmt(r.damage)} (bonukset +${r.bonusShare} % treenien päälle)`);
   if (r.lostToSeal) lines.push(`🛡️ Sinetti jäi vajaaksi: ${fmt(r.lostToSeal)} voimaa sinettirajan yli menetettiin`);
   lines.push(`⚔️ Ensi-isku loppupomolle +${fmt(r.potGain)} → ${fmt(r.pot)}${r.potFrom.length > 1 ? ` (${r.potFrom.map((x) => `${x.label.toLowerCase()} ${fmt(x.value)}`).join(', ')})` : ''}`);
   if (r.mvp) lines.push(`🏆 Viikon sankari: ${r.mvp.name} (${fmt(r.mvp.damage)})`);
