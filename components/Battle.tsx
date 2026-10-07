@@ -194,7 +194,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
             <span className="stage-week">{week + 1 === BOSS_WEEK ? 'Loppupomo' : 'Seuraava monsteri'}</span>
             <p className="teaser-text">“{teaser}”</p>
             <div className="row" style={{ flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-              {next?.hp ? <span className="pill">Voima: {fmt(next.hp)} HP{week + 1 === BOSS_WEEK ? ' ennen ensi-iskua' : ''}</span> : null}
+              {next?.hp ? <span className="pill">Voima: {fmt(next.hp)} HP</span> : null}
               {nextWeak.length ? <span className="pill">{nextWeak.length > 1 ? 'Heikkoudet' : 'Heikkous'}: {nextWeak.join(', ')}</span> : null}
             </div>
           </div>
