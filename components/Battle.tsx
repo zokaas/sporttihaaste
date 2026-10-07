@@ -193,7 +193,10 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           <div style={{ minWidth: 0 }}>
             <span className="stage-week">{week + 1 === BOSS_WEEK ? 'Loppupomo' : 'Seuraava monsteri'}</span>
             <p className="teaser-text">“{teaser}”</p>
-            {nextWeak.length ? <span className="pill" style={{ marginTop: 6 }}>{nextWeak.length > 1 ? 'Heikkoudet' : 'Heikkous'}: {nextWeak.join(', ')}</span> : null}
+            <div className="row" style={{ flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+              {next?.hp ? <span className="pill">Voima: {fmt(next.hp)} HP{week + 1 === BOSS_WEEK ? ' ennen ensi-iskua' : ''}</span> : null}
+              {nextWeak.length ? <span className="pill">{nextWeak.length > 1 ? 'Heikkoudet' : 'Heikkous'}: {nextWeak.join(', ')}</span> : null}
+            </div>
           </div>
         </section>
       ) : null}
