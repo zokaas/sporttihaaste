@@ -28,15 +28,17 @@ export default function TodayCard({ b, showNextReveal = true }: { b: Battle; sho
       <h2 className="display">Tänään {formatDay(b.today)}</h2>
       {difficulty ? (
         <div className={`row difficulty ${difficulty.level}`}>
-          <span aria-hidden="true">{difficulty.level === 'easy' ? '🟢' : difficulty.level === 'medium' ? '🟡' : '🔴'}</span>
+          <span aria-hidden="true">{difficulty.level === 'easy' ? '🟢' : difficulty.level === 'medium' ? '🟡' : difficulty.level === 'hard' ? '🔴' : '💀'}</span>
           <span>
-            <strong>{difficulty.level === 'easy' ? 'Helppo viikko' : difficulty.level === 'medium' ? 'Keskivaikea viikko' : 'Vaikea viikko'}</strong>
+            <strong>{difficulty.level === 'easy' ? 'Helppo viikko' : difficulty.level === 'medium' ? 'Keskivaikea viikko' : difficulty.level === 'hard' ? 'Vaikea viikko' : 'Megamonsteri'}</strong>
             {' · '}
             {difficulty.level === 'easy'
               ? 'Lupaukset ja askeleet riittävät.'
               : difficulty.level === 'medium'
                 ? 'Tarvitaan bonustreenejä.'
-                : `Tarvitaan paljon bonustreenejä ja lisätreeniä. Yhteistreenit${weak ? ` ja ${weak}` : ''} auttavat eniten.`}
+                : difficulty.level === 'hard'
+                  ? `Tarvitaan paljon bonustreenejä ja lisätreeniä. Yhteistreenit${weak ? ` ja ${weak}` : ''} auttavat eniten.`
+                  : `Jokainen treeni tarvitsee bonuksen ja lisäksi lisätreeniä. Koko porukka liikkeelle: yhteistreenit${weak ? `, ${weak}` : ''} ja jokainen askelpäivä.`}
             {difficulty.tenths > 0 ? <>{' '}<Link href="/mina" className="nowrap">Porukan lisävoima →</Link></> : null}
           </span>
         </div>
