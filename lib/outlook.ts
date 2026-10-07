@@ -5,7 +5,7 @@ import { addDays, BOSS_WEEK, helsinkiToday, seasonWeek, weekRange } from './seas
 import { isSickOn } from './weekly';
 import { bonusTenths, hpPlan, weekActual, type WeekActual } from './hpcheck';
 
-export type Difficulty = { level: 'easy' | 'medium' | 'hard'; tenths: number; need: number };
+export type Difficulty = { level: 'easy' | 'medium' | 'hard' | 'mega'; tenths: number; need: number };
 
 /** Treenin keskimääräinen perusvoima päättyneiltä viikoilta (ennen ensimmäistä viikkoa arvio 90). */
 function avgHitBase(b: NonNullable<Battle>) {
@@ -37,14 +37,15 @@ const weekKilled = (b: NonNullable<Battle>, week: number) => Boolean(b.ledger?.k
 
 /**
  * Viikon vaikeus: kuinka moni treeni kymmenestä tarvitsee bonuksen (tällä tahdilla, jos tiedossa).
- * Helppo alle 3/10, keski 3–6/10, vaikea yli 6/10. Loppupomolle ei lasketa (ensi-isku muuttaa tarpeen).
+ * Helppo 0/10, keski 1–4/10, vaikea 5–8/10, megamonsteri 9/10 tai enemmän. Loppupomolle ei lasketa (ensi-isku muuttaa tarpeen).
  */
 export function weekDifficulty(b: NonNullable<Battle>, week = b.week): Difficulty | null {
   if (week < 1 || week >= BOSS_WEEK || !b.monsters.get(week)?.hp || weekKilled(b, week)) return null;
   const p = seasonPlan(b).plan[week - 1];
   if (!p) return null;
   const tenths = bonusTenths(p.needPctAtPace ?? p.needPct);
-  return { level: tenths < 3 ? 'easy' : tenths <= 6 ? 'medium' : 'hard', tenths, need: p.needAtPace ?? p.need };
+  const level = tenths === 0 ? 'easy' : tenths <= 4 ? 'medium' : tenths <= 8 ? 'hard' : 'mega';
+  return { level, tenths, need: p.needAtPace ?? p.need };
 }
 
 /**

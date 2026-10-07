@@ -610,6 +610,7 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .difficulty.easy strong { color: var(--moss-text); }
 .difficulty.medium strong { color: var(--gold); }
 .difficulty.hard strong { color: var(--blood-text); }
+.difficulty.mega strong { color: var(--eye); text-transform: uppercase; letter-spacing: 0.04em; }
 /* Minä-sivun viikkovälilehdet (armonaika) */
 .week-tabs { display: flex; flex-direction: column; gap: 8px; }
 .week-tabbar { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--deep); border: 1px solid var(--line); }
