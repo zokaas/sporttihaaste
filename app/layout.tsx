@@ -4,6 +4,7 @@ import './globals.css';
 import { previewOnly, testDay } from '@/lib/today';
 import { formatDay } from '@/lib/season';
 import ScrollMemory from '@/components/ScrollMemory';
+import ScrollTopButton from '@/components/ScrollTopButton';
 import StrikeToastHost from '@/components/StrikeToastHost';
 import LiveStrikes from '@/components/LiveStrikes';
 import ResumeRefresh from '@/components/ResumeRefresh';
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {testDay() ? <div className="test-banner">{previewOnly() ? 'Esikatselu (vain katselu)' : 'Testitila'}: {formatDay(testDay()!)} · <a href="/yllapito">lopeta</a></div> : null}
         <main className="app">{children}</main>
         <ScrollMemory />
+        <ScrollTopButton />
         <StrikeToastHost />
         <LiveStrikes />
         <ResumeRefresh />
