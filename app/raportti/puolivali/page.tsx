@@ -28,7 +28,7 @@ export default async function Puolivali() {
       <section className="card">
         <h2 className="display">Porukan luvut</h2>
         <ul className="people">
-          <li><div className="grow"><div className="who">💥 {fmt(m.damage)} voimaa</div><div className="facts">{m.trainings} treeniä · {m.stepDays} askelpäivää{m.patrols ? ` · ${m.patrols} megamarssia` : ''}</div></div></li>
+          <li><div className="grow"><div className="who">💥 {fmt(m.damage)} voimaa</div><div className="facts">{m.trainings} treeniä · askeleet kuitattu {m.stepDays} kertaa{m.patrols ? ` · ${m.patrols} megamarssia` : ''}</div></div></li>
           {m.pledgesTotal ? <li><div className="grow"><div className="who">🤝 {m.pledgesKept}/{m.pledgesTotal} lupausta pidetty</div><div className="facts">päättyneiltä viikoilta</div></div></li> : null}
           {m.jointTrainings ? <li><div className="grow"><div className="who">👥 {m.jointTrainings} yhteistreeniä</div></div></li> : null}
           <li><div className="grow"><div className="who">⚔️ Ensi-isku loppupomolle: {fmt(m.pot)}</div></div></li>

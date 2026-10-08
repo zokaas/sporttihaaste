@@ -75,7 +75,7 @@ export function midseasonText(m: Midseason) {
   const lines = [`⚔️ MONSTERIJAHTI – kausi puolivälissä (${dm(m.until)} asti)`, ''];
   lines.push(`💀 Kaatui ${m.killed.length}/${m.started}${m.killed.length ? `: ${m.killed.join(', ')}` : ''}`);
   for (const s of m.standing) lines.push(s.current ? `⚔️ Taistelu käynnissä: ${s.name}` : `😈 Rästissä: ${s.name}`);
-  lines.push(`💥 Voimaa yhteensä ${fmt(m.damage)} · ${m.trainings} treeniä · ${m.stepDays} askelpäivää${m.patrols ? ` · ${m.patrols} megamarssia` : ''}`);
+  lines.push(`💥 Voimaa yhteensä ${fmt(m.damage)} · ${m.trainings} treeniä · askeleet kuitattu ${m.stepDays} kertaa${m.patrols ? ` · ${m.patrols} megamarssia` : ''}`);
   if (m.pledgesTotal) lines.push(`🤝 Lupauksia pidetty ${m.pledgesKept}/${m.pledgesTotal}`);
   if (m.jointTrainings) lines.push(`👥 Yhteistreenejä ${m.jointTrainings}`);
   if (m.top.length) lines.push(`🏆 Kärki: ${m.top.map((t, i) => `${i + 1}. ${t.name} (${fmt(t.damage)})`).join(', ')}`);
