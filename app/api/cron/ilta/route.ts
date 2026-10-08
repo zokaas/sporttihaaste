@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { fridayReminders } from '@/lib/reminders';
+import { sendPush } from '@/lib/push';
 import { helsinkiToday, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 
 export const dynamic = 'force-dynamic';
@@ -28,6 +29,15 @@ export async function GET(request: Request) {
     global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) },
   });
   if ((await supabase.from('notifications_sent').insert({ key: `sunday-${week}` })).error) return NextResponse.json({ skipped: 'Jo lähetetty.' });
-  const r = await fridayReminders(supabase, day, undefined, 'sunday');
-  return NextResponse.json({ sunnuntai: r.sent });
+  try {
+    const r = await fridayReminders(supabase, day, undefined, 'sunday');
+    return NextResponse.json({ sunnuntai: r.sent });
+  } catch (e) {
+    // Virheestä ilmoitus ylläpitäjille, jotta muistutuksen puuttuminen huomataan.
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('Iltaajo', e);
+    const { data: admins } = await supabase.from('profiles').select('id').eq('is_admin', true);
+    await sendPush(supabase, { title: '⚠️ Sunnuntain muistutus epäonnistui', body: msg.slice(0, 180), url: '/yllapito' }, (admins ?? []).map((a) => a.id)).catch(() => 0);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
