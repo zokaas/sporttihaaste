@@ -3,8 +3,8 @@ import type { Weakness } from './rules';
 
 export type MonsterPart = {
   name: string; description?: string | null; weakness?: Weakness | null; image_path?: string | null;
-  /** Osan omat repliikit (tyhjä = yhteinen). `fall_line` on seuraavan osan repliikki, kun tämä osa kaatuu. */
-  taunt_full?: string | null; taunt_half?: string | null; taunt_low?: string | null; hit_lines?: string | null; hit_crit?: string | null; fall_line?: string | null;
+  /** Osan omat repliikit (tyhjä = yhteinen; `taunt_backlog` rästissä). `fall_line` on seuraavan osan repliikki, kun tämä osa kaatuu. */
+  taunt_backlog?: string | null; taunt_full?: string | null; taunt_half?: string | null; taunt_low?: string | null; hit_lines?: string | null; hit_crit?: string | null; fall_line?: string | null;
 };
 
 /** Osien HP:t: tasajako, jakojäännös viimeiselle. */

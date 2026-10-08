@@ -7,11 +7,12 @@ const HIT = ['Auts!', 'Tuoko oli kaikki?', 'Kutittaa.', 'Hmph. Ensi kerralla kov
 const CRIT = 'AARGH! Mistä tuo tuli?!';
 const HALF = 'Tuo sattui. Mutta pelkkä naarmu, sankarit!';
 const LOW = 'Ei… ei vielä… minä en kaadu näin helposti!';
+const BACKLOG = 'Ette saaneet minua kaatumaan. Minä jatkan.';
 
 /** Puhekupla: puhuja (osan nimi) ja teksti. Ilman puhujaa monsteri puhuu yhtenä. */
 export type Line = { who: string | null; text: string };
 
-type Lines = { taunt_full?: string | null; taunt_half?: string | null; taunt_low?: string | null; hit_lines?: string | null; hit_crit?: string | null };
+type Lines = { taunt_backlog?: string | null; taunt_full?: string | null; taunt_half?: string | null; taunt_low?: string | null; hit_lines?: string | null; hit_crit?: string | null };
 type Speaker = Lines & { hp?: number | null; parts?: MonsterPart[] | null };
 
 const pick = <T,>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)];
@@ -29,6 +30,12 @@ export function hitReaction(lines: string | null | undefined, critLine: string |
 }
 
 /** Puhekupla tekstinä (pieni iskuikkuna): "Porilainen: Lisää kaasua!". */
+/** Osan kaatumisrepliikki (seuraavan osan suusta), tai null. */
+export function fallLine(parts: MonsterPart[] | null | undefined, i: number): Line | null {
+  const text = parts?.[i]?.fall_line?.trim();
+  return text && parts![i + 1] ? { who: parts![i + 1].name, text } : null;
+}
+
 export const lineText = (l: Line) => (l.who ? `${l.who}: ${l.text}` : l.text);
 
 /** Osat tilanteessa, jossa monsterilla on `hpLeft` HP:ta jäljellä (kaatunut-tieto mukana). */
@@ -39,17 +46,19 @@ function partsAt(m: Speaker, hpLeft: number) {
 }
 
 /**
- * Näyttämön repliikit HP:n mukaan: täysi (≥ 90 %), alle 50 % ja alle 20 %. Moniosaisella elossa olevat osat
- * puhuvat omat repliikkinsä; jos osalla ei ole omaa, käytetään yhteistä (tai oletusta, jos kukaan ei puhu).
- * Jos elossa olevilla ei ole omaa repliikkiä, viimeksi kaatuneen osan kaatumisrepliikki näkyy seuraavan osan suusta.
+ * Näyttämön repliikit HP:n mukaan: täysi (≥ 90 %), alle 50 % ja alle 20 %. Rästiin jäänyt monsteri sanoo
+ * rästirepliikin (paitsi alle 50 %:ssa). Moniosaisella elossa olevat osat puhuvat omat repliikkinsä; jos osalla
+ * ei ole omaa, käytetään yhteistä (tai oletusta). Jos elossa olevilla ei ole omaa repliikkiä, viimeksi kaatuneen
+ * osan kaatumisrepliikki näkyy seuraavan osan suusta.
  */
-export function stageTaunt(m: Speaker | undefined, hpLeft: number): Line[] | null {
+export function stageTaunt(m: Speaker | undefined, hpLeft: number, backlog = false): Line[] | null {
   if (!m) return null;
   const share = m.hp ? hpLeft / m.hp : 1;
-  const band: keyof Lines | null = share < 0.2 ? 'taunt_low' : share < 0.5 ? 'taunt_half' : share >= 0.9 ? 'taunt_full' : null;
-  const fallback = band === 'taunt_low' ? LOW : band === 'taunt_half' ? HALF : FULL;
+  let band: keyof Lines | null = share < 0.2 ? 'taunt_low' : share < 0.5 ? 'taunt_half' : share >= 0.9 ? 'taunt_full' : null;
+  if (backlog && band !== 'taunt_low' && band !== 'taunt_half') band = 'taunt_backlog';
+  const fallback = band === 'taunt_low' ? LOW : band === 'taunt_half' ? HALF : band === 'taunt_backlog' ? BACKLOG : FULL;
   const parts = partsAt(m, hpLeft);
-  const own = parts && parts.some((p) => p.taunt_full || p.taunt_half || p.taunt_low || p.fall_line);
+  const own = parts && parts.some((p) => p.taunt_full || p.taunt_half || p.taunt_low || p.taunt_backlog || p.fall_line);
   if (!parts || !own) return band ? [{ who: null, text: m[band]?.trim() || fallback }] : null;
 
   const alive = parts.filter((p) => !p.dead);

@@ -4,6 +4,9 @@ import { loadBattle } from './battle';
 import { sendOnce } from './push';
 import { testDay, today } from './today';
 import { addDays, weekRange, BOSS_WEEK, isGateDay } from './season';
+import { sealView } from './rules';
+import { partStates } from './trio';
+import { fallLine } from './taunts';
 
 type Battle = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -26,6 +29,28 @@ async function notifyKills(supabase: SupabaseClient, b: Battle) {
   for (const k of b.ledger.killed) {
     if (!k.killedAt || k.killedAt < Date.now() - 7 * 24 * 3600_000 || k.killedAt > Date.now()) continue;
     await sendOnce(supabase, `kill-${k.week}`, { title: `💀 ${nameOf(b, k.week)} kaatui!`, body: 'Sinetti täyttyi ja voima riitti. Katso, kuka löi viimeisen iskun.' });
+  }
+  await notifyPartFalls(supabase, b);
+}
+
+/**
+ * Kaksikon tai kolmikon osan kaatuminen: ilmoitus kaikille kerran per osa, mukana kaatumisrepliikki.
+ * Vain elossa olevat monsterit (koko monsterin kaatumisesta tulee oma ilmoitus).
+ */
+async function notifyPartFalls(supabase: SupabaseClient, b: Battle) {
+  for (const f of b.ledger?.alive ?? []) {
+    const m = b.monsters.get(f.week);
+    if (!m?.parts?.length || !m.hp) continue;
+    const states = partStates(m.hp, sealView(f, b.required).hp, m.parts.length, false);
+    for (let i = 0; i < m.parts.length - 1; i++) {
+      if (!states[i].dead) continue;
+      const line = fallLine(m.parts, i);
+      const rest = m.parts.slice(i + 1).map((p) => p.name).join(' ja ');
+      await sendOnce(supabase, `part-${f.week}-${i}`, {
+        title: `💥 ${m.parts[i].name} kaatui!`,
+        body: line ? `${line.who}: ”${line.text}”` : `${rest} ${i + 2 < m.parts.length ? 'jatkavat' : 'jatkaa'} vielä taistelua.`,
+      });
+    }
   }
 }
 
