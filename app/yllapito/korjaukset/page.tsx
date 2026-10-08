@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import BackButton from '@/components/BackButton';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { loadSports } from '@/lib/sports';
@@ -61,7 +62,7 @@ export default async function Korjaukset({ searchParams }: { searchParams: { vko
 
   return (
     <>
-      <Link href="/yllapito" className="muted">← Ylläpito</Link>
+      <BackButton fallback="/yllapito?osio=testi" label="Ylläpito" />
       <h1 className="display">Korjaukset</h1>
 
       <section className="card">

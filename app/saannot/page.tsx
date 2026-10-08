@@ -1,4 +1,5 @@
 import Nav from '@/components/Nav';
+import BackButton from '@/components/BackButton';
 import { MESSAGES_PER_DAY } from '@/lib/messages';
 import { QUIET_END, QUIET_START } from '@/lib/quiet';
 import { CATEGORIES, hitDamage, BONUS_CAP_PCT, STEP_GOAL, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, PLEDGE_BONUS } from '@/lib/rules';
@@ -51,6 +52,7 @@ export default async function Saannot() {
   return (
     <>
       <Nav current="/saannot" />
+      <BackButton fallback="/" />
       <h1 className="display">Säännöt</h1>
 
       <section className="card">
