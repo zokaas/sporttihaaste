@@ -84,6 +84,8 @@ function write(key: string, value: string) {
 }
 
 const TAUNT_MS = 4000;
+/** Osan kaatumisbannerin kesto (sama kuin .part-fall-animaatio). */
+const PART_FALL_MS = 2800;
 
 export default function MonsterStage(p: Props) {
   const state = stateOf(p.hp, p.maxHp, p.padded, Boolean(p.dead));
@@ -135,15 +137,25 @@ export default function MonsterStage(p: Props) {
     return () => io.disconnect();
   }, []);
 
-  // Kolmikon osan kaatuminen: lyhyt banneri, kun kaatuneiden määrä kasvaa edellisestä käynnistä
+  // Kaksikon tai kolmikon osan kaatuminen: lyhyt banneri, kun kaatuneiden määrä kasvaa edellisestä käynnistä.
+  // Banneri odottaa, kunnes isot ruudut (kaatuminen, viikkoraportti) on suljettu, jotta se ei jää niiden alle.
+  // Oman iskun reaktiokupla (kaatumisrepliikki) tulee vasta bannerin jälkeen (partFellRef).
+  const partFellRef = useRef(false);
   useEffect(() => {
     if (!p.effects || !parts) return;
     const key = `mj_parts_${p.week}`;
     const before = Number(read(key) ?? deadParts);
     write(key, String(deadParts));
     if (deadParts > before && deadParts < parts.length) {
-      setPartFall(parts[deadParts - 1].name);
-      const t = window.setTimeout(() => setPartFall(null), 2800);
+      partFellRef.current = true;
+      const name = parts[deadParts - 1].name;
+      let t = 0;
+      const show = () => { setPartFall(name); t = window.setTimeout(() => setPartFall(null), PART_FALL_MS); };
+      if ((window as unknown as { __mjModalOpen?: boolean }).__mjModalOpen) {
+        window.addEventListener('mj:modal-closed', show, { once: true });
+        return () => { window.removeEventListener('mj:modal-closed', show); clearTimeout(t); };
+      }
+      show();
       return () => clearTimeout(t);
     }
   }, [p.effects, p.week, deadParts]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -158,7 +170,13 @@ export default function MonsterStage(p: Props) {
       setHit(true);
       // Oma isku jättää hetkeksi kynnenjäljen monsteriin.
       if (label) { setClaw(Date.now()); later(() => setClaw(0), 2200); }
-      if (label && p.hitLine) { later(() => setReply(true), 500); later(() => setReply(false), 5500); }
+      if (label && p.hitLine) {
+        // Jos isku kaatoi osan, kupla tulee vasta "kaatui"-bannerin jälkeen.
+        const at = partFellRef.current ? PART_FALL_MS + 200 : 500;
+        partFellRef.current = false;
+        later(() => setReply(true), at);
+        later(() => setReply(false), at + 5000);
+      }
       later(() => setShownHp(p.hp), 450);
       later(() => setHit(false), 900);
       later(() => setFlying(null), crit ? 2300 : 1800);
