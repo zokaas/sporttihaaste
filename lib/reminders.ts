@@ -34,7 +34,8 @@ export async function fridayReminders(supabase: SupabaseClient, day: string, onl
     for (let d = start; d <= day && d <= end; d = addDays(d, 1)) if (!isSickOn(b.periods, id, d)) healthyDays++;
     const steps = b.steps.filter((s) => s.user_id === id && s.day >= start && s.day <= day && !isSickOn(b.periods, id, s.day)).length;
     if (steps < healthyDays) lines.push(`Askelkuittauksia ${steps}/${healthyDays} (${STEP_GOAL.toLocaleString('fi-FI')} askelta = +50).`);
-    if (!lines.length && (!onlyUser || kind === 'sunday')) continue;
+    // Sunnuntaina vain puuttuvista; perjantaina kaikki kunnossa oleville kehu.
+    if (!lines.length && kind === 'sunday') continue;
     sent += await sendPush(
       supabase,
       {

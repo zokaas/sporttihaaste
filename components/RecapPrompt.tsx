@@ -19,6 +19,8 @@ export default function RecapPrompt({ week, children }: { week: number; children
       // Selaimen tallennus ei ole käytettävissä.
     }
   }, [week]);
+  // Sivulta poistuttaessa (esim. linkistä) vuoro vapautetaan, jotta jono ja paljastus eivät jää odottamaan.
+  useEffect(() => () => release('recap'), []);
   function close() {
     setOpen(false);
     release('recap');

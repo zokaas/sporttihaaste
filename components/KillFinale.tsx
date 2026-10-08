@@ -38,6 +38,8 @@ export default function KillFinale({ killed, kills, storageKey = 'mj_killed', sh
       // Selaimen tallennus ei ole käytettävissä.
     }
   }, [killed, kills, storageKey, showFirst, recapEndMs]);
+  // Sivulta poistuttaessa (esim. linkistä) vuoro vapautetaan, jotta jono ja paljastus eivät jää odottamaan.
+  useEffect(() => () => release('kill'), []);
   if (!open || !fresh.length) return null;
   const k = fresh[fresh.length - 1];
   return (
