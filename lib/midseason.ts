@@ -16,7 +16,8 @@ export function midseason(b: Battle, preview = false) {
   // Luvut torstaihin 5.11. asti; esikatselussa tähänastiset.
   const until = b.today < MID_DAY ? b.today : addDays(MID_DAY, -1);
   const untilMs = helsinkiMs(until) + 1000;
-  const inRange = (d: string) => seasonWeek(d) >= 1 && d <= until;
+  // Mukana myös portinvartijan päivät (29.–30.9.), kuten sankarien omissa luvuissa.
+  const inRange = (d: string) => d <= until;
   const nameOf = (w: number) => b.monsters.get(w)?.name ?? `Viikon ${w} monsteri`;
   const hits = b.hits.filter((h) => inRange(h.trained_on));
   const steps = b.steps.filter((s) => inRange(s.day));
