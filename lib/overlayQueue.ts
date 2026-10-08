@@ -29,6 +29,7 @@ export function requestTurn(id: string, order: number, grant: () => void) {
   if (active === id || pending.some((p) => p.id === id)) return;
   pending.push({ id, order, grant });
   (window as unknown as W).__mjModalOpen = true;
+  window.dispatchEvent(new Event('mj:modal-open'));
   if (!scheduled && !active) {
     scheduled = true;
     setTimeout(() => { scheduled = false; next(); }, 0);
