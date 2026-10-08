@@ -12,6 +12,7 @@ import MonsterStage, { type SealHero } from '@/components/MonsterStage';
 import KillFinale from '@/components/KillFinale';
 import NudgeButton from '@/components/NudgeButton';
 import LiveRefresh from '@/components/LiveRefresh';
+import PushToggle from '@/components/PushToggle';
 import AwaySummary, { type AwayEvent } from '@/components/AwaySummary';
 import RecapPrompt from '@/components/RecapPrompt';
 import RecapCard from '@/components/RecapCard';
@@ -112,6 +113,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   return (
     <>
       <LiveRefresh />
+      {/* Muistutus joka käynnillä, kunnes ilmoitukset ovat päällä tässä laitteessa. */}
+      <PushToggle nudge />
       {data.hpPreview && isAdmin ? (
         <p className="note threat" style={{ margin: 0 }}>
           HP-esikatselu: tavoitetta ei ole lukittu, joten HP:t on laskettu nykyisistä lupauksista. <Link href="/yllapito">Lukitse tavoite ylläpidossa</Link> ke 30.9.
