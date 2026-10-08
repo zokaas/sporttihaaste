@@ -7,12 +7,13 @@ const key = (path: string) => `mj_scroll_${path}`;
 // Alasivut (sankari, monsteri, raportit, korjaukset) avautuvat aina ylhäältä; kohta palautetaan vain takaisin tultaessa.
 const SUBPAGE = /^\/(sankari|monsteri|raportti)\/|^\/yllapito\/korjaukset/;
 let firstPath: string | null = null;
-// Taistelunäkymä avautuu ylhäältä, jos siellä ei ole käyty hetkeen: tilanne on ehtinyt muuttua.
-const EXPIRES: Record<string, number> = { '/': 10 * 60_000 };
-const load = (path: string) => {
+// Sivu avautuu ylhäältä, jos siellä ei ole käyty 10 minuuttiin (tilanne on ehtinyt muuttua, ja keskeltä
+// avautuva sivu hämmentää). Takaisin palatessa kohta palautuu ajasta riippumatta.
+const EXPIRES = 10 * 60_000;
+const load = (path: string, back = false) => {
   try {
     const [y, at] = (sessionStorage.getItem(key(path)) ?? '0').split('|').map(Number);
-    return EXPIRES[path] && at && Date.now() - at > EXPIRES[path] ? 0 : y || 0;
+    return !back && at && Date.now() - at > EXPIRES ? 0 : y || 0;
   } catch { return 0; }
 };
 const save = (path: string, y: number) => { try { sessionStorage.setItem(key(path), `${Math.round(y)}|${Date.now()}`); } catch { /* ei tallennusta */ } };
@@ -26,7 +27,7 @@ const save = (path: string, y: number) => { try { sessionStorage.setItem(key(pat
  * - Kohta tallennetaan vasta, kun vieritys pysähtyy, ja linkkiä napautettaessa: ei jokaisella ruudulla.
  * - Juuri kirjatun treenin jälkeen (?isku=) taistelunäkymä avautuu ylhäältä, jotta isku näkyy.
  * - Alasivut (sankari, monsteri, raportit) avautuvat ylhäältä; takaisin palatessa kohta palautuu.
- * - Taistelunäkymä avautuu ylhäältä myös, jos siellä ei ole käyty yli 10 minuuttiin.
+ * - Jokainen sivu avautuu ylhäältä, jos siellä ei ole käyty yli 10 minuuttiin (paitsi takaisin palatessa).
  * - Jo avoimen välilehden napautus liu'uttaa sivun alkuun (kuten puhelinsovelluksissa).
  */
 export default function ScrollMemory() {
@@ -38,7 +39,8 @@ export default function ScrollMemory() {
     else markNavigation();
     const fresh = new URLSearchParams(window.location.search).has('isku');
     if (window.location.hash) return;
-    const target = fresh || (SUBPAGE.test(path) && !wasPop()) ? 0 : load(path);
+    const back = wasPop();
+    const target = fresh || (SUBPAGE.test(path) && !back) ? 0 : load(path, back);
     const fits = () => document.documentElement.scrollHeight - window.innerHeight >= target - 4;
     if (fits()) { window.scrollTo(0, target); return; }
 
