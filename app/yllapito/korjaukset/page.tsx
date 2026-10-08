@@ -6,6 +6,20 @@ import { hitBonusText } from '@/lib/rules';
 import { SEASON_START, formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
 import { AdminHitForm, AdminSickForm, DeleteRow } from '@/components/AdminTools';
+import { revalidatePath } from 'next/cache';
+import { writeBackup } from '@/lib/backup';
+
+/** Varmuuskopio heti (sama kuin maanantain automaattinen). */
+async function backupNow() {
+  'use server';
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/kirjaudu');
+  let msg: string;
+  try { msg = `Varmuuskopio tallennettu: ${await writeBackup(supabase, 'kasin')}`; } catch (e) { msg = e instanceof Error ? e.message : String(e); }
+  revalidatePath('/yllapito/korjaukset');
+  redirect(`/yllapito/korjaukset?kopio=${encodeURIComponent(msg)}#varmuuskopio`);
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +32,7 @@ const TABLES = [
   { key: 'monsters', label: 'Monsterit' },
 ];
 
-export default async function Korjaukset({ searchParams }: { searchParams: { vko?: string } }) {
+export default async function Korjaukset({ searchParams }: { searchParams: { vko?: string; kopio?: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/kirjaudu');
@@ -35,6 +49,12 @@ export default async function Korjaukset({ searchParams }: { searchParams: { vko
     supabase.from('sick_periods').select('*').order('starts_on', { ascending: false }),
     loadSports(supabase),
   ]);
+  // Automaattiset varmuuskopiot (migraatio 034): uusimmat ensin, latauslinkit voimassa tunnin.
+  const { data: files, error: filesError } = await supabase.storage.from('backups').list('', { limit: 30, sortBy: { column: 'name', order: 'desc' } });
+  const backups = await Promise.all((files ?? []).filter((f) => f.name.endsWith('.json')).map(async (f) => {
+    const { data } = await supabase.storage.from('backups').createSignedUrl(f.name, 3600, { download: f.name });
+    return { name: f.name, url: data?.signedUrl ?? null };
+  }));
   const heroList = (heroes ?? []).filter((h) => h.pledge_locked_at).map((h) => ({ id: h.id, name: h.hero_name ?? '' }));
   const name = (id: string) => heroList.find((h) => h.id === id)?.name ?? '?';
   const maxDay = now < SEASON_START ? SEASON_START : now;
@@ -90,9 +110,22 @@ export default async function Korjaukset({ searchParams }: { searchParams: { vko
         ) : null}
       </section>
 
-      <section className="card">
+      <section className="card" id="varmuuskopio">
         <h2 className="display">Varmuuskopio</h2>
-        <p className="muted small" style={{ margin: 0 }}>Lataa taulut CSV-tiedostoina (aukeavat Excelissä). Ota kopio esimerkiksi joka maanantai.</p>
+        <p className="muted small" style={{ margin: 0 }}>Koko pelin tila tallentuu automaattisesti joka maanantai klo 9 (JSON). Voit ottaa kopion myös heti.</p>
+        {filesError ? <p className="note threat" style={{ margin: 0 }}>Aja migraatio 034_varmuuskopiot.sql, niin automaattiset kopiot tallentuvat.</p> : (
+          <ul className="people">
+            {backups.length ? backups.map((b) => (
+              <li key={b.name}>
+                <div className="grow" style={{ minWidth: 0 }}><div className="who" style={{ overflowWrap: 'anywhere' }}>{b.name}</div></div>
+                {b.url ? <a className="btn btn-ghost" href={b.url} style={{ flex: '0 0 auto' }}>Lataa</a> : null}
+              </li>
+            )) : <li className="muted small">Ei vielä kopioita. Ensimmäinen tallentuu maanantaina.</li>}
+          </ul>
+        )}
+        <form action={backupNow}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Ota varmuuskopio nyt</button></form>
+        {searchParams.kopio ? <p className={`note${/epäonnistui/.test(searchParams.kopio) ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.kopio}</p> : null}
+        <p className="muted small" style={{ margin: 0 }}>Yksittäiset taulut CSV-tiedostoina (aukeavat Excelissä):</p>
         <div className="chips">
           {TABLES.map((t) => <a key={t.key} className="chip" href={`/api/vienti?taulu=${t.key}`} download>{t.label}</a>)}
         </div>
