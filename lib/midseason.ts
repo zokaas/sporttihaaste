@@ -1,22 +1,27 @@
-// Kauden puolivälin raportti: viikot 1–6 yhteensä. Näkyy, kun viikko 6 on lukittu (ma 9.11. klo 12).
-import { computeLedger, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE } from './rules';
-import { seasonWeek, weekRange, BOSS_WEEK } from './season';
+// Kauden puolivälin raportti pe 6.11.: tilanne kauden alusta torstaihin 5.11. asti (luvut eivät enää muutu).
+// Ylläpitäjä voi esikatsella sitä milloin tahansa; luvut ovat silloin tähänastiset.
+import { STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE } from './rules';
+import { addDays, helsinkiMs, seasonWeek, SEASON_END } from './season';
 import type { Battle } from './stats';
 
-export const MID_WEEK = 6;
+/** Raportin päivä (pe, viikko 6). Ilmoitus lähtee aamulla klo 9. */
+export const MID_DAY = '2026-11-06';
+/** Etusivun kortti näkyy raportin päivästä viikon 7 loppuun. */
+export const MID_CARD_UNTIL = '2026-11-15';
 
-/** Onko puolivälin raportti valmis (viikko 6 päättynyt ja armonaika ohi). */
-export const midseasonReady = (b: Battle) => b.week > MID_WEEK && !(b.grace && b.grace <= MID_WEEK);
+export const midseasonReady = (b: Battle) => b.today >= MID_DAY;
 
-export function midseason(b: Battle) {
-  if (!b.ledgerInput || !midseasonReady(b)) return null;
-  const inHalf = (d: string) => { const w = seasonWeek(d); return w >= 1 && w <= MID_WEEK; };
-  const ledger = computeLedger(b.ledgerInput, MID_WEEK);
+export function midseason(b: Battle, preview = false) {
+  if (!b.ledger || (!midseasonReady(b) && !preview)) return null;
+  // Luvut torstaihin 5.11. asti; esikatselussa tähänastiset.
+  const until = b.today < MID_DAY ? b.today : addDays(MID_DAY, -1);
+  const untilMs = helsinkiMs(until) + 1000;
+  const inRange = (d: string) => seasonWeek(d) >= 1 && d <= until;
   const nameOf = (w: number) => b.monsters.get(w)?.name ?? `Viikon ${w} monsteri`;
-  const hits = b.hits.filter((h) => inHalf(h.trained_on));
-  const steps = b.steps.filter((s) => inHalf(s.day));
-  const patrols = b.patrols.filter((p) => inHalf(p.day));
-  const kela = b.kela.filter((k) => inHalf(k.day)).reduce((a, k) => a + k.damage, 0);
+  const hits = b.hits.filter((h) => inRange(h.trained_on));
+  const steps = b.steps.filter((s) => inRange(s.day));
+  const patrols = b.patrols.filter((p) => inRange(p.day));
+  const kela = b.kela.filter((k) => inRange(k.day)).reduce((a, k) => a + k.damage, 0);
   const damage = hits.reduce((a, h) => a + h.damage, 0) + steps.length * STEP_DAY_DAMAGE + patrols.length * PATROL_DAY_DAMAGE + kela;
 
   const per = new Map<string, number>();
@@ -29,43 +34,52 @@ export function midseason(b: Battle) {
   for (const s of steps) stepBy.set(s.user_id, (stepBy.get(s.user_id) ?? 0) + 1);
   const stepKing = [...stepBy].sort((a, c) => c[1] - a[1])[0];
 
+  // Pidetyt lupaukset päättyneiltä viikoilta.
+  const closed = Math.max(0, seasonWeek(until) - 1);
   let kept = 0;
-  for (let w = 1; w <= MID_WEEK; w++) kept += b.ledgerInput.pledgeBonusesByWeek[w] ?? 0;
+  for (let w = 1; w <= closed; w++) kept += b.ledgerInput?.pledgeBonusesByWeek[w] ?? 0;
 
-  const killedWeeks = new Set(ledger.killed.filter((k) => k.week <= MID_WEEK).map((k) => k.week));
+  // Monsterit: kaatuneet raportin rajaan mennessä, ja ne, joiden viikko on jo alkanut mutta jotka ovat vielä pystyssä.
+  const killed = b.ledger.killed.filter((k) => k.killedAt != null && k.killedAt < untilMs).map((k) => k.week);
+  const started = seasonWeek(until);
+  const standing = Array.from({ length: started }, (_, i) => i + 1).filter((w) => !killed.includes(w));
   return {
-    end: weekRange(MID_WEEK).end,
-    killed: [...killedWeeks].sort((a, c) => a - c).map(nameOf),
-    survived: ledger.alive.filter((f) => f.week <= MID_WEEK).map((f) => ({ name: nameOf(f.week), hp: f.hp })),
-    monsters: MID_WEEK,
+    until,
+    preview: !midseasonReady(b),
+    killed: killed.sort((a, c) => a - c).map(nameOf),
+    standing: standing.map((w) => ({ name: nameOf(w), current: w === started })),
+    started,
     damage,
     trainings: hits.length,
     stepDays: steps.length,
     patrols: patrols.length,
     jointTrainings: hits.filter((h) => h.companions.length >= 2).length,
     pledgesKept: kept,
-    pledgesTotal: b.participants.length * MID_WEEK,
-    pot: ledger.pot,
+    pledgesTotal: b.participants.length * closed,
+    pot: b.ledger.pot,
     top,
     stepKing: stepKing ? { name: heroName(stepKing[0]), days: stepKing[1] } : null,
-    weeksLeft: BOSS_WEEK - MID_WEEK,
+    // Päivät raportin päivästä kauden loppuun (su 20.12.).
+    daysLeft: Math.round((Date.parse(SEASON_END) - Date.parse(addDays(until, 1))) / 86_400_000) + 1,
   };
 }
 
 export type Midseason = NonNullable<ReturnType<typeof midseason>>;
 
+const dm = (iso: string) => `${Number(iso.slice(8, 10))}.${Number(iso.slice(5, 7))}.`;
+
 /** Raportti tekstinä WhatsAppiin. */
 export function midseasonText(m: Midseason) {
   const fmt = (n: number) => n.toLocaleString('fi-FI');
-  const lines = ['⚔️ MONSTERIJAHTI – kausi puolivälissä', ''];
-  lines.push(`💀 Kaatui ${m.killed.length}/${m.monsters}${m.killed.length ? `: ${m.killed.join(', ')}` : ''}`);
-  for (const s of m.survived) lines.push(`😈 Rästissä: ${s.name} (${fmt(s.hp)} HP)`);
+  const lines = [`⚔️ MONSTERIJAHTI – kausi puolivälissä (${dm(m.until)} asti)`, ''];
+  lines.push(`💀 Kaatui ${m.killed.length}/${m.started}${m.killed.length ? `: ${m.killed.join(', ')}` : ''}`);
+  for (const s of m.standing) lines.push(s.current ? `⚔️ Taistelu käynnissä: ${s.name}` : `😈 Rästissä: ${s.name}`);
   lines.push(`💥 Voimaa yhteensä ${fmt(m.damage)} · ${m.trainings} treeniä · ${m.stepDays} askelpäivää${m.patrols ? ` · ${m.patrols} megamarssia` : ''}`);
-  lines.push(`🤝 Lupauksia pidetty ${m.pledgesKept}/${m.pledgesTotal}`);
+  if (m.pledgesTotal) lines.push(`🤝 Lupauksia pidetty ${m.pledgesKept}/${m.pledgesTotal}`);
   if (m.jointTrainings) lines.push(`👥 Yhteistreenejä ${m.jointTrainings}`);
   if (m.top.length) lines.push(`🏆 Kärki: ${m.top.map((t, i) => `${i + 1}. ${t.name} (${fmt(t.damage)})`).join(', ')}`);
   if (m.stepKing) lines.push(`👣 Askelkuningas: ${m.stepKing.name} (${m.stepKing.days} päivää)`);
   lines.push(`⚔️ Ensi-isku loppupomolle: ${fmt(m.pot)}`);
-  lines.push('', `${m.weeksLeft} viikkoa jäljellä. Loppupomo odottaa.`);
+  lines.push('', `${m.daysLeft} päivää jäljellä. Loppupomo odottaa.`);
   return lines.join('\n');
 }

@@ -8,7 +8,7 @@ import { addDays, helsinkiToday, isGateDay, seasonWeek, weekRange, BOSS_WEEK } f
 import { loadBattle } from '@/lib/battle';
 import { sealView } from '@/lib/rules';
 import { weaknessesOf, type MonsterPart } from '@/lib/trio';
-import { MID_WEEK } from '@/lib/midseason';
+import { MID_DAY } from '@/lib/midseason';
 
 export const dynamic = 'force-dynamic';
 // Ajastus lukee aina tuoreen tilanteen: Supabase-hakuja ei tallenneta Next.js:n välimuistiin.
@@ -20,7 +20,7 @@ export const fetchCache = 'force-no-store';
  * 1. hiljaisina tunteina (22–09) kirjoitetut viestit
  * 2. yöllä jonoon menneet ilmoitukset (monsteri kaatui, megamarssi, "vain sinä puutut", muistutukset)
  * 3. uuden monsterin paljastus viikon ensimmäisenä päivänä, loppupomon viimeinen viikonloppu (pe)
- *    ja kauden puoliväli (ti 10.11.)
+ *    ja kauden puoliväli (pe 6.11.)
  * 4. perjantaina jokaisen oma viikkomuistutus
  * Vaatii CRON_SECRET- ja SUPABASE_SERVICE_ROLE_KEY-ympäristömuuttujat.
  */
@@ -110,11 +110,11 @@ export async function GET(request: Request) {
     }
   }
 
-  // 3d. Kauden puoliväli: raportti viikoista 1–6 (viikko 6 lukittui ma klo 12, ilmoitus ti klo 9).
-  if (day === addDays(weekRange(MID_WEEK + 1).start, 1) && (await once('midseason'))) {
+  // 3d. Kauden puoliväli pe 6.11.: raportti kauden alusta torstaihin (ennen perjantain omaa muistutusta).
+  if (day === MID_DAY && (await once('midseason'))) {
     result.puolivali = await sendPush(supabase, {
       title: '📊 Kausi puolivälissä',
-      body: 'Kuusi viikkoa takana, kuusi edessä. Katso porukan välitilanne ja kärki.',
+      body: 'Puolet takana. Katso porukan välitilanne, kärki ja kaatuneet monsterit.',
       url: '/raportti/puolivali',
     });
   }

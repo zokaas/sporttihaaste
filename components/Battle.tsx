@@ -19,7 +19,7 @@ import { activeWeaknesses, stageParts } from '@/lib/trio';
 import Hint from '@/components/Hint';
 import TodayCard from '@/components/TodayCard';
 import { isSickOn } from '@/lib/weekly';
-import { MID_WEEK, midseasonReady } from '@/lib/midseason';
+import { MID_CARD_UNTIL, midseasonReady } from '@/lib/midseason';
 
 type BattleData = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -132,7 +132,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           🔥 <strong>Viimeinen viikonloppu.</strong> Loppupomolla on {fmt(view!.hp)} HP jäljellä, ja kausi päättyy su klo 24. Jokainen treeni ja askelpäivä ratkaisee. <Link href="/kirjaa">Kirjaa →</Link>
         </p>
       ) : null}
-      {week === MID_WEEK + 1 && midseasonReady(data) ? (
+      {midseasonReady(data) && data.today <= MID_CARD_UNTIL ? (
         <Link href="/raportti/puolivali" className="note" style={{ margin: 0, display: 'block', textDecoration: 'none' }}>
           📊 <strong>Kausi puolivälissä.</strong> Katso porukan välitilanne ja jaa se WhatsAppiin →
         </Link>
