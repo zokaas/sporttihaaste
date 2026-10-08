@@ -101,9 +101,20 @@ export default function MonsterStage(p: Props) {
   const rootRef = useRef<HTMLElement | null>(null);
   const [offscreen, setOffscreen] = useState(false);
   // Puhekupla näkyy 4 s ja häipyy, jotta kuva jää näkyviin. Aika lasketaan vasta, kun kupla oikeasti näkyy:
-  // näyttämö ruudulla, välilehti auki ja paljastusanimaatio ohi. Jos jokin näistä katkeaa, aika alkaa alusta.
+  // näyttämö ruudulla, välilehti auki, paljastusanimaatio ohi ja isot ruudut suljettu. Jos jokin katkeaa, aika alkaa alusta.
   const [taunt, setTaunt] = useState<'on' | 'fading' | 'gone'>('on');
   const [pageVisible, setPageVisible] = useState(true);
+  // Iso ruutu (kaatuminen, viikkoraportti) auki: puhekuplan aika ei kulu sen takana.
+  const [modalOpen, setModalOpen] = useState(false);
+  useEffect(() => {
+    const w = window as unknown as { __mjModalOpen?: boolean };
+    setModalOpen(Boolean(w.__mjModalOpen));
+    const open = () => setModalOpen(true);
+    const closed = () => setModalOpen(false);
+    window.addEventListener('mj:modal-open', open);
+    window.addEventListener('mj:modal-closed', closed);
+    return () => { window.removeEventListener('mj:modal-open', open); window.removeEventListener('mj:modal-closed', closed); };
+  }, []);
   useEffect(() => {
     const update = () => setPageVisible(document.visibilityState === 'visible');
     update();
@@ -120,10 +131,10 @@ export default function MonsterStage(p: Props) {
       const t = window.setTimeout(() => setTaunt('gone'), 600);
       return () => clearTimeout(t);
     }
-    if (offscreen || revealing || !pageVisible) return;
+    if (offscreen || revealing || !pageVisible || modalOpen) return;
     const t = window.setTimeout(() => setTaunt('fading'), TAUNT_MS + Math.max(0, taunts.length - 1) * 2500);
     return () => clearTimeout(t);
-  }, [taunt, offscreen, revealing, pageVisible, taunts.length]);
+  }, [taunt, offscreen, revealing, pageVisible, modalOpen, taunts.length]);
   const parts = p.parts?.length ? p.parts : null;
   const front = parts ? parts.find((x) => !x.dead) ?? parts[parts.length - 1] : null;
   const deadParts = parts ? parts.filter((x) => x.dead).length : 0;
