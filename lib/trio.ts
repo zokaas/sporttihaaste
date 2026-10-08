@@ -1,7 +1,11 @@
 // Moniosainen monsteri (kaksikko tai kolmikko): osat jakavat viikon HP:n tasan ja kaatuvat järjestyksessä.
 import type { Weakness } from './rules';
 
-export type MonsterPart = { name: string; description?: string | null; weakness?: Weakness | null; image_path?: string | null };
+export type MonsterPart = {
+  name: string; description?: string | null; weakness?: Weakness | null; image_path?: string | null;
+  /** Osan omat repliikit (tyhjä = yhteinen). `fall_line` on seuraavan osan repliikki, kun tämä osa kaatuu. */
+  taunt_full?: string | null; taunt_half?: string | null; taunt_low?: string | null; hit_lines?: string | null; hit_crit?: string | null; fall_line?: string | null;
+};
 
 /** Osien HP:t: tasajako, jakojäännös viimeiselle. */
 export function partHps(total: number, count: number) {

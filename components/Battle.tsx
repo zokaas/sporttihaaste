@@ -7,7 +7,7 @@ import { finalBlows, weekRecap } from '@/lib/stats';
 import { addDays, formatDay, helsinkiMs, KELA_TIME, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_START } from '@/lib/season';
 import BossShadow from '@/components/BossShadow';
 import { bossWhisper } from '@/lib/boss';
-import { fullTaunt, hitReaction } from '@/lib/taunts';
+import { lineText, stageHitLine, stageTaunt } from '@/lib/taunts';
 import MonsterStage, { type SealHero } from '@/components/MonsterStage';
 import KillFinale from '@/components/KillFinale';
 import NudgeButton from '@/components/NudgeButton';
@@ -58,12 +58,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const view = target ? sealView(target, required) : null;
   // Monsterin repliikki HP:n mukaan: ylläpidon kirjoittama tai oletus.
   const targetMonster = target ? monsters.get(target.week) : undefined;
-  const hpShare = view && targetMonster?.hp ? view.hp / targetMonster.hp : 1;
-  const taunt = !view ? null
-    : hpShare < 0.2 ? targetMonster?.taunt_low || 'Ei… ei vielä… minä en kaadu näin helposti!'
-    : hpShare < 0.5 ? targetMonster?.taunt_half || 'Tuo sattui. Mutta pelkkä naarmu, sankarit!'
-    : hpShare >= 0.9 ? fullTaunt(targetMonster?.taunt_full)
-    : null;
+  // Kaksikolla ja kolmikolla elossa olevat osat puhuvat omat repliikkinsä.
+  const taunt = view ? stageTaunt(targetMonster, view.hp) : null;
   // Sinetti tulee näkyviin vasta viikon perjantaina: alkuviikon näkymä on kevyt. Sääntö on silti voimassa
   // koko viikon; padon kortti näytetään aina, koska silloin voimaa on vaakalaudalla.
   const showSeal = data.today >= addDays(weekRange(week).end, -2);
@@ -140,7 +136,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           </p>
         </section>
       ) : null}
-      {target ? <AwaySummary events={awayEvents} skip={ownHit != null} strike={{ name: nameOf(target.week), image: monsterImageUrl(targetMonster?.image_path), hp: view!.hp, maxHp: targetMonster?.hp ?? 1, reaction: hitReaction(targetMonster?.hit_lines, targetMonster?.hit_crit, false) }} /> : null}
+      {target ? <AwaySummary events={awayEvents} skip={ownHit != null} strike={{ name: nameOf(target.week), image: monsterImageUrl(targetMonster?.image_path), hp: view!.hp, maxHp: targetMonster?.hp ?? 1, reaction: lineText(stageHitLine(targetMonster, view!.hp, false)) }} /> : null}
       {recap ? <RecapPrompt week={recap.week}><RecapCard r={recap} /></RecapPrompt> : null}
 
       {target ? (
@@ -163,7 +159,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           endMs={endMs}
           currentWeek={week}
           taunt={taunt}
-          hitLine={ownHit != null ? hitReaction(targetMonster?.hit_lines, targetMonster?.hit_crit, crit) : null}
+          hitLine={ownHit != null ? stageHitLine(targetMonster, view!.hp, crit, ownHit) : null}
           offsetMs={offsetMs}
           boss={target.week === BOSS_WEEK}
           potStrike={potBeforeBoss}

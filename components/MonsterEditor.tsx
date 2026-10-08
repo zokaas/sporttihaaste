@@ -26,7 +26,9 @@ export type Monster = {
   taunt_full?: string | null;
 };
 
-type Part = { name: string; description: string | null; weakness: string | null; image_path: string | null };
+type PartLines = { taunt_full?: string | null; taunt_half?: string | null; taunt_low?: string | null; hit_lines?: string | null; hit_crit?: string | null; fall_line?: string | null };
+type Part = { name: string; description: string | null; weakness: string | null; image_path: string | null } & PartLines;
+const LINE_KEYS = ['taunt_full', 'hit_lines', 'hit_crit', 'taunt_half', 'taunt_low', 'fall_line'] as const;
 const emptyPart = (): Part => ({ name: '', description: null, weakness: null, image_path: null });
 
 /** Lajilista tietokannasta (ylläpidon lisäämät mukana). */
@@ -116,7 +118,11 @@ function MonsterRow({ monster }: { monster: Monster }) {
   function saveAll() {
     const extras = { taunt_half: m.taunt_half?.trim() || null, taunt_low: m.taunt_low?.trim() || null, teaser: m.teaser?.trim() || null, boss_whisper: m.boss_whisper?.trim() || null, hit_lines: m.hit_lines?.trim() || null, hit_crit: m.hit_crit?.trim() || null, taunt_full: m.taunt_full?.trim() || null };
     if (!parts) return save({ name: m.name?.trim() || null, description: m.description?.trim() || null, weakness: m.weakness, parts: null, ...extras });
-    const clean = parts.map((x) => ({ name: x.name.trim(), description: x.description?.trim() || null, weakness: x.weakness || null, image_path: x.image_path }));
+    const clean = parts.map((x, i) => ({
+      name: x.name.trim(), description: x.description?.trim() || null, weakness: x.weakness || null, image_path: x.image_path,
+      // Osan omat repliikit; viimeinen osa ei kaadu ennen koko monsteria, joten sillä ei ole kaatumisrepliikkiä.
+      ...Object.fromEntries(LINE_KEYS.map((k) => [k, k === 'fall_line' && i === parts.length - 1 ? null : x[k]?.trim() || null])),
+    }));
     if (clean.some((x) => !x.name)) return setMsg({ ok: false, text: 'Anna jokaiselle kolmikon osalle nimi.' });
     const names = clean.map((x) => x.name);
     return save({
@@ -209,6 +215,37 @@ function MonsterRow({ monster }: { monster: Monster }) {
                   <WeaknessOptions />
                 </select>
               </label>
+              <details>
+                <summary className="small">Repliikit: {part.name || `osa ${i + 1}`} {LINE_KEYS.some((k) => part[k]?.trim()) ? '✓' : <span className="muted">(tyhjä = yhteinen repliikki)</span>}</summary>
+                <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
+                  <label className="field">
+                    Täydellä HP:lla
+                    <input className="input" value={part.taunt_full ?? ''} onChange={(e) => setPart(i, { taunt_full: e.target.value })} />
+                  </label>
+                  <label className="field">
+                    Iskureaktiot (yksi per rivi)
+                    <textarea className="input" rows={3} style={{ padding: 12 }} value={part.hit_lines ?? ''} onChange={(e) => setPart(i, { hit_lines: e.target.value })} />
+                  </label>
+                  <label className="field">
+                    Kriittinen isku
+                    <input className="input" value={part.hit_crit ?? ''} onChange={(e) => setPart(i, { hit_crit: e.target.value })} />
+                  </label>
+                  <label className="field">
+                    HP alle 50 %
+                    <input className="input" value={part.taunt_half ?? ''} onChange={(e) => setPart(i, { taunt_half: e.target.value })} />
+                  </label>
+                  <label className="field">
+                    HP alle 20 %
+                    <input className="input" value={part.taunt_low ?? ''} onChange={(e) => setPart(i, { taunt_low: e.target.value })} />
+                  </label>
+                  {i < parts.length - 1 ? (
+                    <label className="field">
+                      Kun {part.name || 'tämä osa'} kaatuu (sanoo {parts[i + 1].name || `osa ${i + 2}`})
+                      <input className="input" value={part.fall_line ?? ''} onChange={(e) => setPart(i, { fall_line: e.target.value })} />
+                    </label>
+                  ) : null}
+                </div>
+              </details>
             </fieldset>
           );
         }) : null}
@@ -233,6 +270,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
           {m.week === 1 ? 'Arvoitus (näkyy etusivulla ennen kauden alkua, ma 28.9. alkaen)' : 'Arvoitus (näkyy kaikille edellisen viikon perjantaista alkaen)'}
           <textarea className="input" rows={2} style={{ padding: 12 }} placeholder="Esim. Ensi viikolla vastaan tulee jotain, mikä pelkää palloja…" value={m.teaser ?? ''} onChange={(e) => setM({ ...m, teaser: e.target.value })} />
         </label>
+        {parts ? <p className="small muted" style={{ margin: 0 }}>Yhteiset repliikit alla: käytetään, kun osalla ei ole omaa. Kaatunut osa vaikenee.</p> : null}
         <label className="field">
           Repliikki täydellä HP:lla (ennen kuin sitä on lyöty kunnolla)
           <input className="input" placeholder="Tulkaa vain, sankarit. Olen odottanut teitä." value={m.taunt_full ?? ''} onChange={(e) => setM({ ...m, taunt_full: e.target.value })} />
