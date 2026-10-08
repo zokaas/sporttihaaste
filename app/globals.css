@@ -618,3 +618,4 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .week-tabbar button.on { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
 .nowrap { white-space: nowrap; }
 .stage-taunt-who { display: block; font-style: normal; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--blood); margin-bottom: 2px; }
+summary.btn::-webkit-details-marker { display: none; }

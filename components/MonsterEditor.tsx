@@ -219,7 +219,8 @@ function MonsterRow({ monster }: { monster: Monster }) {
                 </select>
               </label>
               <details>
-                <summary className="small">Repliikit: {part.name || `osa ${i + 1}`} {LINE_KEYS.some((k) => part[k]?.trim()) ? '✓' : <span className="muted">(tyhjä = yhteinen repliikki)</span>}</summary>
+                <summary className="btn btn-ghost" style={{ minHeight: 44, listStyle: 'none' }}>💬 {part.name || `Osa ${i + 1}`}: repliikit {LINE_KEYS.some((k) => part[k]?.trim()) ? '✓' : '▾'}</summary>
+                <p className="small muted" style={{ margin: '8px 0 0' }}>Tyhjä kenttä = yhteinen repliikki. Älä kirjoita nimeä alkuun, se näkyy kuplassa itsestään.</p>
                 <div style={{ display: 'grid', gap: 10, marginTop: 10 }}>
                   <label className="field">
                     Täydellä HP:lla
@@ -379,7 +380,7 @@ function LinePreview({ m }: { m: Monster }) {
     : common(m.hit_crit);
   return (
     <details>
-      <summary className="small">Esikatsele repliikit</summary>
+      <summary className="btn btn-ghost" style={{ minHeight: 44, listStyle: 'none' }}>👁️ Esikatsele repliikit ▾</summary>
       <div style={{ display: 'grid', gap: 14, marginTop: 10, padding: 14, borderRadius: 14, background: 'var(--deep)' }}>
         <Bubbles title="Täysi HP" lines={stageTaunt(speaker, hp) ?? []} />
         <Bubbles title="Iskureaktiot (yksi arvotaan)" lines={hits} />
