@@ -1,14 +1,19 @@
 'use client';
 import { useEffect, useLayoutEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { markNavigation, markPop, wasPop } from '@/lib/navHistory';
 
 const key = (path: string) => `mj_scroll_${path}`;
-// Taistelunäkymä avautuu ylhäältä, jos siellä ei ole käyty hetkeen: tilanne on ehtinyt muuttua.
-const EXPIRES: Record<string, number> = { '/': 10 * 60_000 };
-const load = (path: string) => {
+// Alasivut (sankari, monsteri, raportit, korjaukset) avautuvat aina ylhäältä; kohta palautetaan vain takaisin tultaessa.
+const SUBPAGE = /^\/(sankari|monsteri|raportti)\/|^\/yllapito\/korjaukset/;
+let firstPath: string | null = null;
+// Sivu avautuu ylhäältä, jos siellä ei ole käyty 10 minuuttiin (tilanne on ehtinyt muuttua, ja keskeltä
+// avautuva sivu hämmentää). Takaisin palatessa kohta palautuu ajasta riippumatta.
+const EXPIRES = 10 * 60_000;
+const load = (path: string, back = false) => {
   try {
     const [y, at] = (sessionStorage.getItem(key(path)) ?? '0').split('|').map(Number);
-    return EXPIRES[path] && at && Date.now() - at > EXPIRES[path] ? 0 : y || 0;
+    return !back && at && Date.now() - at > EXPIRES ? 0 : y || 0;
   } catch { return 0; }
 };
 const save = (path: string, y: number) => { try { sessionStorage.setItem(key(path), `${Math.round(y)}|${Date.now()}`); } catch { /* ei tallennusta */ } };
@@ -21,16 +26,21 @@ const save = (path: string, y: number) => { try { sessionStorage.setItem(key(pat
  * - Jos sisältö on vielä latautumassa, odotetaan enintään hetki; oma kosketus keskeyttää odotuksen.
  * - Kohta tallennetaan vasta, kun vieritys pysähtyy, ja linkkiä napautettaessa: ei jokaisella ruudulla.
  * - Juuri kirjatun treenin jälkeen (?isku=) taistelunäkymä avautuu ylhäältä, jotta isku näkyy.
- * - Taistelunäkymä avautuu ylhäältä myös, jos siellä ei ole käyty yli 10 minuuttiin.
+ * - Alasivut (sankari, monsteri, raportit) avautuvat ylhäältä; takaisin palatessa kohta palautuu.
+ * - Jokainen sivu avautuu ylhäältä, jos siellä ei ole käyty yli 10 minuuttiin (paitsi takaisin palatessa).
  * - Jo avoimen välilehden napautus liu'uttaa sivun alkuun (kuten puhelinsovelluksissa).
  */
 export default function ScrollMemory() {
   const path = usePathname();
 
   useLayoutEffect(() => {
+    // Sivunvaihto sovelluksen sisällä (takaisin-nappi tietää, että edellinen sivu on sovelluksessa).
+    if (firstPath === null) firstPath = path;
+    else markNavigation();
     const fresh = new URLSearchParams(window.location.search).has('isku');
     if (window.location.hash) return;
-    const target = fresh ? 0 : load(path);
+    const back = wasPop();
+    const target = fresh || (SUBPAGE.test(path) && !back) ? 0 : load(path, back);
     const fits = () => document.documentElement.scrollHeight - window.innerHeight >= target - 4;
     if (fits()) { window.scrollTo(0, target); return; }
 
@@ -73,7 +83,7 @@ export default function ScrollMemory() {
       save(path, window.scrollY);
       if (a.pathname !== path) navigating = true;
     };
-    const onPop = () => { navigating = true; };
+    const onPop = () => { navigating = true; markPop(); };
     const onHide = () => { if (!navigating) save(path, window.scrollY); };
     window.addEventListener('scroll', onScroll, { passive: true });
     document.addEventListener('click', onClick, true);

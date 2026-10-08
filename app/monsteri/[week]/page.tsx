@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Nav from '@/components/Nav';
+import BackButton from '@/components/BackButton';
 import MonsterStage from '@/components/MonsterStage';
 import { requireHero } from '@/lib/page';
 import { avatarUrl, hitPhotoUrl, monsterImageUrl, resizedImage } from '@/lib/supabase/client';
@@ -50,6 +51,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
   return (
     <>
       <Nav current="/bestiaario" />
+      <BackButton fallback="/bestiaario" />
       <MonsterStage
         week={week}
         title={title}

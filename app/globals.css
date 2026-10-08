@@ -626,3 +626,6 @@ summary.btn::-webkit-details-marker { display: none; }
 .admin-tab-badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--eye, #ff4a2e); color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
 details.admin-past > summary { cursor: pointer; padding: 12px 0; color: var(--muted); font-weight: 600; }
 .push-nudge { display: grid; gap: 8px; }
+.back-link { align-self: flex-start; background: none; border: 0; padding: 8px 0; min-height: 44px; font: inherit; cursor: pointer; }
+/* Sivun alkuun -nappi alapalkin yläpuolella, oikeassa reunassa (480 px:n sovellusalueen sisällä). */
+.scroll-top { position: fixed; z-index: 45; right: max(12px, calc(50% - 240px + 12px)); bottom: calc(76px + env(safe-area-inset-bottom)); padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: rgba(29, 23, 20, 0.95); color: var(--light); font: 600 13px/1 var(--font-body), sans-serif; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); cursor: pointer; animation: taunt-in 0.25s ease-out both; }

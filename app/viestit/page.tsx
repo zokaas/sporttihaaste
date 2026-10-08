@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Nav from '@/components/Nav';
+import BackButton from '@/components/BackButton';
 import MessageForm from '@/components/MessageForm';
 import DeleteMessage from '@/components/DeleteMessage';
 import { createClient } from '@/lib/supabase/server';
@@ -36,6 +37,7 @@ export default async function Viestit({ searchParams }: { searchParams: { sivu?:
   return (
     <>
       <Nav current="/viestit" />
+      <BackButton fallback="/" />
       <h1 className="display">Viestit</h1>
       <section className="card">
         {error ? <p className="error" style={{ margin: 0 }}>Viestit eivät ole vielä käytössä. Ylläpitäjän pitää ajaa migraatio 011_viestit.sql.</p>

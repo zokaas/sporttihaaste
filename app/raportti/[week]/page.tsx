@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Nav from '@/components/Nav';
+import BackButton from '@/components/BackButton';
 import RecapCard from '@/components/RecapCard';
 import ShareRecap from '@/components/ShareRecap';
 import { requireHero } from '@/lib/page';
@@ -15,6 +16,7 @@ export default async function Raportti({ params }: { params: { week: string } })
   return (
     <>
       <Nav current="/" />
+      <BackButton fallback="/" />
       <h1 className="display">Viikon {r.week} raportti</h1>
       <section className="card"><RecapCard r={r} /></section>
       <section className="card">

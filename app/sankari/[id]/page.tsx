@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import { notFound } from 'next/navigation';
 import Nav from '@/components/Nav';
+import BackButton from '@/components/BackButton';
 import { requireHero } from '@/lib/page';
 import { avatarUrl, hitPhotoUrl, resizedImage } from '@/lib/supabase/client';
 import { hitBonusText } from '@/lib/rules';
@@ -42,6 +43,7 @@ export default async function Sankari({ params }: { params: { id: string } }) {
   return (
     <>
       <Nav current="/sankarit" />
+      <BackButton fallback="/sankarit" />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
         {s.avatar ? <ZoomImg className="avatar" src={s.avatar} full={resizedImage(s.avatar, 828)} width={112} height={112} /> : <div className="avatar" style={{ width: 112, height: 112, fontSize: 40 }}>{s.name.slice(0, 1)}</div>}
         <h1 className="display" style={{ overflowWrap: 'anywhere' }}>{s.name}</h1>

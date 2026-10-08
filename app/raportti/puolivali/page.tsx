@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Nav from '@/components/Nav';
+import BackButton from '@/components/BackButton';
 import ShareRecap from '@/components/ShareRecap';
 import { requireHero } from '@/lib/page';
 import { MID_DAY, midseason, midseasonText } from '@/lib/midseason';
@@ -17,6 +18,7 @@ export default async function Puolivali() {
   return (
     <>
       <Nav current="/" />
+      <BackButton fallback="/" />
       <h1 className="display">Kausi puolivälissä</h1>
       {m.preview ? <p className="note threat" style={{ margin: 0 }}>Esikatselu ylläpitäjälle: muut näkevät raportin pe {Number(MID_DAY.slice(8))}.{Number(MID_DAY.slice(5, 7))}. alkaen. Luvut ovat tähänastiset.</p> : null}
       <p className="muted small" style={{ margin: 0 }}>Luvut kauden alusta {Number(m.until.slice(8))}.{Number(m.until.slice(5, 7))}. asti.</p>
