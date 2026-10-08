@@ -6,6 +6,12 @@ import { groupName } from '@/lib/trio';
 import { resizedImage } from '@/lib/supabase/client';
 import { Viewer } from '@/components/ImageViewer';
 import { localKey } from '@/lib/localKey';
+import type { Line } from '@/lib/taunts';
+
+/** Puhekuplan sisältö: puhujan nimi (moniosaisella) ja repliikki. */
+function Speech({ line }: { line: Line }) {
+  return <>{line.who ? <b className="stage-taunt-who">{line.who}</b> : null}“{line.text}”</>;
+}
 
 export type StagePart = { name: string; image: string | null; hp: number; left: number; dead: boolean };
 
@@ -39,10 +45,10 @@ type Props = {
   seal?: SealHero[];
   /** Viikon loppu (ms) ja testitilan siirtymä. */
   endMs?: number;
-  /** Monsterin repliikki (HP alle 50 % / 20 %), näytetään puhekuplana. */
-  taunt?: string | null;
+  /** Monsterin repliikit (täysi HP / alle 50 % / 20 %) puhekuplina; moniosaisella osa per kupla. */
+  taunt?: Line[] | string | null;
   /** Monsterin reaktio omaan juuri kirjattuun iskuun; näkyy hetken tauntin tilalla. */
-  hitLine?: string | null;
+  hitLine?: Line | string | null;
   /** Kuluva viikko, jos näyttämöllä on rästi (yläpalkin otsikko). */
   currentWeek?: number;
   /** Yläpalkin otsikko viikkonumeron sijaan (esim. portinvartija). */
@@ -102,7 +108,10 @@ export default function MonsterStage(p: Props) {
     document.addEventListener('visibilitychange', update);
     return () => document.removeEventListener('visibilitychange', update);
   }, []);
-  useEffect(() => { setTaunt('on'); }, [p.taunt]);
+  const taunts: Line[] = typeof p.taunt === 'string' ? [{ who: null, text: p.taunt }] : p.taunt ?? [];
+  const hitLine: Line | null = typeof p.hitLine === 'string' ? { who: null, text: p.hitLine } : p.hitLine ?? null;
+  const tauntKey = taunts.map((l) => `${l.who}:${l.text}`).join('|');
+  useEffect(() => { setTaunt('on'); }, [tauntKey]);
   useEffect(() => {
     if (taunt === 'gone') return;
     if (taunt === 'fading') {
@@ -110,9 +119,9 @@ export default function MonsterStage(p: Props) {
       return () => clearTimeout(t);
     }
     if (offscreen || revealing || !pageVisible) return;
-    const t = window.setTimeout(() => setTaunt('fading'), TAUNT_MS);
+    const t = window.setTimeout(() => setTaunt('fading'), TAUNT_MS + Math.max(0, taunts.length - 1) * 2500);
     return () => clearTimeout(t);
-  }, [taunt, offscreen, revealing, pageVisible]);
+  }, [taunt, offscreen, revealing, pageVisible, taunts.length]);
   const parts = p.parts?.length ? p.parts : null;
   const front = parts ? parts.find((x) => !x.dead) ?? parts[parts.length - 1] : null;
   const deadParts = parts ? parts.filter((x) => x.dead).length : 0;
@@ -263,8 +272,10 @@ export default function MonsterStage(p: Props) {
 
       <div className="stage-info">
         {/* Puhekupla nimen yläpuolella, jotta se ei peitä kuvan kasvoja (ne ovat yleensä kuvan yläosassa). */}
-        {reply && p.hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status">“{p.hitLine}”</div>
-          : p.taunt && !p.dead && taunt !== 'gone' ? <div key="taunt" className={`stage-taunt${taunt === 'fading' ? ' fading' : ''}`} role="note">“{p.taunt}”</div> : null}
+        {reply && hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status"><Speech line={hitLine} /></div>
+          : taunts.length && !p.dead && taunt !== 'gone' ? taunts.map((l, i) => (
+            <div key={`taunt-${i}`} className={`stage-taunt${taunt === 'fading' ? ' fading' : ''}`} role="note" style={i && taunt !== 'fading' ? { animationDelay: `${i * 0.6}s` } : undefined}><Speech line={l} /></div>
+          )) : null}
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
         {parts ? (
           <div className="stage-parts" aria-label={`${groupName(parts.length)}: ${deadParts}/${parts.length} kaatunut`}>

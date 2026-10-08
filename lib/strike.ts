@@ -2,7 +2,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadBattle } from './battle';
 import { sealView } from './rules';
-import { hitReaction } from './taunts';
+import { hitReaction, lineText, stageHitLine } from './taunts';
 import { BOSS_WEEK, isGateDay } from './season';
 import { monsterImageUrl } from './supabase/client';
 
@@ -24,6 +24,6 @@ export async function strikeSummary(supabase: SupabaseClient, today: string): Pr
     image: monsterImageUrl(m?.image_path),
     hp: view.hp,
     maxHp: m?.hp ?? 1,
-    reaction: hitReaction(m?.hit_lines, m?.hit_crit, false),
+    reaction: lineText(stageHitLine(m, view.hp, false)),
   };
 }
