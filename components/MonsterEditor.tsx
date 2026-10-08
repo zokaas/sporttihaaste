@@ -60,7 +60,7 @@ function WeaknessOptions() {
 
 export { shrinkJpeg };
 
-function MonsterRow({ monster }: { monster: Monster }) {
+function MonsterRow({ monster, current = false }: { monster: Monster; current?: boolean }) {
   const router = useRouter();
   const [m, setM] = useState(monster);
   const [busy, setBusy] = useState(false);
@@ -165,6 +165,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
     <details className="monster-row">
       <summary>
         <strong>Vko {m.week}</strong> {m.name ?? <span className="muted">nimeämättä</span>}
+        {current ? <span className="pill" style={{ marginLeft: 6 }}>nyt</span> : null}
         {m.parts ? <span className="muted small"> · {partWord(m.parts.length)}</span> : null}
         {m.hp ? <span className="muted small"> · {m.hp.toLocaleString('fi-FI')} HP</span> : null}
         {!m.weakness && !m.parts && m.week !== BOSS_WEEK ? <span className="error small"> · heikkous puuttuu</span> : null}
@@ -342,10 +343,19 @@ function MonsterRow({ monster }: { monster: Monster }) {
   );
 }
 
-export default function MonsterEditor({ monsters, sports }: { monsters: Monster[]; sports: Sport[] }) {
+/** Kuluva ja tulevat viikot ensin; menneet viikot omaan suljettuun ryhmäänsä. */
+export default function MonsterEditor({ monsters, sports, currentWeek = 0 }: { monsters: Monster[]; sports: Sport[]; currentWeek?: number }) {
+  const past = monsters.filter((m) => m.week < currentWeek);
+  const now = monsters.filter((m) => m.week >= currentWeek);
   return (
     <SportsContext.Provider value={sports}>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>{monsters.map((m) => <MonsterRow key={m.week} monster={m} />)}</div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>{now.map((m) => <MonsterRow key={m.week} monster={m} current={m.week === currentWeek} />)}</div>
+      {past.length ? (
+        <details className="admin-past">
+          <summary>Menneet viikot ({past.length})</summary>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>{past.map((m) => <MonsterRow key={m.week} monster={m} />)}</div>
+        </details>
+      ) : null}
     </SportsContext.Provider>
   );
 }

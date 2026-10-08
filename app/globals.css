@@ -619,3 +619,9 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .nowrap { white-space: nowrap; }
 .stage-taunt-who { display: block; font-style: normal; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--blood); margin-bottom: 2px; }
 summary.btn::-webkit-details-marker { display: none; }
+/* Ylläpidon välilehdet */
+.admin-tabs { position: sticky; top: 0; z-index: 20; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; border-radius: 14px; background: var(--track); }
+.admin-tabs a { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; border-radius: 10px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 14px; }
+.admin-tabs a.active { background: var(--blood); color: #fff; }
+.admin-tab-badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--eye, #ff4a2e); color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
+details.admin-past > summary { cursor: pointer; padding: 12px 0; color: var(--muted); font-weight: 600; }

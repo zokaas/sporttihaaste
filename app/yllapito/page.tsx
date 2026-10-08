@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { TEST_DAY_COOKIE, TEST_SKIP_COOKIE, testDay, testSkipPast } from '@/lib/today';
-import { helsinkiToday, formatDay, seasonWeek, weekRange, SEASON_START, SEASON_END, BOSS_WEEK } from '@/lib/season';
+import { helsinkiToday, formatDay, seasonWeek, weekRange, SEASON_START, SEASON_END, BOSS_WEEK, GATE_DAY } from '@/lib/season';
 import { revalidatePath } from 'next/cache';
 import webpush from 'web-push';
 import { createClient } from '@/lib/supabase/server';
@@ -86,7 +86,7 @@ async function sendTestPush() {
   } catch (e) {
     message = `Lähetys epäonnistui: ${(e instanceof Error ? e.message : String(e)).replace(/\.$/, '')}. Tarkista VAPID-muuttujat Vercelissä.`;
   }
-  redirect(`/yllapito?push=${encodeURIComponent(message)}`);
+  redirect(`/yllapito?osio=testi&push=${encodeURIComponent(message)}`);
 }
 
 async function setTestDay(formData: FormData) {
@@ -102,7 +102,7 @@ async function clearTestDay() {
   'use server';
   await requireAdmin();
   cookies().delete(TEST_DAY_COOKIE);
-  redirect('/yllapito');
+  redirect('/yllapito?osio=testi');
 }
 
 async function resetTestData() {
@@ -120,7 +120,7 @@ async function testFridayReminder() {
   const supabase = await requireAdmin();
   const { data: { user } } = await supabase.auth.getUser();
   const res = await fridayReminders(supabase, today(), user!.id);
-  redirect(`/yllapito?push=${encodeURIComponent(res.skipped ?? `Perjantain muistutus lähetetty itsellesi (${res.sent} laitteeseen).`)}`);
+  redirect(`/yllapito?osio=testi&push=${encodeURIComponent(res.skipped ?? `Perjantain muistutus lähetetty itsellesi (${res.sent} laitteeseen).`)}`);
 }
 
 /** Varjojen ääni: ilmoitus kaikille sankareille ilman lähettäjän nimeä (hiljaisina tunteina aamulla klo 9). */
@@ -163,7 +163,20 @@ async function setSportActive(form: FormData) {
   redirect(`/yllapito?laji=${encodeURIComponent(error ? `Muutos epäonnistui: ${error.message}` : `${name} ${active ? 'palautettu listalle' : 'piilotettu'}.`)}#lajit`);
 }
 
-export default async function Yllapito({ searchParams }: { searchParams: { push?: string; testi?: string; tavoite?: string; nollaa?: string; nakyvyys?: string; laji?: string } }) {
+const TABS = [
+  { id: 'nyt', label: 'Nyt' },
+  { id: 'monsterit', label: 'Monsterit' },
+  { id: 'peli', label: 'Peli' },
+  { id: 'testi', label: 'Testi' },
+] as const;
+type Tab = (typeof TABS)[number]['id'];
+
+export default async function Yllapito({ searchParams }: { searchParams: { osio?: string; push?: string; testi?: string; tavoite?: string; nollaa?: string; nakyvyys?: string; laji?: string } }) {
+  // Välilehti: osoitteesta, tai tallennusviestin mukaan (lomakkeet palaavat oikealle välilehdelle).
+  const tab: Tab = TABS.some((t) => t.id === searchParams.osio) ? (searchParams.osio as Tab)
+    : searchParams.testi || searchParams.nollaa ? 'testi'
+    : searchParams.tavoite || searchParams.nakyvyys || searchParams.laji ? 'peli'
+    : 'nyt';
   const supabase = await requireAdmin();
   const battle = await loadBattle(supabase, today());
   const lastRecap = battle.week >= 2 ? weekRecap(battle, battle.week - 1) : null;
@@ -184,6 +197,8 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
     const diff = Math.round((Date.parse(helsinkiToday()) - Date.parse(day)) / 86_400_000);
     return diff === 0 ? `tänään ${time}` : diff === 1 ? `eilen ${time}` : `${diff} pv sitten`;
   };
+  // Tulevien monsterien puutteet välilehden merkkiin (kuva tai heikkous puuttuu).
+  const monsterWarnings = ((monsters ?? []) as Monster[]).filter((m) => m.week >= battle.week && (!m.image_path || (!m.weakness && !m.parts && m.week !== BOSS_WEEK))).length;
   const withPush = new Set((subs ?? []).map((s) => s.user_id));
   const locked = (heroes ?? []).filter((h) => h.pledge_locked_at);
   const total = locked.reduce((a, h) => a + Number(h.pledge_hours), 0);
@@ -224,8 +239,16 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
     <>
       <Nav current="/yllapito" />
       <h1 className="display">Ylläpito</h1>
-      <Link className="btn btn-ghost" href="/yllapito/korjaukset">🛠️ Korjaukset: iskut, sairaudet ja varmuuskopio</Link>
-      {lastRecap ? (
+      <nav className="admin-tabs" aria-label="Ylläpidon osiot">
+        {TABS.map((t) => (
+          <Link key={t.id} href={`/yllapito?osio=${t.id}`} className={t.id === tab ? 'active' : undefined} aria-current={t.id === tab ? 'page' : undefined}>
+            {t.label}{t.id === 'monsterit' && monsterWarnings ? <span className="admin-tab-badge">{monsterWarnings}</span> : null}
+          </Link>
+        ))}
+      </nav>
+      {searchParams.push ? <p className="note" role="status" style={{ margin: 0 }}>{searchParams.push}</p> : null}
+
+      {tab === 'nyt' && lastRecap ? (
         <section className={`card${lastNeed != null && lastRecap.parts.bonus > lastNeed * 1.5 ? ' threat' : ''}`}>
           <h2 className="display">Viikko {lastRecap.week}</h2>
           <p style={{ margin: 0 }}>Bonuksista tuli <strong>{fmt(lastRecap.parts.bonus)}</strong> voimaa{lastNeed != null ? <>, HP oletti <strong>{fmt(lastNeed)}</strong>.{lastRecap.parts.bonus > lastNeed * 1.5 ? ' ⚠️ Selvästi enemmän: monsterit kaatuvat bonuksilla helpommin kuin HP:t olettavat.' : ''}</> : '.'}</p>
@@ -233,58 +256,8 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
         </section>
       ) : null}
 
-      {/* Ennen kautta testipäivänä voi myös kirjata; kauden aikana se on pelkkä esikatselu. */}
-      {(() => { const preseason = helsinkiToday() < SEASON_START; return (
-        <section className="card">
-          <h2 className="display">{preseason ? 'Testitila' : 'Esikatselu'}</h2>
-          {preseason
-            ? <Hint id="admin-test" className="">Kokeile sovellusta ennen kautta: valitse päivä, niin sovellus toimii sinulle kuin se olisi tänään. Muut näkevät sovelluksen normaalisti.</Hint>
-            : <Hint id="admin-preview" className="">Katso, miltä sovellus näyttää valittuna päivänä (monsterit, vihjeet, sinetti). Vain katselu: iskuja, askeleita ja sairauksia ei voi kirjata, jotta oikea peli pysyy koskemattomana. Muut näkevät sovelluksen normaalisti.</Hint>}
-          <form action={setTestDay} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div className="row" style={{ alignItems: 'center' }}>
-              <input className="input grow" type="date" name="day" min={SEASON_START} max={SEASON_END} defaultValue={testDay() ?? '2026-10-07'} required />
-              <button className="btn" type="submit">Aseta</button>
-            </div>
-            <label className="row" style={{ alignItems: 'center', gap: 10, minHeight: 44 }}>
-              <input type="checkbox" name="kaada" defaultChecked={!testDay() || testSkipPast()} style={{ width: 22, height: 22 }} />
-              <span>Kaada aiemmat viikot automaattisesti, jotta näet valitun viikon monsterin</span>
-            </label>
-          </form>
-          {testDay() ? (
-            <form action={clearTestDay}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>{preseason ? "Lopeta testitila" : "Lopeta esikatselu"} ({formatDay(testDay()!)})</button></form>
-          ) : null}
-          {preseason ? (
-            <>
-              <form action={resetTestData}>
-                <ConfirmButton message="Poistetaanko kaikkien iskut, askeleet, sairaudet ja lupausmuutokset?" className="btn btn-ghost" style={{ width: '100%', color: 'var(--blood-text)' }}>Tyhjennä testidata</ConfirmButton>
-              </form>
-              <Hint id="admin-reset">Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet, lupausmuutokset ja viestit. Tunnukset ja ilmoittautumiset säilyvät. Portinvartijan oikeat iskut ja askeleet 29.–30.9. säilyvät, vain testitilan kauden päivät (1.10. alkaen) poistetaan. Toimii ennen kauden alkua 1.10.</Hint>
-            </>
-          ) : null}
-          {searchParams.testi ? <p className={`note${searchParams.testi.startsWith('Tyhjennys epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.testi}</p> : null}
-          {searchParams.nollaa ? <ClearLocalState /> : null}
-        </section>
-      ); })()}
-
-      <section className="card">
-        <h2 className="display">Näkyvyys</h2>
-        <Hint id="admin-nav">Automaattisesti Lyö näkyy kauden aikana (1.10.–20.12.) ja Bestiaario 1.10. alkaen. Testitilassa automaattinen näkyvyys seuraa testipäivää.</Hint>
-        <form action={saveNav} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {([['strike', 'Lyö-nappi (alapalkki)', season?.nav_strike], ['bestiary', 'Bestiaario (monsterilistaus)', season?.nav_bestiary]] as const).map(([name, label, value]) => (
-            <label key={name} className="field">
-              {label}
-              <select className="input" name={name} defaultValue={value ?? 'auto'}>
-                <option value="auto">Automaattinen (kauden aikana)</option>
-                <option value="on">Näytä aina</option>
-                <option value="off">Piilota</option>
-              </select>
-            </label>
-          ))}
-          <button className="btn" type="submit">Tallenna näkyvyys</button>
-        </form>
-        {searchParams.nakyvyys ? <p className={`note${searchParams.nakyvyys.startsWith('Tallennus epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.nakyvyys}</p> : null}
-      </section>
-
+      {tab === 'nyt' ? (
+        <>
       <section className="card">
         <h2 className="display">Ilmoittautuneet {locked.length}/10</h2>
         <ul className="people">
@@ -306,12 +279,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
             );
           })}
         </ul>
-        <form action={sendTestPush}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Lähetä testi-ilmoitus kaikille</button></form>
-        <form action={testFridayReminder}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Kokeile perjantain muistutusta (vain itsellesi)</button></form>
-        <Hint id="admin-friday">Perjantain muistutus lähtee automaattisesti pe klo 9 niille, joilta puuttuu lupauksen tunteja, isku sinettiin tai askelkuittauksia.</Hint>
-        {searchParams.push ? <p className="note" role="status" style={{ margin: 0 }}>{searchParams.push}</p> : null}
       </section>
-
       <section className="card" id="varjot">
         <h2 className="display">👁️ Varjojen ääni</h2>
         <p className="muted small" style={{ margin: 0 }}>Ilmoitus kaikille sankareille ilman lähettäjän nimeä, kuin se tulisi pimeydestä. Ei näy Viestit-sivulla. Klo 22–09 lähetetty lähtee aamulla klo 9.</p>
@@ -327,7 +295,64 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
           <ConfirmButton className="btn" message="Lähetetäänkö varjojen ääni kaikille sankareille?">Lähetä kaikille</ConfirmButton>
         </form>
       </section>
+        </>
+      ) : null}
 
+      {tab === 'monsterit' ? (
+        <>
+      <section className="card">
+        <h2 className="display">Monsterit</h2>
+        <Hint id="admin-monsters" className="muted">Nimi, kuvaus, heikkous ja kuva näkyvät muille vasta monsterin viikon alkaessa (viikko 1: to 1.10., muut maanantaisin klo 00.00).</Hint>
+        <MonsterEditor currentWeek={battle.week} monsters={(monsters ?? []) as Monster[]} sports={battle.sports.filter((x) => x.active)} />
+      </section>
+      {helsinkiToday() > GATE_DAY ? (
+        <details className="card admin-past">
+          <summary>👁️ Portinvartija (ohi)</summary>
+      <div id="portinvartija" style={{ display: 'grid', gap: 12, paddingTop: 12 }}>
+        <h2 className="display">👁️ Portinvartija (ti 29.9.–ke 30.9.)</h2>
+        <p className="muted small" style={{ margin: 0 }}>Kauden avaava taistelu ti 29.9.–ke 30.9. klo 23.59. Treenit ja askeleet lyövät, sinettiä ei ole. Jos se jää henkiin, jäljelle jäänyt HP siirtyy viikon 1 monsterille; jos se kaatuu, ylijäämä säästyy ensi-iskuun. Näkyy kaikille heti.</p>
+        {gateError ? <p className="note threat" style={{ margin: 0 }}>Aja ensin migraatio 027_portinvartija.sql.</p> : <GateEditor gate={(gateRow ?? { name: null, description: null, image_path: null, taunt: null, hp: null }) as GateRow} />}
+      </div>
+        </details>
+      ) : (
+      <section className="card" id="portinvartija">
+        <h2 className="display">👁️ Portinvartija (ti 29.9.–ke 30.9.)</h2>
+        <p className="muted small" style={{ margin: 0 }}>Kauden avaava taistelu ti 29.9.–ke 30.9. klo 23.59. Treenit ja askeleet lyövät, sinettiä ei ole. Jos se jää henkiin, jäljelle jäänyt HP siirtyy viikon 1 monsterille; jos se kaatuu, ylijäämä säästyy ensi-iskuun. Näkyy kaikille heti.</p>
+        {gateError ? <p className="note threat" style={{ margin: 0 }}>Aja ensin migraatio 027_portinvartija.sql.</p> : <GateEditor gate={(gateRow ?? { name: null, description: null, image_path: null, taunt: null, hp: null }) as GateRow} />}
+      </section>
+      )}
+        </>
+      ) : null}
+
+      {tab === 'peli' ? (
+        <>
+      <section className="card">
+        <h2 className="display">Tavoite</h2>
+        {season?.hp_locked_at ? (
+          <p className="ok" style={{ margin: 0 }}>
+            Lukittu {new Date(season.hp_locked_at).toLocaleString('fi-FI')}: lupaukset {String(season.total_pledge_hours).replace('.', ',')} h, viikkovauhti {fmt(season.pace)}.
+          </p>
+        ) : (
+          <p style={{ margin: 0 }}>Esikatselu nykyisillä lupauksilla ({String(total).replace('.', ',')} h): viikkovauhti {fmt(preview.pace)}.</p>
+        )}
+        <div className="scroll">
+          <table className="admin">
+            <thead><tr><th>Viikko</th><th>Monsteri</th><th>HP</th></tr></thead>
+            <tbody>
+              {(monsters ?? []).map((m) => (
+                <tr key={m.week}>
+                  <td>{m.week}</td>
+                  <td>{m.week === BOSS_WEEK ? 'Loppupomo' : m.name ?? <span className="muted">nimeämättä</span>}</td>
+                  <td>{fmt(season?.hp_locked_at ? m.hp : m.week === BOSS_WEEK ? preview.boss : preview.monsters[m.week - 1])}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <Hint id="admin-lock" className="muted">Koko ensi-isku osuu loppupomoon, kattoa ei ole. Lukitse tavoite, kun kaikki ovat ilmoittautuneet. Lukituksen voi tehdä uudelleen, jos joku ilmoittautuu myöhässä.</Hint>
+        <form action={lockSeason}><button className="btn" type="submit">{season?.hp_locked_at ? 'Laske ja lukitse uudelleen' : 'Lukitse tavoite'}</button></form>
+        {searchParams.tavoite ? <p className={`note${searchParams.tavoite.startsWith('Lukitus epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.tavoite}</p> : null}
+      </section>
       <section className="card">
         <h2 className="display">HP:n realismi</h2>
         <p style={{ margin: 0 }}>Treenit ja askeleet eivät yksin riitä kaatamaan monsteria: loput pitää tulla bonuksista (3 hengen porukka, heikkous, juhlapäivä). Yksi bonus antaa treenille +50 %. Luvut ovat koko porukan yhteisiä.</p>
@@ -358,47 +383,24 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
         </ul>
         <Hint id="admin-hpcheck" className="muted">Loppupomon HP:sta vähennetään vielä ensi-isku, joten sen todellinen tarve on pienempi. Viikko 1 on 4 päivää ja sen HP sisältää portinvartijan jäännöksen. "Tällä tahdilla" käyttää päättyneiden viikkojen treeni- ja askelmääriä.</Hint>
       </section>
-
       <section className="card">
-        <h2 className="display">Tavoite</h2>
-        {season?.hp_locked_at ? (
-          <p className="ok" style={{ margin: 0 }}>
-            Lukittu {new Date(season.hp_locked_at).toLocaleString('fi-FI')}: lupaukset {String(season.total_pledge_hours).replace('.', ',')} h, viikkovauhti {fmt(season.pace)}.
-          </p>
-        ) : (
-          <p style={{ margin: 0 }}>Esikatselu nykyisillä lupauksilla ({String(total).replace('.', ',')} h): viikkovauhti {fmt(preview.pace)}.</p>
-        )}
-        <div className="scroll">
-          <table className="admin">
-            <thead><tr><th>Viikko</th><th>Monsteri</th><th>HP</th></tr></thead>
-            <tbody>
-              {(monsters ?? []).map((m) => (
-                <tr key={m.week}>
-                  <td>{m.week}</td>
-                  <td>{m.week === BOSS_WEEK ? 'Loppupomo' : m.name ?? <span className="muted">nimeämättä</span>}</td>
-                  <td>{fmt(season?.hp_locked_at ? m.hp : m.week === BOSS_WEEK ? preview.boss : preview.monsters[m.week - 1])}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <Hint id="admin-lock" className="muted">Koko ensi-isku osuu loppupomoon, kattoa ei ole. Lukitse tavoite, kun kaikki ovat ilmoittautuneet. Lukituksen voi tehdä uudelleen, jos joku ilmoittautuu myöhässä.</Hint>
-        <form action={lockSeason}><button className="btn" type="submit">{season?.hp_locked_at ? 'Laske ja lukitse uudelleen' : 'Lukitse tavoite'}</button></form>
-        {searchParams.tavoite ? <p className={`note${searchParams.tavoite.startsWith('Lukitus epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.tavoite}</p> : null}
+        <h2 className="display">Näkyvyys</h2>
+        <Hint id="admin-nav">Automaattisesti Lyö näkyy kauden aikana (1.10.–20.12.) ja Bestiaario 1.10. alkaen. Testitilassa automaattinen näkyvyys seuraa testipäivää.</Hint>
+        <form action={saveNav} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {([['strike', 'Lyö-nappi (alapalkki)', season?.nav_strike], ['bestiary', 'Bestiaario (monsterilistaus)', season?.nav_bestiary]] as const).map(([name, label, value]) => (
+            <label key={name} className="field">
+              {label}
+              <select className="input" name={name} defaultValue={value ?? 'auto'}>
+                <option value="auto">Automaattinen (kauden aikana)</option>
+                <option value="on">Näytä aina</option>
+                <option value="off">Piilota</option>
+              </select>
+            </label>
+          ))}
+          <button className="btn" type="submit">Tallenna näkyvyys</button>
+        </form>
+        {searchParams.nakyvyys ? <p className={`note${searchParams.nakyvyys.startsWith('Tallennus epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.nakyvyys}</p> : null}
       </section>
-
-      <section className="card" id="portinvartija">
-        <h2 className="display">👁️ Portinvartija (ti 29.9.–ke 30.9.)</h2>
-        <p className="muted small" style={{ margin: 0 }}>Kauden avaava taistelu ti 29.9.–ke 30.9. klo 23.59. Treenit ja askeleet lyövät, sinettiä ei ole. Jos se jää henkiin, jäljelle jäänyt HP siirtyy viikon 1 monsterille; jos se kaatuu, ylijäämä säästyy ensi-iskuun. Näkyy kaikille heti.</p>
-        {gateError ? <p className="note threat" style={{ margin: 0 }}>Aja ensin migraatio 027_portinvartija.sql.</p> : <GateEditor gate={(gateRow ?? { name: null, description: null, image_path: null, taunt: null, hp: null }) as GateRow} />}
-      </section>
-
-      <section className="card">
-        <h2 className="display">Monsterit</h2>
-        <Hint id="admin-monsters" className="muted">Nimi, kuvaus, heikkous ja kuva näkyvät muille vasta monsterin viikon alkaessa (viikko 1: to 1.10., muut maanantaisin klo 00.00).</Hint>
-        <MonsterEditor monsters={(monsters ?? []) as Monster[]} sports={battle.sports.filter((x) => x.active)} />
-      </section>
-
       <section className="card" id="lajit">
         <h2 className="display">Lajit</h2>
         <p className="muted small" style={{ margin: 0 }}>Uusi laji näkyy heti kaikilla kirjauksessa, säännöissä ja heikkouksissa. Nimeä ja arvoa ei voi muuttaa jälkikäteen. Laji ei myöskään poistu, mutta sen voi piilottaa: vanhat iskut säilyvät.</p>
@@ -442,6 +444,54 @@ export default async function Yllapito({ searchParams }: { searchParams: { push?
           ))}
         </ul>
       </section>
+        </>
+      ) : null}
+
+      {tab === 'testi' ? (
+        <>
+        {/* Ennen kautta testipäivänä voi myös kirjata; kauden aikana se on pelkkä esikatselu. */}
+      {(() => { const preseason = helsinkiToday() < SEASON_START; return (
+        <section className="card">
+          <h2 className="display">{preseason ? 'Testitila' : 'Esikatselu'}</h2>
+          {preseason
+            ? <Hint id="admin-test" className="">Kokeile sovellusta ennen kautta: valitse päivä, niin sovellus toimii sinulle kuin se olisi tänään. Muut näkevät sovelluksen normaalisti.</Hint>
+            : <Hint id="admin-preview" className="">Katso, miltä sovellus näyttää valittuna päivänä (monsterit, vihjeet, sinetti). Vain katselu: iskuja, askeleita ja sairauksia ei voi kirjata, jotta oikea peli pysyy koskemattomana. Muut näkevät sovelluksen normaalisti.</Hint>}
+          <form action={setTestDay} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div className="row" style={{ alignItems: 'center' }}>
+              <input className="input grow" type="date" name="day" min={SEASON_START} max={SEASON_END} defaultValue={testDay() ?? '2026-10-07'} required />
+              <button className="btn" type="submit">Aseta</button>
+            </div>
+            <label className="row" style={{ alignItems: 'center', gap: 10, minHeight: 44 }}>
+              <input type="checkbox" name="kaada" defaultChecked={!testDay() || testSkipPast()} style={{ width: 22, height: 22 }} />
+              <span>Kaada aiemmat viikot automaattisesti, jotta näet valitun viikon monsterin</span>
+            </label>
+          </form>
+          {testDay() ? (
+            <form action={clearTestDay}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>{preseason ? "Lopeta testitila" : "Lopeta esikatselu"} ({formatDay(testDay()!)})</button></form>
+          ) : null}
+          {preseason ? (
+            <>
+              <form action={resetTestData}>
+                <ConfirmButton message="Poistetaanko kaikkien iskut, askeleet, sairaudet ja lupausmuutokset?" className="btn btn-ghost" style={{ width: '100%', color: 'var(--blood-text)' }}>Tyhjennä testidata</ConfirmButton>
+              </form>
+              <Hint id="admin-reset">Tyhjennys poistaa kaikkien iskut, askeleet, sairaudet, lupausmuutokset ja viestit. Tunnukset ja ilmoittautumiset säilyvät. Portinvartijan oikeat iskut ja askeleet 29.–30.9. säilyvät, vain testitilan kauden päivät (1.10. alkaen) poistetaan. Toimii ennen kauden alkua 1.10.</Hint>
+            </>
+          ) : null}
+          {searchParams.testi ? <p className={`note${searchParams.testi.startsWith('Tyhjennys epäonnistui') ? ' threat' : ''}`} role="status" style={{ margin: 0 }}>{searchParams.testi}</p> : null}
+          {searchParams.nollaa ? <ClearLocalState /> : null}
+        </section>
+      ); })()}
+      <section className="card">
+        <h2 className="display">Ilmoitukset ja esikatselut</h2>
+        <Link className="btn btn-ghost" href="/?finaali=1">🎉 Esikatsele loppugaala (kauden jälkeinen etusivu)</Link>
+        <Hint id="admin-finale">Loppugaala näkyy kaikille etusivulla, kun loppupomon viikko päättyy su 20.12. Esikatselussa luvut ovat tämänhetkiset.</Hint>
+        <form action={sendTestPush}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Lähetä testi-ilmoitus kaikille</button></form>
+        <form action={testFridayReminder}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Kokeile perjantain muistutusta (vain itsellesi)</button></form>
+        <Hint id="admin-friday">Perjantain muistutus lähtee automaattisesti pe klo 9 niille, joilta puuttuu lupauksen tunteja, isku sinettiin tai askelkuittauksia.</Hint>
+      </section>
+      <Link className="btn btn-ghost" href="/yllapito/korjaukset">🛠️ Korjaukset: iskut, sairaudet ja varmuuskopio</Link>
+        </>
+      ) : null}
     </>
   );
 }
