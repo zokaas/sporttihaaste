@@ -19,6 +19,7 @@ import { activeWeaknesses, stageParts } from '@/lib/trio';
 import Hint from '@/components/Hint';
 import TodayCard from '@/components/TodayCard';
 import { isSickOn } from '@/lib/weekly';
+import { MID_WEEK, midseasonReady } from '@/lib/midseason';
 
 type BattleData = Awaited<ReturnType<typeof loadBattle>>;
 
@@ -125,6 +126,16 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
         <p className="note" style={{ margin: 0 }}>
           ⏳ <strong>Viikko {week} päättyy tänään.</strong> Kirjaa viikon treenit viimeistään ma klo 12, jolloin viikko lukittuu. <Link href="/kirjaa">Kirjaa →</Link>
         </p>
+      ) : week === BOSS_WEEK && target?.week === BOSS_WEEK && data.today >= addDays(weekRange(week).end, -2) ? (
+        // Loppupomon viikon viimeinen viikonloppu (pe–la); sunnuntaina näkyy "päättyy tänään".
+        <p className="note threat" style={{ margin: 0 }}>
+          🔥 <strong>Viimeinen viikonloppu.</strong> Loppupomolla on {fmt(view!.hp)} HP jäljellä, ja kausi päättyy su klo 24. Jokainen treeni ja askelpäivä ratkaisee. <Link href="/kirjaa">Kirjaa →</Link>
+        </p>
+      ) : null}
+      {week === MID_WEEK + 1 && midseasonReady(data) ? (
+        <Link href="/raportti/puolivali" className="note" style={{ margin: 0, display: 'block', textDecoration: 'none' }}>
+          📊 <strong>Kausi puolivälissä.</strong> Katso porukan välitilanne ja jaa se WhatsAppiin →
+        </Link>
       ) : null}
       {data.today === SEASON_START && (data.gate.dealt > 0 || data.gate.left > 0) ? (
         // Portinvartijan (29.–30.9.) tulos kauden ensimmäisenä päivänä: selittää viikon 1 monsterin lisä-HP:n tai potin ylijäämän.

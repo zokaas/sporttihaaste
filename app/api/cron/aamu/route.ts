@@ -4,7 +4,11 @@ import { sendPush, type PushPayload } from '@/lib/push';
 import { fridayReminders } from '@/lib/reminders';
 import { checkKills } from '@/lib/events';
 import { helsinkiHour, QUIET_END } from '@/lib/quiet';
-import { helsinkiToday, isGateDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
+import { addDays, helsinkiToday, isGateDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
+import { loadBattle } from '@/lib/battle';
+import { sealView } from '@/lib/rules';
+import { weaknessesOf, type MonsterPart } from '@/lib/trio';
+import { MID_WEEK } from '@/lib/midseason';
 
 export const dynamic = 'force-dynamic';
 // Ajastus lukee aina tuoreen tilanteen: Supabase-hakuja ei tallenneta Next.js:n välimuistiin.
@@ -15,7 +19,8 @@ export const fetchCache = 'force-no-store';
  * osuvat kumpikin klo 9:ään; aiemmin kuin klo 9 ei lähetetä mitään, ja kaikki on varattu kerran lähetettäväksi):
  * 1. hiljaisina tunteina (22–09) kirjoitetut viestit
  * 2. yöllä jonoon menneet ilmoitukset (monsteri kaatui, megamarssi, "vain sinä puutut", muistutukset)
- * 3. uuden monsterin paljastus viikon ensimmäisenä päivänä
+ * 3. uuden monsterin paljastus viikon ensimmäisenä päivänä, loppupomon viimeinen viikonloppu (pe)
+ *    ja kauden puoliväli (ti 10.11.)
  * 4. perjantaina jokaisen oma viikkomuistutus
  * Vaatii CRON_SECRET- ja SUPABASE_SERVICE_ROLE_KEY-ympäristömuuttujat.
  */
@@ -68,12 +73,14 @@ export async function GET(request: Request) {
   // 2b. Klo 9 Kela-iskut tulevat voimaan: kaatoiko jokin niistä monsterin?
   await checkKills(supabase, day).catch((e) => console.error('Kaatumistarkistus epäonnistui', e));
   if (week >= 1 && week <= BOSS_WEEK && weekRange(week).start === day) {
-    const { data: m } = await supabase.from('monsters').select('name, weakness').eq('week', week).maybeSingle();
+    const { data: m } = await supabase.from('monsters').select('name, weakness, parts').eq('week', week).maybeSingle();
     const { data: season } = await supabase.from('season').select('hp_locked_at').eq('id', 1).maybeSingle();
     if (m?.name && season?.hp_locked_at && (await once(`reveal-${week}`))) {
+      // Kaksikolla ja kolmikolla kaikkien osien heikkoudet.
+      const weak = weaknessesOf(m as { weakness: string | null; parts: MonsterPart[] | null });
       result.paljastus = await sendPush(supabase, {
         title: week === BOSS_WEEK ? `🔥 Loppupomo heräsi: ${m.name}` : `👁️ Uusi monsteri: ${m.name}`,
-        body: m.weakness ? `Heikkous: ${m.weakness} (+50 %). Viikko ${week} alkoi.` : `Viikko ${week} alkoi.`,
+        body: weak.length ? `${weak.length > 1 ? 'Heikkoudet' : 'Heikkous'}: ${weak.join(', ')} (+50 %). Viikko ${week} alkoi.` : `Viikko ${week} alkoi.`,
       });
     }
   }
@@ -88,6 +95,28 @@ export async function GET(request: Request) {
         body: 'Kaatakaa se ennen ke 30.9. klo 23.59, niin portti kauteen aukeaa. Treenit ja askeleet lyövät.',
       });
     }
+  }
+
+  // 3c. Loppupomon viikon perjantai: viimeinen viikonloppu (ennen perjantain omaa muistutusta).
+  if (week === BOSS_WEEK && day === addDays(weekRange(week).end, -2) && (await once('boss-weekend'))) {
+    const b = await loadBattle(supabase, day);
+    const boss = b.ledger?.alive.find((f) => f.week === BOSS_WEEK);
+    if (boss) {
+      const hp = sealView(boss, b.required).hp;
+      result.loppupomo = await sendPush(supabase, {
+        title: '🔥 Viimeinen viikonloppu',
+        body: `${b.monsters.get(BOSS_WEEK)?.name ?? 'Loppupomo'}: ${hp.toLocaleString('fi-FI')} HP jäljellä. Kausi päättyy su klo 24. Jokainen treeni ratkaisee.`,
+      });
+    }
+  }
+
+  // 3d. Kauden puoliväli: raportti viikoista 1–6 (viikko 6 lukittui ma klo 12, ilmoitus ti klo 9).
+  if (day === addDays(weekRange(MID_WEEK + 1).start, 1) && (await once('midseason'))) {
+    result.puolivali = await sendPush(supabase, {
+      title: '📊 Kausi puolivälissä',
+      body: 'Kuusi viikkoa takana, kuusi edessä. Katso porukan välitilanne ja kärki.',
+      url: '/raportti/puolivali',
+    });
   }
 
   // 4. Perjantain oma viikkomuistutus
