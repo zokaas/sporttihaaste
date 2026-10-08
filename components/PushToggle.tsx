@@ -17,8 +17,10 @@ async function saveSubscription(sub: PushSubscription) {
 /**
  * Ilmoitusten tila ja päälle kytkentä. Tarkistaa, että tilaus on oikeasti olemassa ja tallessa palvelimella.
  * card: näytetään omana korttinaan vain, kun ilmoitukset puuttuvat (ei silloin, kun ne ovat jo päällä).
+ * nudge: taistelunäkymän muistutus joka käynnillä, kunnes ilmoitukset ovat päällä tässä laitteessa
+ * (ei sulkemisnappia). Selaimelle, joka ei tue ilmoituksia lainkaan, ei näytetä mitään.
  */
-export default function PushToggle({ card = false }: { card?: boolean }) {
+export default function PushToggle({ card = false, nudge = false }: { card?: boolean; nudge?: boolean }) {
   const [state, setState] = useState<State>('checking');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -75,7 +77,26 @@ export default function PushToggle({ card = false }: { card?: boolean }) {
     }
   }
 
-  if (card && (state === 'checking' || state === 'on')) return null;
+  if ((card || nudge) && (state === 'checking' || state === 'on')) return null;
+  if (nudge && state === 'unsupported') return null;
+  if (nudge) {
+    return (
+      <section className="card threat push-nudge" aria-live="polite">
+        <strong>🔔 Ilmoitukset ovat pois päältä</strong>
+        <p style={{ margin: 0 }}>Ilman niitä et kuule, kun monsteri kaatuu, uusi paljastuu tai sinua tarvitaan sinettiin.</p>
+        {state === 'needs-home-screen' ? (
+          <ol className="small" style={{ margin: 0, paddingLeft: 20 }}>
+            <li>Napauta Safarin <strong>Jaa</strong>-painiketta (neliö ja nuoli ylös).</li>
+            <li>Valitse <strong>Lisää Koti-valikkoon</strong>.</li>
+            <li>Avaa Monsterijahti <strong>kotinäytön kuvakkeesta</strong> ja paina tässä näkyvää nappia.</li>
+          </ol>
+        ) : null}
+        {state === 'denied' ? <p className="small" style={{ margin: 0 }}>Ilmoitukset on estetty. Salli ne puhelimen asetuksista (Asetukset → Ilmoitukset → Monsterijahti) ja avaa sovellus uudelleen.</p> : null}
+        {state === 'off' ? <button className="btn btn-moss" type="button" disabled={busy} onClick={enable}>{busy ? 'Hetki…' : 'Laita ilmoitukset päälle'}</button> : null}
+        {error ? <p className="error" role="alert" style={{ margin: 0 }}>{error}</p> : null}
+      </section>
+    );
+  }
   const body = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {state === 'checking' ? <p className="muted" style={{ margin: 0 }}>Tarkistetaan ilmoituksia…</p> : null}

@@ -625,3 +625,4 @@ summary.btn::-webkit-details-marker { display: none; }
 .admin-tabs a.active { background: var(--blood); color: #fff; }
 .admin-tab-badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--eye, #ff4a2e); color: #fff; font-size: 11px; line-height: 18px; text-align: center; }
 details.admin-past > summary { cursor: pointer; padding: 12px 0; color: var(--muted); font-weight: 600; }
+.push-nudge { display: grid; gap: 8px; }
