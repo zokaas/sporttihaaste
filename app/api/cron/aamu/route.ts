@@ -147,6 +147,18 @@ export async function GET(request: Request) {
     result.perjantai = r.sent;
   });
 
+  // 4b. Kauden jälkeinen maanantai: loppugaala auki.
+  await step('loppugaala', async () => {
+    if (day !== addDays(SEASON_END, 1) || !(await once('finale'))) return;
+    const b = await loadBattle(supabase, day);
+    const bossDown = Boolean(b.ledger?.killed.some((k) => k.week === BOSS_WEEK));
+    result.loppugaala = await sendPush(supabase, {
+      title: bossDown ? '🏆 Loppupomo kaatui – kausi on voitettu!' : '🏆 Kausi päättyi',
+      body: 'Loppugaala on auki: pokaalikaappi, kauden luvut ja palkinnot. Kuka on MVP?',
+      url: '/',
+    });
+  });
+
   // 5. Viikoittainen varmuuskopio maanantaisin (kauden aikana ja viikko sen jälkeen).
   await step('varmuuskopio', async () => {
     if (weekday !== 'Mon' || day < SEASON_START || day > addDays(SEASON_END, 8) || !(await once(`backup-${day}`))) return;
