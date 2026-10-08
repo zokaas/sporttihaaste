@@ -484,6 +484,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { osio?
       <section className="card">
         <h2 className="display">Ilmoitukset ja esikatselut</h2>
         <Link className="btn btn-ghost" href="/?finaali=1">🎉 Esikatsele loppugaala (kauden jälkeinen etusivu)</Link>
+        <Link className="btn btn-ghost" href="/raportti/puolivali">📊 Esikatsele puolivälin raportti (kaikille pe 6.11.)</Link>
         <Hint id="admin-finale">Loppugaala näkyy kaikille etusivulla, kun loppupomon viikko päättyy su 20.12. Esikatselussa luvut ovat tämänhetkiset.</Hint>
         <form action={sendTestPush}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Lähetä testi-ilmoitus kaikille</button></form>
         <form action={testFridayReminder}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Kokeile perjantain muistutusta (vain itsellesi)</button></form>
