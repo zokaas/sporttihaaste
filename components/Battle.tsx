@@ -59,7 +59,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   // Monsterin repliikki HP:n mukaan: ylläpidon kirjoittama tai oletus.
   const targetMonster = target ? monsters.get(target.week) : undefined;
   // Kaksikolla ja kolmikolla elossa olevat osat puhuvat omat repliikkinsä.
-  const taunt = view ? stageTaunt(targetMonster, view.hp) : null;
+  const taunt = view ? stageTaunt(targetMonster, view.hp, target.week < week) : null;
   // Sinetti tulee näkyviin vasta viikon perjantaina: alkuviikon näkymä on kevyt. Sääntö on silti voimassa
   // koko viikon; padon kortti näytetään aina, koska silloin voimaa on vaakalaudalla.
   const showSeal = data.today >= addDays(weekRange(week).end, -2);

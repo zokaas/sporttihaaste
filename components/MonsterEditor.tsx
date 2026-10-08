@@ -6,6 +6,8 @@ import { createClient, monsterImageUrl } from '@/lib/supabase/client';
 import { BOSS_WEEK } from '@/lib/season';
 import { bossWhisper } from '@/lib/boss';
 import { CATEGORIES, SPECIAL_WEAKNESSES, SPORTS, type Sport } from '@/lib/rules';
+import { fallLine, stageTaunt, type Line } from '@/lib/taunts';
+import type { MonsterPart } from '@/lib/trio';
 
 export type Monster = {
   week: number;
@@ -24,11 +26,12 @@ export type Monster = {
   hit_lines?: string | null;
   hit_crit?: string | null;
   taunt_full?: string | null;
+  taunt_backlog?: string | null;
 };
 
-type PartLines = { taunt_full?: string | null; taunt_half?: string | null; taunt_low?: string | null; hit_lines?: string | null; hit_crit?: string | null; fall_line?: string | null };
+type PartLines = { taunt_backlog?: string | null; taunt_full?: string | null; taunt_half?: string | null; taunt_low?: string | null; hit_lines?: string | null; hit_crit?: string | null; fall_line?: string | null };
 type Part = { name: string; description: string | null; weakness: string | null; image_path: string | null } & PartLines;
-const LINE_KEYS = ['taunt_full', 'hit_lines', 'hit_crit', 'taunt_half', 'taunt_low', 'fall_line'] as const;
+const LINE_KEYS = ['taunt_full', 'hit_lines', 'hit_crit', 'taunt_half', 'taunt_low', 'taunt_backlog', 'fall_line'] as const;
 const emptyPart = (): Part => ({ name: '', description: null, weakness: null, image_path: null });
 
 /** Lajilista tietokannasta (ylläpidon lisäämät mukana). */
@@ -116,7 +119,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
   }
 
   function saveAll() {
-    const extras = { taunt_half: m.taunt_half?.trim() || null, taunt_low: m.taunt_low?.trim() || null, teaser: m.teaser?.trim() || null, boss_whisper: m.boss_whisper?.trim() || null, hit_lines: m.hit_lines?.trim() || null, hit_crit: m.hit_crit?.trim() || null, taunt_full: m.taunt_full?.trim() || null };
+    const extras = { taunt_half: m.taunt_half?.trim() || null, taunt_low: m.taunt_low?.trim() || null, teaser: m.teaser?.trim() || null, boss_whisper: m.boss_whisper?.trim() || null, hit_lines: m.hit_lines?.trim() || null, hit_crit: m.hit_crit?.trim() || null, taunt_full: m.taunt_full?.trim() || null, taunt_backlog: m.taunt_backlog?.trim() || null };
     if (!parts) return save({ name: m.name?.trim() || null, description: m.description?.trim() || null, weakness: m.weakness, parts: null, ...extras });
     const clean = parts.map((x, i) => ({
       name: x.name.trim(), description: x.description?.trim() || null, weakness: x.weakness || null, image_path: x.image_path,
@@ -144,7 +147,7 @@ function MonsterRow({ monster }: { monster: Monster }) {
     setBusy(true);
     setMsg(null);
     const supabase = createClient();
-    const cols = 'name, description, weakness, image_path, parts, teaser, taunt_half, taunt_low, boss_whisper, hit_lines, hit_crit, taunt_full';
+    const cols = 'name, description, weakness, image_path, parts, teaser, taunt_half, taunt_low, boss_whisper, hit_lines, hit_crit, taunt_full, taunt_backlog';
     const [{ data: a, error: e1 }, { data: b, error: e2 }] = await Promise.all([
       supabase.from('monsters').select(cols).eq('week', m.week).single(),
       supabase.from('monsters').select(cols).eq('week', other).single(),
@@ -238,6 +241,10 @@ function MonsterRow({ monster }: { monster: Monster }) {
                     HP alle 20 %
                     <input className="input" value={part.taunt_low ?? ''} onChange={(e) => setPart(i, { taunt_low: e.target.value })} />
                   </label>
+                  <label className="field">
+                    Rästissä (jäi kaatumatta omalla viikollaan)
+                    <input className="input" value={part.taunt_backlog ?? ''} onChange={(e) => setPart(i, { taunt_backlog: e.target.value })} />
+                  </label>
                   {i < parts.length - 1 ? (
                     <label className="field">
                       Kun {part.name || 'tämä osa'} kaatuu (sanoo {parts[i + 1].name || `osa ${i + 2}`})
@@ -293,6 +300,13 @@ function MonsterRow({ monster }: { monster: Monster }) {
         </label>
         {m.week < BOSS_WEEK ? (
           <label className="field">
+            Repliikki rästissä (jäi kaatumatta omalla viikollaan)
+            <input className="input" placeholder="Ette saaneet minua kaatumaan. Minä jatkan." value={m.taunt_backlog ?? ''} onChange={(e) => setM({ ...m, taunt_backlog: e.target.value })} />
+          </label>
+        ) : null}
+        <LinePreview m={m} />
+        {m.week < BOSS_WEEK ? (
+          <label className="field">
             Loppupomon kuiskaus, kun tämä monsteri kaatuu
             <input className="input" placeholder={bossWhisper(m.week) ?? ''} value={m.boss_whisper ?? ''} onChange={(e) => setM({ ...m, boss_whisper: e.target.value })} />
           </label>
@@ -332,5 +346,50 @@ export default function MonsterEditor({ monsters, sports }: { monsters: Monster[
     <SportsContext.Provider value={sports}>
       <div style={{ display: 'flex', flexDirection: 'column' }}>{monsters.map((m) => <MonsterRow key={m.week} monster={m} />)}</div>
     </SportsContext.Provider>
+  );
+}
+
+/** Puhekuplat esikatselussa samalla tyylillä kuin näyttämöllä. */
+function Bubbles({ title, lines }: { title: string; lines: Line[] }) {
+  if (!lines.length) return null;
+  return (
+    <div style={{ display: 'grid', gap: 6 }}>
+      <span className="small" style={{ color: '#c9c1b4' }}>{title}</span>
+      {lines.map((l, i) => (
+        <div key={i} className="stage-taunt" style={{ maxWidth: '100%', margin: 0 }}>
+          {l.who ? <b className="stage-taunt-who">{l.who}</b> : null}“{l.text}”
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Repliikkien esikatselu tallentamattomista kentistä: mitä pelaajat näkevät missäkin tilanteessa. */
+function LinePreview({ m }: { m: Monster }) {
+  const hp = m.hp && m.hp > 0 ? m.hp : 1000;
+  const parts = (m.parts ?? null) as unknown as MonsterPart[] | null;
+  const speaker = { ...m, hp, parts };
+  const rows = (s?: string | null) => (s ?? '').split('\n').map((l) => l.trim()).filter(Boolean);
+  const common = (s?: string | null): Line[] => rows(s).map((text) => ({ who: null, text }));
+  const hits: Line[] = parts?.some((p) => rows(p.hit_lines).length)
+    ? parts.flatMap((p) => rows(p.hit_lines).map((text) => ({ who: p.name, text })))
+    : common(m.hit_lines);
+  const crits: Line[] = parts?.some((p) => p.hit_crit?.trim())
+    ? parts.filter((p) => p.hit_crit?.trim()).map((p) => ({ who: p.name, text: p.hit_crit!.trim() }))
+    : common(m.hit_crit);
+  return (
+    <details>
+      <summary className="small">Esikatsele repliikit</summary>
+      <div style={{ display: 'grid', gap: 14, marginTop: 10, padding: 14, borderRadius: 14, background: 'var(--deep)' }}>
+        <Bubbles title="Täysi HP" lines={stageTaunt(speaker, hp) ?? []} />
+        <Bubbles title="Iskureaktiot (yksi arvotaan)" lines={hits} />
+        <Bubbles title="Kriittinen isku" lines={crits} />
+        {parts?.slice(0, -1).map((p, i) => <Bubbles key={i} title={`Kun ${p.name || `osa ${i + 1}`} kaatuu (myös ilmoituksena)`} lines={[fallLine(parts, i)].filter((l): l is Line => Boolean(l))} />)}
+        <Bubbles title="HP alle 50 %" lines={stageTaunt(speaker, hp * 0.45) ?? []} />
+        <Bubbles title="HP alle 20 %" lines={stageTaunt(speaker, hp * 0.1) ?? []} />
+        {m.week < BOSS_WEEK ? <Bubbles title="Rästissä" lines={stageTaunt(speaker, hp * 0.7, true) ?? []} /> : null}
+        <span className="small" style={{ color: '#c9c1b4' }}>Tyhjät kentät näkyvät oletusrepliikkeinä. Moniosaisella kaatunut osa vaikenee.</span>
+      </div>
+    </details>
   );
 }
