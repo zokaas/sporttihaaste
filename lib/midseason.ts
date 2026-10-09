@@ -2,7 +2,7 @@
 // Ylläpitäjä voi esikatsella sitä milloin tahansa; luvut ovat silloin tähänastiset.
 import { STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE } from './rules';
 import { addDays, helsinkiMs, seasonWeek, SEASON_END } from './season';
-import type { Battle } from './stats';
+import { heroStats, type Battle } from './stats';
 
 /** Raportin päivä (pe, viikko 6). Ilmoitus lähtee aamulla klo 9. */
 export const MID_DAY = '2026-11-06';
@@ -61,6 +61,11 @@ export function midseason(b: Battle, preview = false) {
     top,
     stepKing: stepKing ? { name: heroName(stepKing[0]), days: stepKing[1] } : null,
     // Päivät raportin päivästä kauden loppuun (su 20.12.).
+    // Merkit tähän mennessä (pysyvät; hetkelliset 🔥 / 🏆 jätetään pois).
+    badges: heroStats(b, () => null)
+      .map((s) => ({ name: s.name, shorts: s.achievements.filter((a) => !a.live).map((a) => a.short ?? a.icon) }))
+      .filter((x) => x.shorts.length)
+      .sort((a, c) => c.shorts.length - a.shorts.length),
     daysLeft: Math.round((Date.parse(SEASON_END) - Date.parse(addDays(until, 1))) / 86_400_000) + 1,
   };
 }

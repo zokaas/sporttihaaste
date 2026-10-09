@@ -45,6 +45,16 @@ export default async function Puolivali() {
           {m.stepKing ? <p className="muted small" style={{ margin: 0 }}>👣 Askelkuningas: {m.stepKing.name} ({m.stepKing.days} päivää)</p> : null}
         </section>
       ) : null}
+      {m.badges.length ? (
+        <section className="card">
+          <h2 className="display">🎖️ Merkit tähän mennessä</h2>
+          <ul className="people">
+            {m.badges.map((x) => (
+              <li key={x.name}><div className="grow" style={{ minWidth: 0 }}><div className="who">{x.name}</div></div><span style={{ whiteSpace: 'nowrap' }}>{x.shorts.join(' ')}</span></li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       <p className="muted" style={{ margin: 0, textAlign: 'center' }}>{m.daysLeft} päivää jäljellä. Loppupomo odottaa.</p>
       <section className="card">
         <h2 className="display">Jaa porukalle</h2>
