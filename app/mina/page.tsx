@@ -49,7 +49,8 @@ export default async function Mina() {
           <h2 className="display">Iskusi viikolla {b.week}</h2>
           {myHits.length || myKela.length ? (
             <ul className="people">
-              {myHits.map((h) => (
+              {[
+              ...myHits.map((h) => ({ day: h.trained_on, at: h.created_at as string, el: (
                 <li key={h.id}>
                   <div className="grow" style={{ minWidth: 0 }}>
                     <div className="who">{h.sport} {duration(h.minutes)} <span className="ok">{h.damage}</span></div>
@@ -61,15 +62,16 @@ export default async function Mina() {
                   </div>
                   <DeleteHitButton id={h.id} />
                 </li>
-              ))}
-              {myKela.map((k) => (
+              ) })),
+              ...myKela.map((k) => ({ day: k.day, at: '', el: (
                 <li key={`kela-${k.day}`}>
                   <div className="grow" style={{ minWidth: 0 }}>
                     <div className="who">🏥 Kela <span className="ok">{k.damage}</span></div>
                     <div className="facts">{formatDay(k.day)} · sairaspäivä</div>
                   </div>
                 </li>
-              ))}
+              ) })),
+            ].sort((a, c) => c.day.localeCompare(a.day) || c.at.localeCompare(a.at)).map((x) => x.el)}
             </ul>
           ) : <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla.</p>}
           <Link className="btn" href="/kirjaa">⚔️ Kirjaa treeni</Link>

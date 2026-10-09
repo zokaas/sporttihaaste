@@ -53,18 +53,23 @@ export default async function Sankari({ params }: { params: { id: string } }) {
       <section className="card">
         <h2 className="display">Tällä viikolla</h2>
         <div className="row" style={{ justifyContent: 'space-between' }}><span>Lupaus</span><span className={status.kept ? 'ok' : ''}>{h(status.hours)} / {h(status.target)}{status.kept ? ' ✓' : ''}</span></div>
-        {weekHits.length ? weekHits.map((x, i) => (
-          <div key={i} className="row" style={{ justifyContent: 'space-between' }}>
-            <span>{formatDay(x.trained_on)} {x.sport} {x.minutes} min{x.companions.length ? ` · ${x.companions.length + 1} hengen porukka` : ''}{hitBonusText(x) ? <span className="bonus-text"> · {hitBonusText(x)}</span> : null}</span>
-            <strong>{x.damage}</strong>
-          </div>
-        )) : weekKela.length ? null : <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla.</p>}
-        {weekKela.map((k) => (
-          <div key={`kela-${k.day}`} className="row" style={{ justifyContent: 'space-between' }}>
-            <span>{formatDay(k.day)} 🏥 Kela · sairaspäivä</span>
-            <strong>{k.damage}</strong>
-          </div>
-        ))}
+        {/* Iskut ja Kela-päivät samassa listassa, uusin päivä ensin. */}
+        {weekHits.length || weekKela.length ? [
+          ...weekHits.map((x) => ({ day: x.trained_on, at: x.created_at, key: `hit-${x.id}`, row: (
+            <>
+              <span>{formatDay(x.trained_on)} {x.sport} {x.minutes} min{x.companions.length ? ` · ${x.companions.length + 1} hengen porukka` : ''}{hitBonusText(x) ? <span className="bonus-text"> · {hitBonusText(x)}</span> : null}</span>
+              <strong>{x.damage}</strong>
+            </>
+          ) })),
+          ...weekKela.map((k) => ({ day: k.day, at: '', key: `kela-${k.day}`, row: (
+            <>
+              <span>{formatDay(k.day)} 🏥 Kela · sairaspäivä</span>
+              <strong>{k.damage}</strong>
+            </>
+          ) })),
+        ].sort((a, c) => c.day.localeCompare(a.day) || c.at.localeCompare(a.at)).map((r) => (
+          <div key={r.key} className="row" style={{ justifyContent: 'space-between' }}>{r.row}</div>
+        )) : <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla.</p>}
       </section>
 
       {photos.length ? (
