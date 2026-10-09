@@ -115,16 +115,37 @@ export default async function Saannot() {
       </section>
 
       <section className="card">
+        <h2 className="display">Merkit</h2>
+        <p style={{ margin: 0 }}>Merkit näkyvät Sankarit-listassa nimen vieressä ja kaikki sankarin omalla sivulla. <strong>Kerran ansaittu merkki pysyy koko kauden</strong>, ja sen taso nousee, kun saavutat enemmän. Taso näkyy merkissä, esimerkiksi 👣14 tai ⚔️×3.</p>
+        <ul className="rules-list">
+          <li><strong>🤝 Sanansa pitävä</strong>: lupaus pidetty peräkkäisinä viikkoina 3 / 6 / 9.</li>
+          <li><strong>👣 Askelputki</strong>: askeleet kuitattu peräkkäisinä päivinä 7 / 14 / 21.</li>
+          <li><strong>⚔️ Viimeinen isku</strong>: kaadoit monsterin 1 / 3 / 5 kertaa.</li>
+          <li><strong>💥 Kriittinen</strong>: isku vähintään +100 % bonuksella 1 / 5 / 10 kertaa.</li>
+          <li><strong>🎯 Heikkousmetsästäjä</strong>: iskut monsterin heikkouteen 5 / 10 / 20.</li>
+          <li><strong>👥 Porukan liima</strong>: yhteistreenipäivät 5 / 10 / 20.</li>
+        </ul>
+        <p style={{ margin: 0 }}>Lisäksi kaksi hetkellistä merkkiä:</p>
+        <ul className="rules-list">
+          <li><strong>🏆 Viikon sankari</strong>: eniten voimaa päättyneellä viikolla. Näkyy seuraavan viikon ajan.</li>
+          <li><strong>🔥 Askelputki käynnissä</strong>: vähintään 3 päivää putkeen, luku kertoo päivät. Liekki sammuu, jos päivä jää kuittaamatta, mutta ansaittu 👣-merkki jää.</li>
+        </ul>
+      </section>
+
+      <section className="card">
         <h2 className="display">Viestit ja ilmoitukset</h2>
         <p style={{ margin: 0 }}>Viestit-sivulla (📣) voit lähettää porukalle viestin, enintään {MESSAGES_PER_DAY} päivässä ja 200 merkkiä. Ilmoitus viestistä menee kaikille, myös sinulle itsellesi.</p>
         <p style={{ margin: 0 }}><strong>Hiljaiset tunnit klo {QUIET_START}–{String(QUIET_END).padStart(2, '0')}.</strong> Yöllä ei tule yhtään ilmoitusta: silloin syntyvät ilmoitukset ja viestit lähtevät aamulla klo {QUIET_END}.</p>
         <ul className="rules-list">
-          <li><strong>👁️ Portinvartija</strong>: ke 30.9. klo {QUIET_END} muistutus, jos portti on vielä kiinni, ja ilmoitus kun se kaatuu.</li>
-          <li><strong>👁️ Uusi monsteri</strong>: to 1.10. ja sen jälkeen joka maanantai klo {QUIET_END}.</li>
-          <li><strong>⚔️ Perjantaimuistutus</strong>: pe klo {QUIET_END}, vain jos sinulta puuttuu vielä jotain (lupauksen tunnit, isku sinettiin tai askelkuittauksia).</li>
-          <li><strong>💀 Monsteri kaatui</strong> ja <strong>⭐ Megamarssi</strong>: heti kaikille.</li>
+          <li><strong>👁️ Uusi monsteri</strong>: joka maanantai klo {QUIET_END}, heikkoudet mukana.</li>
+          <li><strong>⚔️ Perjantaimuistutus</strong>: pe klo {QUIET_END}. Jos sinulta puuttuu jotain (lupauksen tunnit, isku sinettiin tai askelkuittauksia), saat listan; jos kaikki on kunnossa, saat kehun.</li>
+          <li><strong>⏳ Viikko lukittuu</strong>: su illalla, vain jos sinulta puuttuu vielä jotain.</li>
+          <li><strong>💀 Monsteri kaatui</strong>, <strong>💥 kaksikon tai kolmikon osa kaatui</strong> ja <strong>⭐ Megamarssi</strong>: heti kaikille.</li>
           <li><strong>⚔️ Vain sinä puutut sinetistä</strong>: perjantaista alkaen sille, jonka isku viimeisenä puuttuu.</li>
           <li><strong>⏳ Sinetti odottaa sinua</strong>: kun joku painaa Muistuta puuttuvia (kukin voi muistuttaa kerran kolmessa tunnissa).</li>
+          <li><strong>📊 Kausi puolivälissä</strong>: pe 6.11. väliraportti.</li>
+          <li><strong>🔥 Viimeinen viikonloppu</strong>: pe 18.12., jos loppupomo on vielä pystyssä.</li>
+          <li><strong>🏆 Loppugaala</strong>: ma 21.12., kun kausi on päättynyt.</li>
         </ul>
         <p className="muted small" style={{ margin: 0 }}>Kun sovellus on auki, näet muiden iskut ja askeleet heti pienenä iskuikkunana ruudun yläreunassa.</p>
       </section>
