@@ -131,7 +131,17 @@ export default function SeasonFinale({ f }: { f: Finale }) {
             <div className="stat"><span className="muted small">Askelpäivät</span><strong>{f.own.stepDays}</strong></div>
           </div>
           {f.own.bestHit ? <p style={{ margin: 0 }}>Paras iskusi: {f.own.bestHit.sport} {f.own.bestHit.minutes} min, <strong>{fmt(f.own.bestHit.damage)}</strong> voimaa.</p> : null}
-          {allShown && f.own.awards.length ? <p style={{ margin: 0 }}>Kunniamerkkisi: <strong>{f.own.awards.join(', ')}</strong></p> : null}
+          {allShown && f.own.awards.length ? <p style={{ margin: 0 }}>Palkintosi: <strong>{f.own.awards.join(', ')}</strong></p> : null}
+          {f.own.badges.length ? (
+            <>
+              <p className="muted small" style={{ margin: 0 }}>Merkkisi kaudelta:</p>
+              <div className="badges">
+                {f.own.badges.map((a, i) => (
+                  <div key={i} className="badge"><span className="icon" aria-hidden="true">{a.short ?? a.icon}</span><div><strong>{a.title}</strong><div className="muted small">{a.detail}</div></div></div>
+                ))}
+              </div>
+            </>
+          ) : null}
         </section>
       ) : null}
 

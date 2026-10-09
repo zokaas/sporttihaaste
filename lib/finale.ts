@@ -51,6 +51,7 @@ export function seasonFinale(b: Battle, userId: string, avatarUrl: (p: string | 
 
   const defs: { icon: string; title: string; detail: string; unit: string; value: (id: string) => number }[] = [
     { icon: '🏆', title: 'MVP', detail: 'Eniten voimaa koko kaudella', unit: 'voimaa', value: (id) => byId.get(id)?.damage ?? 0 },
+    { icon: '💥', title: 'Kovin isku', detail: 'Kauden suurin yksittäinen isku', unit: 'voimaa', value: (id) => Math.max(0, ...b.hits.filter((h) => h.user_id === id).map((h) => h.damage)) },
     { icon: '⚔️', title: 'Viimeisten iskujen mestari', detail: 'Eniten monsterien viimeisiä iskuja', unit: 'viimeistä iskua', value: (id) => blowCount.get(id) ?? 0 },
     { icon: '🤝', title: 'Lupauksen pitäjä', detail: 'Eniten pidettyjä viikkolupauksia', unit: `/ ${closed} lupausta`, value: (id) => kept.get(id) ?? 0 },
     { icon: '👣', title: 'Askelkuningas', detail: 'Eniten 10 000 askeleen päiviä', unit: 'askelpäivää', value: (id) => byId.get(id)?.stepDays ?? 0 },
@@ -93,6 +94,8 @@ export function seasonFinale(b: Battle, userId: string, avatarUrl: (p: string | 
         stepDays: mine.stepDays,
         bestHit: best ? { sport: best.sport, minutes: best.minutes, damage: best.damage } : null,
         awards: awards.filter((a) => a.winners.some((w) => w.id === userId)).map((a) => `${a.icon} ${a.title}`),
+        // Kauden aikana ansaitut pysyvät merkit (ei hetkellisiä 🔥 / 🏆).
+        badges: mine.achievements.filter((a) => !a.live),
       }
     : null;
 
