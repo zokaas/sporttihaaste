@@ -11,7 +11,7 @@ export const MID_CARD_UNTIL = '2026-11-15';
 
 export const midseasonReady = (b: Battle) => b.today >= MID_DAY;
 
-export function midseason(b: Battle, preview = false) {
+export function midseason(b: Battle, preview = false, userId?: string) {
   if (!b.ledger || (!midseasonReady(b) && !preview)) return null;
   // Luvut torstaihin 5.11. asti; esikatselussa tähänastiset.
   const until = b.today < MID_DAY ? b.today : addDays(MID_DAY, -1);
@@ -44,6 +44,25 @@ export function midseason(b: Battle, preview = false) {
   const killed = b.ledger.killed.filter((k) => k.killedAt != null && k.killedAt < untilMs).map((k) => k.week);
   const started = seasonWeek(until);
   const standing = Array.from({ length: started }, (_, i) => i + 1).filter((w) => !killed.includes(w));
+  // Oma puolikausi (Sinun kautesi): samat rajat kuin porukan luvuissa.
+  const stats = heroStats(b, () => null);
+  const ranking = b.participants.map((id) => ({ id, damage: per.get(id) ?? 0 })).sort((a, c) => c.damage - a.damage);
+  const ownHits = userId ? hits.filter((h) => h.user_id === userId) : [];
+  const bestHit = ownHits.reduce<(typeof ownHits)[number] | null>((a, h) => (!a || h.damage > a.damage ? h : a), null);
+  const own = userId && b.participants.includes(userId)
+    ? {
+        damage: per.get(userId) ?? 0,
+        rank: ranking.findIndex((r) => r.id === userId) + 1,
+        of: ranking.length,
+        trainings: ownHits.length,
+        kept: Array.from({ length: closed }, (_, i) => i + 1).filter((w) => b.pledgeStatus(userId, w).kept).length,
+        closed,
+        stepDays: stepBy.get(userId) ?? 0,
+        bestHit: bestHit ? { sport: bestHit.sport, minutes: bestHit.minutes, damage: bestHit.damage } : null,
+        badges: stats.find((s) => s.id === userId)?.achievements.filter((a) => !a.live) ?? [],
+      }
+    : null;
+
   return {
     until,
     preview: !midseasonReady(b),
@@ -60,12 +79,13 @@ export function midseason(b: Battle, preview = false) {
     pot: b.ledger.pot,
     top,
     stepKing: stepKing ? { name: heroName(stepKing[0]), days: stepKing[1] } : null,
-    // Päivät raportin päivästä kauden loppuun (su 20.12.).
     // Merkit tähän mennessä (pysyvät; hetkelliset 🔥 / 🏆 jätetään pois).
-    badges: heroStats(b, () => null)
+    badges: stats
       .map((s) => ({ name: s.name, shorts: s.achievements.filter((a) => !a.live).map((a) => a.short ?? a.icon) }))
       .filter((x) => x.shorts.length)
       .sort((a, c) => c.shorts.length - a.shorts.length),
+    own,
+    // Päivät raportin päivästä kauden loppuun (su 20.12.).
     daysLeft: Math.round((Date.parse(SEASON_END) - Date.parse(addDays(until, 1))) / 86_400_000) + 1,
   };
 }

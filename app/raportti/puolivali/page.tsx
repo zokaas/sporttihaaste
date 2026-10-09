@@ -10,9 +10,9 @@ export const dynamic = 'force-dynamic';
 const fmt = (n: number) => n.toLocaleString('fi-FI');
 
 export default async function Puolivali() {
-  const { battle: b, me } = await requireHero();
+  const { battle: b, me, user } = await requireHero();
   // Ylläpitäjä näkee raportin etukäteen (tähänastisilla luvuilla), muut pe 6.11. alkaen.
-  const m = midseason(b, Boolean(me.is_admin));
+  const m = midseason(b, Boolean(me.is_admin), user.id);
   if (!m) notFound();
   const text = midseasonText(m);
   return (
@@ -43,6 +43,27 @@ export default async function Puolivali() {
             {m.top.map((t) => <li key={t.name}><strong>{t.name}</strong> · {fmt(t.damage)} voimaa</li>)}
           </ol>
           {m.stepKing ? <p className="muted small" style={{ margin: 0 }}>👣 Askelkuningas: {m.stepKing.name} ({m.stepKing.days} päivää)</p> : null}
+        </section>
+      ) : null}
+      {m.own ? (
+        <section className="card">
+          <h2 className="display">Sinun kautesi tähän asti</h2>
+          <div className="stat-row">
+            <div className="stat"><span className="muted small">Voima</span><strong>{fmt(m.own.damage)}</strong><span className="muted small">sija {m.own.rank}/{m.own.of}</span></div>
+            <div className="stat"><span className="muted small">Treenit</span><strong>{m.own.trainings}</strong></div>
+          </div>
+          <div className="stat-row">
+            <div className="stat"><span className="muted small">Lupaukset</span><strong>{m.own.kept}/{m.own.closed}</strong></div>
+            <div className="stat"><span className="muted small">Askeleet kuitattu</span><strong>{m.own.stepDays} kertaa</strong></div>
+          </div>
+          {m.own.bestHit ? <p style={{ margin: 0 }}>Paras iskusi: {m.own.bestHit.sport} {m.own.bestHit.minutes} min, <strong>{fmt(m.own.bestHit.damage)}</strong> voimaa.</p> : null}
+          {m.own.badges.length ? (
+            <div className="badges">
+              {m.own.badges.map((a, i) => (
+                <div key={i} className="badge"><span className="icon" aria-hidden="true">{a.short ?? a.icon}</span><div><strong>{a.title}</strong><div className="muted small">{a.detail}</div></div></div>
+              ))}
+            </div>
+          ) : <p className="muted small" style={{ margin: 0 }}>Ei vielä merkkejä. Toinen puolisko on edessä!</p>}
         </section>
       ) : null}
       {m.badges.length ? (
