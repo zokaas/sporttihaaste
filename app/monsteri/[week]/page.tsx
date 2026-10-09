@@ -141,7 +141,8 @@ export default async function Monsteri({ params }: { params: { week: string } })
         <h2 className="display">Iskut</h2>
         {hits.length || kela.length ? (
           <ul className="people">
-            {hits.map((h, i) => (
+            {[
+              ...hits.map((h, i) => ({ day: h.trained_on, at: h.created_at as string, el: (
               <li key={i}>
                 {hitPhotoUrl(h.photo_path) ? <ZoomImg className="hit-photo" src={resizedImage(hitPhotoUrl(h.photo_path)!, 96)} full={hitPhotoUrl(h.photo_path)!} width={40} height={40} /> : null}
                 <div className="grow" style={{ minWidth: 0 }}>
@@ -155,8 +156,8 @@ export default async function Monsteri({ params }: { params: { week: string } })
                 </div>
                 <strong>{fmt(h.damage)}</strong>
               </li>
-            ))}
-            {kela.map((k) => (
+            ) })),
+            ...kela.map((k) => ({ day: k.day, at: '', el: (
               <li key={`kela-${k.userId}-${k.day}`}>
                 <div className="grow" style={{ minWidth: 0 }}>
                   <div className="who">{heroName(k.userId)} <span className="muted" style={{ fontWeight: 400 }}>· 🏥 Kela</span></div>
@@ -164,7 +165,8 @@ export default async function Monsteri({ params }: { params: { week: string } })
                 </div>
                 <strong>{fmt(k.damage)}</strong>
               </li>
-            ))}
+            ) })),
+            ].sort((a, c) => c.day.localeCompare(a.day) || c.at.localeCompare(a.at)).map((x) => x.el)}
           </ul>
         ) : <p className="muted" style={{ margin: 0 }}>Kukaan ei ole vielä lyönyt.</p>}
       </section>

@@ -78,7 +78,8 @@ export default async function Kirjaa() {
           <p className="muted" style={{ margin: 0 }}>Ei vielä iskuja tällä viikolla.</p>
         ) : (
           <ul className="people">
-            {(myHits ?? []).map((h) => (
+            {[
+            ...(myHits ?? []).map((h) => ({ day: h.trained_on as string, at: h.created_at as string, el: (
               <li key={h.id}>
                 <div className="grow" style={{ minWidth: 0 }}>
                   <div className="who">{h.sport} {formatMinutes(h.minutes)} <span className="ok">{h.damage}</span></div>
@@ -91,15 +92,16 @@ export default async function Kirjaa() {
                 </div>
                 <DeleteHitButton id={h.id} />
               </li>
-            ))}
-            {myKela.map((k) => (
+            ) })),
+            ...myKela.map((k) => ({ day: k.day, at: '', el: (
                 <li key={`kela-${k.day}`}>
                   <div className="grow" style={{ minWidth: 0 }}>
                     <div className="who">🏥 Kela <span className="ok">{k.damage}</span></div>
                     <div className="facts">{formatDay(k.day)} · sairaspäivä</div>
                   </div>
                 </li>
-              ))}
+              ) })),
+            ].sort((a, c) => c.day.localeCompare(a.day) || c.at.localeCompare(a.at)).map((x) => x.el)}
           </ul>
         )}
         <Hint id="week-lock">{grace ? `Viikko ${grace} on vielä auki tänään klo 12 asti.` : `Viikon ${week} treenejä voi kirjata ma ${formatDay(lockDay).slice(3)} klo 12 asti.`} Sen jälkeen viikko lukittuu, eikä iskuja voi enää lisätä tai poistaa.</Hint>
