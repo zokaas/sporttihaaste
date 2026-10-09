@@ -5,7 +5,8 @@ import { addDays, monthDay, seasonWeek, weekRange, BOSS_WEEK } from './season';
 
 export type Battle = Awaited<ReturnType<typeof loadBattle>>;
 
-export type Achievement = { icon: string; title: string; detail: string };
+/** Merkki. `short` näkyy sankarilistassa (esim. "👣14"); `live` = käynnissä oleva putki tai viikon merkki. */
+export type Achievement = { icon: string; title: string; detail: string; short?: string; live?: boolean };
 
 export type HeroStats = {
   id: string;
@@ -35,6 +36,18 @@ function longestStreak(days: string[]) {
   }
   return best;
 }
+
+/** Käynnissä oleva askelputki: päättyy tänään tai eilen (tämän päivän kuittaus voi vielä puuttua). */
+function currentStreak(days: string[], today: string) {
+  const set = new Set(days);
+  let d = set.has(today) ? today : addDays(today, -1);
+  let n = 0;
+  while (set.has(d)) { n++; d = addDays(d, -1); }
+  return n;
+}
+
+/** Korkein saavutettu taso (kynnysarvot nousevassa järjestyksessä), tai 0. */
+const tierOf = (value: number, steps: number[]) => [...steps].reverse().find((t) => value >= t) ?? 0;
 
 /** Viikon suurin vahingontekijä (iskut + askeleet) jokaiselta päättyneeltä viikolta. */
 export function weekHeroes(b: Battle) {
@@ -73,16 +86,37 @@ export function heroStats(b: Battle, avatarUrl: (p: string | null) => string | n
     for (let w = 1; w < b.week; w++) if (b.pledgeStatus(h.id, w).kept) kept++;
     const streak = longestStreak(steps);
 
+    // Merkit. Pysyvät merkit ansaitaan kerran koko kaudeksi (tasot nousevat); viikon sankari näkyy vain
+    // seuraavan viikon ajan, ja 🔥 vain niin kauan kuin askelputki on käynnissä.
     const achievements: Achievement[] = [];
-    for (const [w, id] of Object.entries(winners)) if (id === h.id) achievements.push({ icon: '🏆', title: 'Viikon sankari', detail: `Eniten voimaa viikolla ${w}` });
-    for (const [w, id] of Object.entries(blows)) {
-      if (id !== h.id) continue;
-      const m = b.monsters.get(Number(w));
-      achievements.push({ icon: '⚔️', title: 'Viimeinen isku', detail: m?.name ?? `Viikon ${w} monsteri` });
+    const live = currentStreak(steps, b.today);
+    if (live >= 3) achievements.push({ icon: '🔥', short: `🔥${live}`, title: `Askelputki käynnissä: ${live} päivää`, detail: 'Kuittaa askeleet tänäänkin, niin liekki palaa.', live: true });
+    if (b.week >= 2 && winners[b.week - 1] === h.id) achievements.push({ icon: '🏆', title: 'Viikon sankari', detail: `Eniten voimaa viikolla ${b.week - 1}`, live: true });
+
+    // Pisin putki peräkkäin pidettyjä lupauksia päättyneiltä viikoilta.
+    let keptRun = 0;
+    let keptBest = 0;
+    for (let w = 1; w < b.week; w++) { keptRun = b.pledgeStatus(h.id, w).kept ? keptRun + 1 : 0; keptBest = Math.max(keptBest, keptRun); }
+    const blowCount = Object.values(blows).filter((id) => id === h.id).length;
+    const crits = hits.filter((x) => (x.bonus_pct ?? 0) >= 100).length;
+    const weak = hits.filter((x) => x.weakness_hit).length;
+    const together = new Set(b.hits.filter((x) => x.companions.length && (x.user_id === h.id || x.companions.includes(h.id))).map((x) => x.trained_on)).size;
+    const tiered: [string, string, number, number[], (n: number) => string][] = [
+      ['🤝', 'Sanansa pitävä', keptBest, [3, 6, 9], (n) => `${n} lupausta pidetty peräkkäin`],
+      ['👣', 'Askelputki', streak, [7, 14, 21], (n) => `${n} askelpäivää putkeen`],
+      ['⚔️', 'Viimeinen isku', blowCount, [1, 3, 5], (n) => (n === 1 ? 'Kaatoi monsterin' : `Kaatoi ${n} monsteria`)],
+      ['💥', 'Kriittinen', crits, [1, 5, 10], (n) => (n === 1 ? 'Isku vähintään +100 % bonuksella' : `${n} iskua vähintään +100 % bonuksella`)],
+      ['🎯', 'Heikkousmetsästäjä', weak, [5, 10, 20], (n) => `${n} iskua monsterin heikkouteen`],
+      ['👥', 'Porukan liima', together, [5, 10, 20], (n) => `${n} yhteistreenipäivää`],
+    ];
+    for (const [icon, title, value, steps_, detail] of tiered) {
+      const t = tierOf(value, steps_);
+      if (!t) continue;
+      const level = steps_.indexOf(t) + 1;
+      // Lyhenne: putkissa ja määrissä taso näkyy lukuna (👣14, ⚔️×3); ensimmäinen taso pelkkänä merkkinä.
+      const short = level === 1 ? icon : icon === '👣' || icon === '🤝' ? `${icon}${t}` : `${icon}×${t}`;
+      achievements.push({ icon, short, title: `${title}${steps_.length > 1 ? ` (taso ${level})` : ''}`, detail: detail(value) });
     }
-    if (streak >= 14) achievements.push({ icon: '👣', title: 'Askelputki 14', detail: `${streak} päivää putkeen` });
-    else if (streak >= 7) achievements.push({ icon: '👣', title: 'Askelputki 7', detail: `${streak} päivää putkeen` });
-    if (kept >= 3 && kept === b.week - 1) achievements.push({ icon: '🤝', title: 'Sanansa pitävä', detail: `Kaikki ${kept} lupausta pidetty` });
 
     return {
       id: h.id,

@@ -120,7 +120,7 @@ export default async function Sankarit({ searchParams }: { searchParams: { tab?:
                       : `${s.stepDays} askelpäivää · pisin putki ${s.longestStreak}`}
                   </div>
                 </div>
-                {s.achievements.length ? <span title="Saavutukset">{s.achievements.slice(0, 3).map((a) => a.icon).join('')}</span> : null}
+                {s.achievements.length ? <span title="Merkit" style={{ whiteSpace: 'nowrap' }}>{s.achievements.slice(0, 3).map((a) => a.short ?? a.icon).join(' ')}</span> : null}
               </Link>
             </li>
           ))}
