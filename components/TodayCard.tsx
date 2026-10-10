@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import type { Battle } from '@/lib/stats';
 import { upcomingCelebrations } from '@/lib/stats';
 import { BOSS_WEEK, formatDay, weekRange } from '@/lib/season';
@@ -39,7 +38,6 @@ export default function TodayCard({ b, showNextReveal = true }: { b: Battle; sho
                 : difficulty.level === 'hard'
                   ? `Tarvitaan paljon bonustreenejä ja lisätreeniä. Yhteistreenit${weak ? ` ja ${weak}` : ''} auttavat eniten.`
                   : `Jokainen treeni tarvitsee bonuksen ja lisäksi lisätreeniä. Koko porukka liikkeelle: yhteistreenit${weak ? `, ${weak}` : ''} ja jokainen askelpäivä.`}
-            {difficulty.tenths > 0 ? <>{' '}<Link href="/mina" className="nowrap">Porukan lisävoima →</Link></> : null}
           </span>
         </div>
       ) : null}

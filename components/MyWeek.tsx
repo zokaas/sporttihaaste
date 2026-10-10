@@ -12,8 +12,6 @@ type Day = { day: string; stepped: boolean; future: boolean; patrol: boolean; si
 type Props = {
   week: number;
   grace?: boolean;
-  /** Porukan yhteinen lisävoima (tavoite, kertynyt) ja oma osuus; null, kun tavoitetta ei lasketa. */
-  teamExtra?: { goal: number; done: number; mine: number } | null;
   days: Day[];
   target: number;
   hours: number;
@@ -99,28 +97,9 @@ export default function MyWeek(p: Props) {
         {p.sickDays ? <span className="small" style={{ color: 'var(--gold)' }}>🤒 {p.sickDays} sairaspäivää: tavoite {h(p.fullTarget)} → {h(p.target)}{p.inSeal ? '' : ' · ei sinettivelvollisuutta tällä viikolla'}</span> : null}
       </div>
 
-      {p.teamExtra ? (() => {
-        const g = p.teamExtra;
-        const ok = g.done >= g.goal;
-        return (
-          <div className="myweek-block">
-            <Hint
-              id="team-extra"
-              title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">⭐ Porukan lisävoima</span><strong className={ok ? 'ok' : ''} style={{ fontSize: 22 }}>{g.done.toLocaleString('fi-FI')} / {g.goal.toLocaleString('fi-FI')}{ok ? ' ✓' : ''}</strong></div>}
-            >
-              Lupaukset ja askeleet eivät yksin riitä kaatamaan monsteria. Loput kerätään yhdessä: bonuksilla (3 hengen porukka, viikon heikkous, juhlapäivä), treenaamalla yli lupauksen ja kuittaamalla askeleita yli 5 päivän. Tavoite lasketaan tähänastisella tahdilla, ja palkki katoaa, kun viikon monsteri on kaatunut.
-            </Hint>
-            <div className="hpbar"><span style={{ width: `${Math.min(100, (g.done / g.goal) * 100)}%`, background: ok ? 'var(--moss-text)' : 'var(--gold)' }} /></div>
-            <span className="muted small">
-              {ok ? 'Porukan lisävoima on kasassa! ' : ''}Sinä +{g.mine.toLocaleString('fi-FI')} · bonukset, treenit yli lupauksen ja askeleet yli 5 päivän.
-            </span>
-          </div>
-        );
-      })() : null}
-
       <div className="myweek-block">
         <Hint id="steps" title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Askeleet (10 000 / pv)</span><strong className={stepsOk ? 'ok' : ''}>{stepCount} / {stepGoal} pv{stepsOk ? ' ✓' : ''}{stepCount > stepGoal ? ` +${stepCount - stepGoal} ⭐` : ''}</strong></div>}>
-          Napauta päivää, kun olet kävellyt 10 000 askelta: +50. Tavoite on 5 päivää viikossa (vähemmän sairaspäivinä ja lyhyellä viikolla), mutta jokainen päivä tavoitteen yli on lisävoimaa. Jos kaikki terveet kuittaavat saman päivän, siitä tulee megamarssi ⭐ +250.
+          Napauta päivää, kun olet kävellyt 10 000 askelta: +50. Tavoite on 5 päivää viikossa (vähemmän sairaspäivinä ja lyhyellä viikolla), mutta jokainen päivä tavoitteen yli tuo lisää voimaa. Jos kaikki terveet kuittaavat saman päivän, siitä tulee megamarssi ⭐ +250.
         </Hint>
         <div className="weekstrip" style={{ gridTemplateColumns: `repeat(${p.days.length}, 1fr)` }}>
           {p.days.map((d) => {
