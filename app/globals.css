@@ -275,8 +275,14 @@ table.plain th, table.plain td { text-align: left; padding: 6px 4px; border-bott
 .threat { border-left: 3px solid var(--gold); }
 
 /* Viikon yhteenveto */
-.modal { position: fixed; inset: 0; z-index: 40; background: rgba(8, 5, 4, 0.85); display: flex; align-items: center; justify-content: center; padding: 16px; animation: finale-in 0.3s ease-out; }
-.modal-body { width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; }
+/* Ruutu alapalkin päällä (z-index > 50) ja kokonaan näytöllä myös lovellisissa puhelimissa. */
+.modal { position: fixed; inset: 0; z-index: 60; background: rgba(8, 5, 4, 0.85); display: flex; align-items: center; justify-content: center; padding: calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom)); animation: finale-in 0.3s ease-out; }
+.modal-body { width: 100%; max-width: 440px; max-height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+/* Viikkoraportin kuva ruudussa matalampi, jotta luvut ja napit mahtuvat näkyviin. */
+.modal .recap-images > .zoom-img:only-child .recap-img { max-height: 30vh; }
+.modal .recap-img { width: 96px; height: 96px; }
+/* Napit pysyvät ruudun alareunassa näkyvissä, vaikka sisältöä vieritettäisiin. */
+.modal-body > .row:last-child { position: sticky; bottom: -18px; margin: 0 -18px -18px; padding: 12px 18px 18px; background: var(--surface); border-top: 1px solid var(--line); }
 .recap { display: flex; flex-direction: column; gap: 10px; }
 .recap-kicker { letter-spacing: 0.25em; text-transform: uppercase; font-size: 12px; color: var(--gold); }
 h2.recap-title { font-size: 26px; }
