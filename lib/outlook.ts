@@ -1,8 +1,7 @@
 // Viikon vaikeus ja oma bonustavoite HP-laskurin (lib/hpcheck.ts) pohjalta.
 import type { Battle } from './stats';
 import { PATROL_DAY_DAMAGE, STEP_DAY_DAMAGE } from './rules';
-import { addDays, BOSS_WEEK, helsinkiToday, seasonWeek, weekRange } from './season';
-import { isSickOn } from './weekly';
+import { BOSS_WEEK, helsinkiToday, seasonWeek, weekRange } from './season';
 import { bonusTenths, hpPlan, weekActual, type WeekActual } from './hpcheck';
 
 export type Difficulty = { level: 'easy' | 'medium' | 'hard' | 'mega'; tenths: number; need: number };
@@ -32,7 +31,7 @@ export function seasonPlan(b: NonNullable<Battle>, totalPledgeHours = b.particip
   return { plan: hpPlan(totalPledgeHours, hpByWeek, actuals, closedWeeks), actuals, closedWeeks, totalPledgeHours, avgHitBase: avgHitBase(b) };
 }
 
-/** Onko viikon oma monsteri jo kaatunut (silloin vaikeutta tai lisävoimaa ei enää näytetä). */
+/** Onko viikon oma monsteri jo kaatunut (silloin vaikeutta ei enää näytetä). */
 const weekKilled = (b: NonNullable<Battle>, week: number) => Boolean(b.ledger?.killed.some((k) => k.week === week));
 
 /**
@@ -46,35 +45,4 @@ export function weekDifficulty(b: NonNullable<Battle>, week = b.week): Difficult
   const tenths = bonusTenths(p.needPctAtPace ?? p.needPct);
   const level = tenths === 0 ? 'easy' : tenths <= 4 ? 'medium' : tenths <= 8 ? 'hard' : 'mega';
   return { level, tenths, need: p.needAtPace ?? p.need };
-}
-
-/**
- * Sankarin viikon lisävoima: omien iskujen bonukset + treenien perusvoima lupaustavoitteen (100 / h) ylittävältä
- * osalta + askelpäivät yli tavoitteen (5 / 7 terveistä päivistä).
- */
-function heroExtra(b: NonNullable<Battle>, userId: string, week: number) {
-  const mine = b.hits.filter((h) => h.user_id === userId && seasonWeek(h.trained_on) === week);
-  const base = mine.reduce((a, h) => a + Math.round(h.damage / (1 + (h.bonus_pct ?? 0) / 100)), 0);
-  const bonus = mine.reduce((a, h) => a + h.damage, 0) - base;
-  const over = Math.max(0, base - Math.round(b.pledgeStatus(userId, week).target * 100));
-  const { start, end } = weekRange(week);
-  let healthy = 0;
-  for (let d = start; d <= end; d = addDays(d, 1)) if (!isSickOn(b.periods, userId, d)) healthy++;
-  const stepDays = b.steps.filter((s) => s.user_id === userId && s.day >= start && s.day <= end && !isSickOn(b.periods, userId, s.day)).length;
-  const steps = Math.max(0, stepDays - Math.round((5 * healthy) / 7)) * STEP_DAY_DAMAGE;
-  return bonus + over + steps;
-}
-
-/**
- * Porukan yhteinen lisävoima viikolle: tavoite on HP-laskurin bonustarve tähänastisella tahdilla (ennen ensimmäistä
- * päättynyttä viikkoa teoreettinen), kertynyt on kaikkien sankarien lisävoima. `mine` on sankarin oma osuus (ei tavoitetta).
- */
-export function teamExtra(b: NonNullable<Battle>, userId: string, week = b.week) {
-  if (week < 1 || week >= BOSS_WEEK || weekKilled(b, week)) return null;
-  const p = seasonPlan(b).plan[week - 1];
-  // Tarve samalla tahdilla kuin viikon vaikeudessa; jos lisävoimaa ei tarvita, palkkia ei näytetä.
-  const need = p ? p.needAtPace ?? p.need : 0;
-  if (need <= 0) return null;
-  const done = b.participants.reduce((a, u) => a + heroExtra(b, u, week), 0);
-  return { goal: need, done, mine: heroExtra(b, userId, week) };
 }
