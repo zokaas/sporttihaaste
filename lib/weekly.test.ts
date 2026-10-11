@@ -16,6 +16,7 @@ assert.equal(weekPledgeTarget(4, 2, 3), 2.5);
 // Viikko 1: to–su 4 päivää → 4 × 4/7 = 2,29 → 2,5 h
 assert.equal(weekPledgeTarget(4, 1, 0), 2.5);
 assert.equal(weekPledgeTarget(4, 2, 7), 0);
+assert.equal(weekPledgeTarget(1, 2, 6), 0.5);
 
 assert.equal(pledgeForWeek(4, [], 5), 4);
 assert.equal(pledgeForWeek(4, [{ from_week: 3, hours: 5 }, { from_week: 6, hours: 3 }], 5), 5);

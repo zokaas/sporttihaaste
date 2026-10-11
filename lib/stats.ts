@@ -18,7 +18,10 @@ export type HeroStats = {
   stepDays: number;
   longestStreak: number;
   pledgesKept: number;
+  /** Päättyneet viikot, joilta lupaus lasketaan (sairausvapautetut pois). */
   closedWeeks: number;
+  /** Koko viikon sairaana: vapautettu lupauksesta. */
+  excusedWeeks: number;
   favourites: { sport: string; count: number }[];
   achievements: Achievement[];
 };
@@ -83,7 +86,12 @@ export function heroStats(b: Battle, avatarUrl: (p: string | null) => string | n
     const counts = new Map<string, number>();
     for (const x of hits) counts.set(x.sport, (counts.get(x.sport) ?? 0) + 1);
     let kept = 0;
-    for (let w = 1; w < b.week; w++) if (b.pledgeStatus(h.id, w).kept) kept++;
+    let excused = 0;
+    for (let w = 1; w < b.week; w++) {
+      const st = b.pledgeStatus(h.id, w);
+      if (st.excused) excused++;
+      else if (st.kept) kept++;
+    }
     const streak = longestStreak(steps);
 
     // Merkit. Pysyvät merkit ansaitaan kerran koko kaudeksi (tasot nousevat); viikon sankari näkyy vain
@@ -93,10 +101,15 @@ export function heroStats(b: Battle, avatarUrl: (p: string | null) => string | n
     if (live >= 3) achievements.push({ icon: '🔥', short: `🔥${live}`, title: `Askelputki käynnissä: ${live} päivää`, detail: 'Kuittaa askeleet tänäänkin, niin liekki palaa.', live: true });
     if (b.week >= 2 && winners[b.week - 1] === h.id) achievements.push({ icon: '🏆', title: 'Viikon sankari', detail: `Eniten voimaa viikolla ${b.week - 1}`, live: true });
 
-    // Pisin putki peräkkäin pidettyjä lupauksia päättyneiltä viikoilta.
+    // Pisin putki peräkkäin pidettyjä lupauksia päättyneiltä viikoilta. Sairausvapautettu viikko ohitetaan.
     let keptRun = 0;
     let keptBest = 0;
-    for (let w = 1; w < b.week; w++) { keptRun = b.pledgeStatus(h.id, w).kept ? keptRun + 1 : 0; keptBest = Math.max(keptBest, keptRun); }
+    for (let w = 1; w < b.week; w++) {
+      const st = b.pledgeStatus(h.id, w);
+      if (st.excused) continue;
+      keptRun = st.kept ? keptRun + 1 : 0;
+      keptBest = Math.max(keptBest, keptRun);
+    }
     const blowCount = Object.values(blows).filter((id) => id === h.id).length;
     const crits = hits.filter((x) => (x.bonus_pct ?? 0) >= 100).length;
     const weak = hits.filter((x) => x.weakness_hit).length;
@@ -128,7 +141,8 @@ export function heroStats(b: Battle, avatarUrl: (p: string | null) => string | n
       stepDays: steps.length,
       longestStreak: streak,
       pledgesKept: kept,
-      closedWeeks: b.week - 1,
+      closedWeeks: b.week - 1 - excused,
+      excusedWeeks: excused,
       favourites: [...counts].sort((a, c) => c[1] - a[1]).slice(0, 3).map(([sport, count]) => ({ sport, count })),
       achievements,
     };
@@ -136,8 +150,20 @@ export function heroStats(b: Battle, avatarUrl: (p: string | null) => string | n
 }
 
 /** Järjestys: pidetyt lupaukset, sitten vahinko. */
+/** Lupausviikkoja vähintään tämän verran, ennen kuin pidettyjen osuus ratkaisee järjestyksen. */
+const RANK_MIN_WEEKS = 3;
+
+/**
+ * Lupausjärjestys: pidettyjen osuus (sairausvapautetut viikot eivät ole mukana), kun lupausviikkoja on
+ * vähintään RANK_MIN_WEEKS; muuten nämä jäävät perään. Tasapelissä enemmän pidettyjä, vähemmän rikottuja, sitten voima.
+ */
 export function rankByPledges(stats: HeroStats[]) {
-  return [...stats].sort((a, c) => c.pledgesKept - a.pledgesKept || c.damage - a.damage);
+  const enough = (x: HeroStats) => (x.closedWeeks >= RANK_MIN_WEEKS ? 1 : 0);
+  const share = (x: HeroStats) => (enough(x) ? x.pledgesKept / x.closedWeeks : 0);
+  const broken = (x: HeroStats) => x.closedWeeks - x.pledgesKept;
+  return [...stats].sort(
+    (a, c) => enough(c) - enough(a) || share(c) - share(a) || c.pledgesKept - a.pledgesKept || broken(a) - broken(c) || c.damage - a.damage,
+  );
 }
 
 /** Tulevat juhlapäivät (nimi- ja syntymäpäivät) seuraavan n päivän ajalta, tänään mukaan lukien. */
@@ -226,7 +252,8 @@ export function weekRecap(b: Battle, w: number): WeekRecap | null {
     lostToSeal: after.lostToSeal - (before?.lostToSeal ?? 0),
     mvp: top ? { name: b.heroes.find((h) => h.id === top[0])?.hero_name ?? '', damage: top[1] } : null,
     pledgesKept: b.ledgerInput.pledgeBonusesByWeek[w] ?? 0,
-    participants: b.participants.length,
+    // Koko viikon sairaana olleet eivät ole mukana lupauslaskussa.
+    participants: b.participants.filter((u) => !b.pledgeStatus(u, w).excused).length,
     pledgeKeepers: b.participants.filter((u) => b.pledgeStatus(u, w).kept).map((u) => b.heroes.find((h) => h.id === u)?.hero_name ?? '?'),
     patrolDays: patrols.length,
     stepDays: steps.length,

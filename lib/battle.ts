@@ -112,7 +112,9 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     const sickDays = sickDaysBetween(periods, userId, start, end < today ? end : today);
     const target = weekPledgeTarget(pledgeOf(userId, w), w, sickDays);
     const hours = hoursInWeek(hitList, userId, w, sports);
-    return { target, hours, kept: target > 0 && hours >= target, sickDays };
+    // Vapautettu: koko viikko sairaana, joten tavoitetta ei ole. Ei lasketa lupaustilastoihin eikä katkaise putkea.
+    const excused = target === 0 && sickDays > 0;
+    return { target, hours, kept: target > 0 && hours >= target, sickDays, excused };
   };
 
   const patrols = patrolDays(stepList, participants, periods);

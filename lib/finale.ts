@@ -34,10 +34,18 @@ export function seasonFinale(b: Battle, userId: string, avatarUrl: (p: string | 
   for (const id of Object.values(blows)) blowCount.set(id, (blowCount.get(id) ?? 0) + 1);
 
   const kept = new Map<string, number>();
+  const counted = new Map<string, number>();
+  let pledgeWeeks = 0; // lupausviikot yhteensä, sairausvapautetut pois
   for (const h of heroes) {
     let n = 0;
-    for (let w = 1; w <= closed; w++) if (b.pledgeStatus(h.id, w).kept) n++;
+    for (let w = 1; w <= closed; w++) {
+      const st = b.pledgeStatus(h.id, w);
+      if (st.excused) continue;
+      pledgeWeeks++;
+      if (st.kept) n++;
+    }
     kept.set(h.id, n);
+    counted.set(h.id, closed - [...Array(closed)].filter((_, i) => b.pledgeStatus(h.id, i + 1).excused).length);
   }
 
   // Yhteistreenipäivät: kirjaaja ja merkityt seuralaiset, kukin päivä kerran
@@ -53,7 +61,7 @@ export function seasonFinale(b: Battle, userId: string, avatarUrl: (p: string | 
     { icon: '🏆', title: 'MVP', detail: 'Eniten voimaa koko kaudella', unit: 'voimaa', value: (id) => byId.get(id)?.damage ?? 0 },
     { icon: '💥', title: 'Kovin isku', detail: 'Kauden suurin yksittäinen isku', unit: 'voimaa', value: (id) => Math.max(0, ...b.hits.filter((h) => h.user_id === id).map((h) => h.damage)) },
     { icon: '⚔️', title: 'Viimeisten iskujen mestari', detail: 'Eniten monsterien viimeisiä iskuja', unit: 'viimeistä iskua', value: (id) => blowCount.get(id) ?? 0 },
-    { icon: '🤝', title: 'Lupauksen pitäjä', detail: 'Eniten pidettyjä viikkolupauksia', unit: `/ ${closed} lupausta`, value: (id) => kept.get(id) ?? 0 },
+    { icon: '🤝', title: 'Lupauksen pitäjä', detail: 'Eniten pidettyjä viikkolupauksia', unit: 'pidettyä lupausta', value: (id) => kept.get(id) ?? 0 },
     { icon: '👣', title: 'Askelkuningas', detail: 'Eniten 10 000 askeleen päiviä', unit: 'askelpäivää', value: (id) => byId.get(id)?.stepDays ?? 0 },
     { icon: '👥', title: 'Porukan liima', detail: 'Eniten yhteistreenipäiviä', unit: 'yhteistreenipäivää', value: togetherCount },
     { icon: '🎯', title: 'Heikkousmetsästäjä', detail: 'Eniten iskuja monsterin heikkouteen', unit: 'heikkousiskua', value: (id) => weaknessHits.get(id) ?? 0 },
@@ -74,7 +82,7 @@ export function seasonFinale(b: Battle, userId: string, avatarUrl: (p: string | 
     { label: 'Askelpäiviä', value: fmt(b.steps.length) },
     { label: 'Megamarsseja', value: fmt(b.patrols.length) },
     { label: 'Yhteistreenejä', value: fmt(b.hits.filter((h) => h.companions.length >= 2).length) },
-    { label: 'Lupauksia pidetty', value: `${[...kept.values()].reduce((a, n) => a + n, 0)}/${closed * heroes.length}` },
+    { label: 'Lupauksia pidetty', value: `${[...kept.values()].reduce((a, n) => a + n, 0)}/${pledgeWeeks}` },
     { label: 'Pisin askelputki', value: streakBest.best ? `${streakBest.best} pv` : '–', note: streakBest.winners.map((w) => w.name).join(', ') },
   ];
 
@@ -90,7 +98,7 @@ export function seasonFinale(b: Battle, userId: string, avatarUrl: (p: string | 
         of: ranked.length,
         hours: mine.hours,
         kept: kept.get(userId) ?? 0,
-        closed,
+        closed: counted.get(userId) ?? closed,
         stepDays: mine.stepDays,
         bestHit: best ? { sport: best.sport, minutes: best.minutes, damage: best.damage } : null,
         awards: awards.filter((a) => a.winners.some((w) => w.id === userId)).map((a) => `${a.icon} ${a.title}`),

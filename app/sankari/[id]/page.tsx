@@ -35,7 +35,7 @@ export default async function Sankari({ params }: { params: { id: string } }) {
     ['Voima', (x) => fmt(x.damage)],
     ['Iskut', (x) => String(x.hitCount)],
     ['Treenitunnit (lupaukseen)', (x) => h(x.hours)],
-    ['Pidetyt lupaukset', (x) => `${x.pledgesKept}/${x.closedWeeks}`],
+    ['Pidetyt lupaukset', (x) => `${x.pledgesKept}/${x.closedWeeks}${x.excusedWeeks ? ` · 🤒 ${x.excusedWeeks}` : ''}`],
     ['Askelpäivät', (x) => String(x.stepDays)],
     ['Pisin askelputki', (x) => String(x.longestStreak)],
   ];
@@ -52,7 +52,7 @@ export default async function Sankari({ params }: { params: { id: string } }) {
 
       <section className="card">
         <h2 className="display">Tällä viikolla</h2>
-        <div className="row" style={{ justifyContent: 'space-between' }}><span>Lupaus</span><span className={status.kept ? 'ok' : ''}>{h(status.hours)} / {h(status.target)}{status.kept ? ' ✓' : ''}</span></div>
+        <div className="row" style={{ justifyContent: 'space-between' }}><span>Lupaus</span><span className={status.kept ? 'ok' : ''}>{status.excused ? '🤒 Vapautettu' : <>{h(status.hours)} / {h(status.target)}{status.kept ? ' ✓' : ''}</>}</span></div>
         {/* Iskut ja Kela-päivät samassa listassa, uusin päivä ensin. */}
         {weekHits.length || weekKela.length ? [
           ...weekHits.map((x) => ({ day: x.trained_on, at: x.created_at, key: `hit-${x.id}`, row: (
