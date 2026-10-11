@@ -15,6 +15,7 @@ import LiveRefresh from '@/components/LiveRefresh';
 import PushToggle from '@/components/PushToggle';
 import AwaySummary, { type AwayEvent } from '@/components/AwaySummary';
 import RecapPrompt from '@/components/RecapPrompt';
+import EarlyReveal from '@/components/EarlyReveal';
 import RecapCard from '@/components/RecapCard';
 import { activeWeaknesses, stageParts, weaknessesOf } from '@/lib/trio';
 import Hint from '@/components/Hint';
@@ -156,6 +157,19 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
       ) : null}
       {target ? <AwaySummary events={awayEvents} skip={ownHit != null} strike={{ name: nameOf(target.week), image: monsterImageUrl(targetMonster?.image_path), hp: view!.hp, maxHp: targetMonster?.hp ?? 1, reaction: lineText(stageHitLine(targetMonster, view!.hp, false)) }} /> : null}
       {recap ? <RecapPrompt week={recap.week}><RecapCard r={recap} /></RecapPrompt> : null}
+      {early?.name ? (
+        <EarlyReveal week={week + 1} boss={week + 1 === BOSS_WEEK}>
+          <span className="stage-week">{week + 1 === BOSS_WEEK ? '🔥 Loppupomo paljastui' : '👁️ Seuraava monsteri paljastui'}</span>
+          {earlyImg ? <img className="early-reveal-img" src={earlyImg} alt="" /> : null}
+          <h2 className="display" style={{ margin: 0 }}>{early.name}</h2>
+          {early.taunt_full || early.teaser ? <p className="teaser-text" style={{ margin: 0 }}>“{early.taunt_full || early.teaser}”</p> : null}
+          <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
+            {early.hp ? <span className="pill">Voima: {fmt(early.hp)} HP</span> : null}
+            {earlyWeak.length ? <span className="pill">{earlyWeak.length > 1 ? 'Heikkoudet' : 'Heikkous'}: {earlyWeak.join(', ')}</span> : null}
+          </div>
+          <p className="muted small" style={{ margin: 0 }}>Kaaditte viikon monsterin etuajassa, joten {week + 1 === BOSS_WEEK ? 'loppupomo' : 'seuraava'} näyttäytyi jo nyt. Se herää maanantaina klo 00, ja siihen asti iskut säästyvät ensi-iskuun.</p>
+        </EarlyReveal>
+      ) : null}
 
       {target ? (
         <MonsterStage

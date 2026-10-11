@@ -62,7 +62,8 @@ export default async function Monsteri({ params }: { params: { week: string } })
         maxHp={m?.hp ?? 1}
         padded={view?.dam ?? 0}
         backlog={week < b.week && !killed}
-        revealed={Boolean(m?.name)}
+        // Ennakkoon paljastunut (nukkuva) monsteri ei kuluta maanantain paljastusanimaatiota.
+        revealed={Boolean(m?.name) && week <= b.week}
         dead={Boolean(killed)}
         ownHit={null}
         zoom={m?.name ? images : undefined}
