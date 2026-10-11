@@ -167,6 +167,14 @@ export async function GET(request: Request) {
     result.varmuuskopio = await writeBackup(supabase);
   });
 
+  // 5b. Maanantaina: ajettiinko sunnuntai-illan muistutusajo? Jos ei, ylläpitäjät saavat tiedon virheilmoituksessa.
+  await step('sunnuntaitarkistus', async () => {
+    const prev = seasonWeek(addDays(day, -1));
+    if (weekday !== 'Mon' || prev < 1 || prev > BOSS_WEEK) return;
+    const { data: ran } = await supabase.from('notifications_sent').select('key').eq('key', `sunday-${prev}`).maybeSingle();
+    if (!ran) errors.push(`Sunnuntain muistutusajo (viikko ${prev}) jäi ajamatta`);
+  });
+
   // 6. Virheistä ilmoitus ylläpitäjille (kerran päivässä).
   if (errors.length) {
     result.virheet = errors.join(' | ');

@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadBattle } from './battle';
 import { sendPush } from './push';
 import { STEP_GOAL } from './rules';
-import { addDays, weekRange } from './season';
+import { addDays, formatDay, weekRange } from './season';
 import { isSickOn } from './weekly';
 
 const h = (n: number) => `${String(Math.round(n * 10) / 10).replace('.', ',')} h`;
@@ -17,6 +17,8 @@ const h = (n: number) => `${String(Math.round(n * 10) / 10).replace('.', ',')} h
 export async function fridayReminders(supabase: SupabaseClient, day: string, onlyUser?: string, kind: 'friday' | 'sunday' = 'friday') {
   const b = await loadBattle(supabase, day);
   if (!b.ledger) return { sent: 0, skipped: 'Taistelu ei ole käynnissä.' };
+  // Sunnuntaina ei muistuteta, jos viikon monsteri ja kaikki rästit ovat jo kaatuneet.
+  if (kind === 'sunday' && !b.ledger.alive.some((f) => f.week <= b.week)) return { sent: 0, skipped: 'Monsteri on jo kaatunut.' };
   const target = b.ledger.alive[0];
   const monster = target ? b.monsters.get(target.week)?.name ?? 'monsteri' : null;
   const { start, end } = weekRange(b.week);
@@ -30,10 +32,12 @@ export async function fridayReminders(supabase: SupabaseClient, day: string, onl
       lines.push(target.padded ? `${monster} on sinettirajalla ja kaatuu heti, kun sinä lyöt!` : `Et ole vielä lyönyt viikon monsteria (${monster}), ja sinetti tarvitsee sinut.`);
     }
     // Sairaspäiviä ei lasketa puuttuviksi askelkuittauksiksi.
-    let healthyDays = 0;
-    for (let d = start; d <= day && d <= end; d = addDays(d, 1)) if (!isSickOn(b.periods, id, d)) healthyDays++;
-    const steps = b.steps.filter((s) => s.user_id === id && s.day >= start && s.day <= day && !isSickOn(b.periods, id, s.day)).length;
-    if (steps < healthyDays) lines.push(`Askelkuittauksia ${steps}/${healthyDays} (${STEP_GOAL.toLocaleString('fi-FI')} askelta = +50).`);
+    // Puuttuvat päivät nimeltä, jotta viestin voi tarkistaa (tämä päivä erikseen: sen ehtii vielä kuitata).
+    const stepped = new Set(b.steps.filter((s) => s.user_id === id).map((s) => s.day));
+    const missing: string[] = [];
+    for (let d = start; d <= day && d <= end; d = addDays(d, 1)) if (!isSickOn(b.periods, id, d) && !stepped.has(d)) missing.push(d);
+    if (missing.length === 1 && missing[0] === day) lines.push(`Tämän päivän askeleet kuittaamatta (${STEP_GOAL.toLocaleString('fi-FI')} askelta = +50).`);
+    else if (missing.length) lines.push(`Askeleet kuittaamatta: ${missing.map((d) => (d === day ? 'tänään' : formatDay(d))).join(', ')} (${STEP_GOAL.toLocaleString('fi-FI')} askelta = +50).`);
     // Sunnuntaina vain puuttuvista; perjantaina kaikki kunnossa oleville kehu.
     if (!lines.length && kind === 'sunday') continue;
     sent += await sendPush(
