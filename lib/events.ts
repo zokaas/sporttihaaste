@@ -3,9 +3,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadBattle } from './battle';
 import { sendOnce } from './push';
 import { testDay, today } from './today';
-import { addDays, weekRange, BOSS_WEEK, isGateDay } from './season';
+import { addDays, weekRange, BOSS_WEEK, isGateDay, earlyRevealMs } from './season';
 import { sealView } from './rules';
-import { partStates } from './trio';
+import { partStates, weaknessesOf } from './trio';
+import { createAdminClient } from './supabase/admin';
 import { fallLine } from './taunts';
 
 type Battle = Awaited<ReturnType<typeof loadBattle>>;
@@ -31,6 +32,37 @@ async function notifyKills(supabase: SupabaseClient, b: Battle) {
     await sendOnce(supabase, `kill-${k.week}`, { title: `💀 ${nameOf(b, k.week)} kaatui!`, body: 'Sinetti täyttyi ja voima riitti. Katso, kuka löi viimeisen iskun.' });
   }
   await notifyPartFalls(supabase, b);
+  await earlyReveal(supabase, b);
+}
+
+/**
+ * Ennakkopaljastus: kun viikon monsteri ja kaikki rästit ovat kaatuneet, seuraava monsteri (myös loppupomo)
+ * paljastuu aikaisintaan viikon sunnuntaina klo 19. Paljastusaika siirretään tietokantaan, joten näkymä
+ * monsters_public avaa tiedot itse oikealla hetkellä. Lyöminen alkaa silti vasta maanantaina.
+ * Ilmoitus lähtee heti, jos hetki on jo ohi; muuten sunnuntai-illan ajo lähettää sen.
+ */
+async function earlyReveal(supabase: SupabaseClient, b: Battle) {
+  const w = b.week;
+  if (!b.ledger || w < 1 || w >= BOSS_WEEK) return;
+  if (!b.ledger.killed.some((k) => k.week === w) || b.ledger.alive.some((f) => f.week <= w)) return;
+  const admin = createAdminClient();
+  if (!admin) return;
+  const next = w + 1;
+  const now = Date.now();
+  const at = Math.max(now, earlyRevealMs(w));
+  const { data: m } = await admin.from('monsters').select('name, weakness, parts, revealed_at').eq('week', next).maybeSingle();
+  if (!m?.name) return;
+  const current = m.revealed_at ? Date.parse(m.revealed_at) : Infinity;
+  if (current > at) {
+    const { error } = await admin.from('monsters').update({ revealed_at: new Date(at).toISOString() }).eq('week', next);
+    if (error) throw error;
+  }
+  if (Math.min(current, at) > now) return;
+  const weak = weaknessesOf(m as Parameters<typeof weaknessesOf>[0]);
+  await sendOnce(supabase, `early-${next}`, {
+    title: next === BOSS_WEEK ? `🔥 Loppupomo paljastui: ${m.name}` : `👁️ Seuraava monsteri paljastui: ${m.name}`,
+    body: `Herää ma klo 00.00.${weak.length ? ` ${weak.length > 1 ? 'Heikkoudet' : 'Heikkous'}: ${weak.join(', ')}.` : ''} Siihen asti iskut säästyvät ensi-iskuun.`,
+  });
 }
 
 /**

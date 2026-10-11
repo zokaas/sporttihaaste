@@ -96,8 +96,10 @@ export async function GET(request: Request) {
     if (m?.name && season?.hp_locked_at && (await once(`reveal-${week}`))) {
       // Kaksikolla ja kolmikolla kaikkien osien heikkoudet.
       const weak = weaknessesOf(m as { weakness: string | null; parts: MonsterPart[] | null });
+      // Ennakkoon paljastunut (su illalla): nyt se herää ja taistelu alkaa.
+      const { data: early } = await supabase.from('notifications_sent').select('key').eq('key', `early-${week}`).maybeSingle();
       result.paljastus = await sendPush(supabase, {
-        title: week === BOSS_WEEK ? `🔥 Loppupomo heräsi: ${m.name}` : `👁️ Uusi monsteri: ${m.name}`,
+        title: early ? `⚔️ ${m.name} on hereillä!` : week === BOSS_WEEK ? `🔥 Loppupomo heräsi: ${m.name}` : `👁️ Uusi monsteri: ${m.name}`,
         body: weak.length ? `${weak.length > 1 ? 'Heikkoudet' : 'Heikkous'}: ${weak.join(', ')} (+50 %). Viikko ${week} alkoi.` : `Viikko ${week} alkoi.`,
       });
     }

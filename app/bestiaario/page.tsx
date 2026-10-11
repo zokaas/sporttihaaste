@@ -28,6 +28,8 @@ export default async function Bestiaario() {
   const alive = new Map((b.ledger?.alive ?? []).map((f) => [f.week, f]));
   const boss = b.monsters.get(BOSS_WEEK);
   const bossRevealed = b.week >= BOSS_WEEK && boss?.name;
+  // Ennakkopaljastus: loppupomon nimi näkyy jo sunnuntai-illasta, mutta se herää vasta maanantaina.
+  const bossEarly = !bossRevealed && b.nextEarly && b.week + 1 === BOSS_WEEK && boss?.name;
 
   return (
     <>
@@ -36,10 +38,12 @@ export default async function Bestiaario() {
 
       <BossShadow growth={bossRevealed ? 1 : bossGrowth(b.week)}>
         <span className="pill" style={{ background: 'var(--blood)', alignSelf: 'flex-start' }}>Loppupomo · {formatDay(weekRange(BOSS_WEEK).start)}</span>
-        <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>{bossRevealed ? boss!.name : '???'}</h2>
+        <h2 className="display" style={{ fontSize: 30, color: 'var(--light)' }}>{bossRevealed || bossEarly ? boss!.name : '???'}</h2>
         <span className="small" style={{ color: '#c9c1b4' }}>
           {bossRevealed
             ? `${boss?.hp ? `${fmt(boss.hp)} HP. ` : ''}Ensi-isku ${fmt(b.ledgerInput ? computeLedger(b.ledgerInput, MONSTER_WEEKS).pot : 0)} osui siihen sen herätessä. Se kaatuu kuten muutkin: HP nollaan ja sinetti täyteen.`
+            : bossEarly
+            ? `Se herää maanantaina klo 00. Olette säästäneet sitä vastaan ${fmt(b.ledger?.pot ?? 0)} voimaa, ja kaikki säästetty iskee heti, kun se herää.`
             : `${bossStirring(b.week)} Olette säästäneet sitä vastaan ${fmt(b.ledger?.pot ?? 0)} voimaa. Kaikki säästetty iskee heti, kun se herää.`}
         </span>
       </BossShadow>
@@ -66,7 +70,8 @@ export default async function Bestiaario() {
             const img = monsterImageUrl(m?.image_path);
             const k = killed.get(w);
             const f = alive.get(w);
-            const future = w > b.week;
+            const future = w > b.week && !(b.nextEarly && w === b.week + 1);
+            const sleeping = w > b.week && !future;
             const { start } = weekRange(w);
             return (
               <li key={w} style={future ? { opacity: 0.5 } : undefined}>
@@ -85,7 +90,7 @@ export default async function Bestiaario() {
                   <div className="facts">
                     {k ? <span className="ok">Kaatui {formatDay(killedDay(k))}{blows[w] ? `, viimeinen isku: ${name(blows[w])}` : ''}</span>
                       : f ? <span style={{ color: 'var(--blood-text)' }}>{w < b.week ? 'Rästissä' : 'Taistelussa'}: {(() => { const v = sealView(f, b.required); return v.dam ? `${fmt(v.hp)} HP, sinetti kesken` : `${fmt(v.hp)} / ${fmt(m?.hp ?? 0)} HP`; })()}</span>
-                        : future ? 'Paljastuu viikon alkaessa' : ''}
+                        : sleeping ? 'Paljastui etuajassa, herää maanantaina' : future ? 'Paljastuu viikon alkaessa' : ''}
                   </div>
                 </div>
               </li>

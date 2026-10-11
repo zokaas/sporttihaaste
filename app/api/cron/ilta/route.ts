@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { fridayReminders } from '@/lib/reminders';
 import { sendPush } from '@/lib/push';
+import { checkKills } from '@/lib/events';
 import { helsinkiToday, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 
 export const dynamic = 'force-dynamic';
@@ -28,6 +29,8 @@ export async function GET(request: Request) {
     auth: { persistSession: false },
     global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) },
   });
+  // Ennakkopaljastus: jos viikon monsteri kaatui jo aiemmin, seuraava paljastui su klo 19 ja siitä lähtee ilmoitus nyt.
+  await checkKills(supabase, day).catch((e) => console.error('Ennakkopaljastus', e));
   if ((await supabase.from('notifications_sent').insert({ key: `sunday-${week}` })).error) return NextResponse.json({ skipped: 'Jo lähetetty.' });
   try {
     const r = await fridayReminders(supabase, day, undefined, 'sunday');

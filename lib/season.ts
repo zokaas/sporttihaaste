@@ -43,6 +43,12 @@ export function weekRange(week: number) {
   return { start, end: addDays(start, 6) };
 }
 
+/** Ennakkopaljastus: kun viikon monsteri on kaatunut, seuraava paljastuu aikaisintaan viikon sunnuntaina klo 19. */
+export const EARLY_REVEAL_TIME = '19:00:00';
+export function earlyRevealMs(week: number) {
+  return helsinkiMs(weekRange(week).end, EARLY_REVEAL_TIME);
+}
+
 /** Kela-isku tulee sairaspäivälle klo 9 (aamuilmoitusten kanssa). */
 export const KELA_TIME = '09:00:00';
 export const KELA_HOUR = 9;

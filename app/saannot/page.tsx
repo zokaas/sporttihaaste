@@ -58,7 +58,7 @@ export default async function Saannot() {
       <section className="card">
         <h2 className="display">Lyhyesti</h2>
         <p style={{ margin: 0 }}>Ennen kautta, ti 29.9.–ke 30.9., porttia vartioi portinvartija Sauronin silmä. Se kaadetaan treeneillä ja askeleilla ilman sinettiä ennen ke klo 23.59. Jos se jää henkiin, jäljelle jäänyt HP siirtyy torstain monsterille; jos se kaatuu, ylijäämä säästyy ensi-iskuun. Ti–ke treenit eivät kerry viikon 1 lupaukseen.</p>
-        <p style={{ margin: 0 }}>Kausi kestää 1.10.–20.12. Ensimmäinen monsteri paljastuu to 1.10., ja sen jälkeen uusi joka maanantai: yhteensä 11 monsteria ja viimeisellä viikolla loppupomo. Seuraavaa pääsee lyömään vasta, kun edellinen on tuhottu. Treenit ovat iskuja: jokainen kirjattu treeni vähentää monsterin HP:ta.</p>
+        <p style={{ margin: 0 }}>Kausi kestää 1.10.–20.12. Ensimmäinen monsteri paljastuu to 1.10., ja sen jälkeen uusi joka maanantai: yhteensä 11 monsteria ja viimeisellä viikolla loppupomo. Seuraavaa pääsee lyömään vasta, kun edellinen on tuhottu. Jos viikon monsteri kaatuu etuajassa, seuraava paljastuu aikaisintaan sunnuntaina klo 19, mutta sitä pääsee lyömään vasta maanantaina. Treenit ovat iskuja: jokainen kirjattu treeni vähentää monsterin HP:ta.</p>
         <p style={{ margin: 0 }}>Monsteri kaatuu, kun sen HP loppuu <strong>ja</strong> sinetti on täynnä eli jokainen terve sankari on lyönyt sitä vähintään yhdellä treenillä. Siihen asti monsterille jää 10 HP jokaista puuttuvaa sankaria kohden.</p>
         <p style={{ margin: 0 }}>Viikon treenit voi kirjata vielä maanantaina klo 12 asti. Jos sinetti on silloin vajaa, sinettirajan yli mennyt voima menetetään ja monsteri jää rästiin.</p>
       </section>
@@ -137,7 +137,7 @@ export default async function Saannot() {
         <p style={{ margin: 0 }}>Viestit-sivulla (📣) voit lähettää porukalle viestin, enintään {MESSAGES_PER_DAY} päivässä ja 200 merkkiä. Ilmoitus viestistä menee kaikille, myös sinulle itsellesi.</p>
         <p style={{ margin: 0 }}><strong>Hiljaiset tunnit klo {QUIET_START}–{String(QUIET_END).padStart(2, '0')}.</strong> Yöllä ei tule yhtään ilmoitusta: silloin syntyvät ilmoitukset ja viestit lähtevät aamulla klo {QUIET_END}.</p>
         <ul className="rules-list">
-          <li><strong>👁️ Uusi monsteri</strong>: joka maanantai klo {QUIET_END}, heikkoudet mukana.</li>
+          <li><strong>👁️ Uusi monsteri</strong>: joka maanantai klo {QUIET_END}, heikkoudet mukana. Jos viikon monsteri kaatui etuajassa, seuraava paljastuu jo sunnuntai-iltana (aikaisintaan klo 19) ja maanantaina tulee ⚔️ herätys.</li>
           <li><strong>⚔️ Perjantaimuistutus</strong>: pe klo {QUIET_END}. Jos sinulta puuttuu jotain (lupauksen tunnit, isku sinettiin tai askelkuittauksia), saat listan; jos kaikki on kunnossa, saat kehun.</li>
           <li><strong>⏳ Viikko lukittuu</strong>: su illalla, vain jos sinulta puuttuu vielä jotain.</li>
           <li><strong>💀 Monsteri kaatui</strong>, <strong>💥 kaksikon tai kolmikon osa kaatui</strong> ja <strong>⭐ Megamarssi</strong>: heti kaikille.</li>
