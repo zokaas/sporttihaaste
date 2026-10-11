@@ -38,7 +38,7 @@ const GLOSSARY: [string, string][] = [
 const FAQ: [string, string][] = [
   ['Unohdin kirjata treenin. Ehtiikö vielä?', 'Kyllä. Viikon treenit, askeleet ja sairaspäivät voi kirjata vielä seuraavana maanantaina klo 12 asti (armonaika). Sen jälkeen viikko lukittuu. Sunnuntai-iltana tulee muistutus, jos viikolta puuttuu jotain.'],
   ['Kirjasin väärin. Miten korjaan?', 'Poista isku Kirjaa treeni -sivulla ja kirjaa uudelleen. Sekin onnistuu vain kuluvan viikon aikana.'],
-  ['Sairastuin. Mitä teen?', 'Merkitse Minä-sivun päivärivin alle 🤒 ne päivät, joina olit kipeä (kuluvalta viikolta). Jos merkitset tämän päivän, voit valita jatkuuko sairaus: silloin tulevat päivät merkitään itsestään, kunnes painat Olen taas terve. Jokainen sairaspäivä pienentää viikon lupausta 1/7:lla, yksikin sairaspäivä vapauttaa sen viikon sinetistä, ja megamarssiin riittävät terveet. Jokaisesta sairaspäivästä Kela iskee monsteria klo 9 (tai heti, jos merkitset sen myöhemmin) lupauksesi päiväosuudella (lupaus ÷ 7 × 100, esim. 4 h lupauksella 57), jotta porukka ei jää jälkeen. Kela-voima ei täytä sinettiä.'],
+  ['Sairastuin. Mitä teen?', 'Merkitse Minä-sivun päivärivin alle 🤒 ne päivät, joina olit kipeä (kuluvalta viikolta). Jos merkitset tämän päivän, voit valita jatkuuko sairaus: silloin tulevat päivät merkitään itsestään, kunnes painat Olen taas terve. Jokainen sairaspäivä pienentää viikon lupausta 1/7:lla (yksikin terve päivä: vähintään 0,5 h). Koko viikon sairaana olet vapautettu: viikkoa ei lasketa lupaustilastoihin eikä se katkaise 🤝-putkea. yksikin sairaspäivä vapauttaa sen viikon sinetistä, ja megamarssiin riittävät terveet. Jokaisesta sairaspäivästä Kela iskee monsteria klo 9 (tai heti, jos merkitset sen myöhemmin) lupauksesi päiväosuudella (lupaus ÷ 7 × 100, esim. 4 h lupauksella 57), jotta porukka ei jää jälkeen. Kela-voima ei täytä sinettiä.'],
   ['Mitä askelkuittaus tarkoittaa?', `Kuittaa päivä, jona kävelit vähintään ${STEP_GOAL.toLocaleString('fi-FI')} askelta. Jokainen kuitattu päivä tuo ${STEP_DAY_DAMAGE} voimaa, mutta askeleet eivät täytä sinettiä.`],
   ['Miksi monsterin HP jää 10, 20 tai 30:een?', 'Sinetti on kesken: jokainen puuttuva sankari pitää monsterille 10 HP. Ylimenevä voima kertyy patoon (näkyy etusivulla 🔒), ja monsteri kaatuu heti, kun viimeinenkin puuttuva lyö: silloin pato siirtyy eteenpäin. Jos sinetti on vielä vajaa, kun viikko lukittuu (ma klo 12), pato menetetään.'],
   ['Mitä rästi tarkoittaa?', 'Monsteri, joka jäi viikolla eloon. Se jatkaa seuraavalla viikolla, ja vanhin monsteri ottaa iskut aina ensin.'],
@@ -118,7 +118,7 @@ export default async function Saannot() {
         <h2 className="display">Merkit</h2>
         <p style={{ margin: 0 }}>Merkit näkyvät Sankarit-listassa nimen vieressä ja kaikki sankarin omalla sivulla. <strong>Kerran ansaittu merkki pysyy koko kauden</strong>, ja sen taso nousee, kun saavutat enemmän. Taso näkyy merkissä, esimerkiksi 👣14 tai ⚔️×3.</p>
         <ul className="rules-list">
-          <li><strong>🤝 Sanansa pitävä</strong>: lupaus pidetty peräkkäisinä viikkoina 3 / 6 / 9.</li>
+          <li><strong>🤝 Sanansa pitävä</strong>: lupaus pidetty peräkkäisinä viikkoina 3 / 6 / 9. Koko viikon sairaus ei katkaise putkea.</li>
           <li><strong>👣 Askelputki</strong>: askeleet kuitattu peräkkäisinä päivinä 7 / 14 / 21.</li>
           <li><strong>⚔️ Viimeinen isku</strong>: kaadoit monsterin 1 / 3 / 5 kertaa.</li>
           <li><strong>💥 Kriittinen</strong>: isku vähintään +100 % bonuksella 1 / 5 / 10 kertaa.</li>

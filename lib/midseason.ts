@@ -39,6 +39,8 @@ export function midseason(b: Battle, preview = false, userId?: string) {
   const closed = Math.max(0, seasonWeek(until) - 1);
   let kept = 0;
   for (let w = 1; w <= closed; w++) kept += b.ledgerInput?.pledgeBonusesByWeek[w] ?? 0;
+  // Koko viikon sairaana olleet eivät ole lupauslaskussa (vapautettu).
+  const pledgeWeeks = (id: string) => Array.from({ length: closed }, (_, i) => i + 1).filter((w) => !b.pledgeStatus(id, w).excused);
 
   // Monsterit: kaatuneet raportin rajaan mennessä, ja ne, joiden viikko on jo alkanut mutta jotka ovat vielä pystyssä.
   const killed = b.ledger.killed.filter((k) => k.killedAt != null && k.killedAt < untilMs).map((k) => k.week);
@@ -55,8 +57,8 @@ export function midseason(b: Battle, preview = false, userId?: string) {
         rank: ranking.findIndex((r) => r.id === userId) + 1,
         of: ranking.length,
         trainings: ownHits.length,
-        kept: Array.from({ length: closed }, (_, i) => i + 1).filter((w) => b.pledgeStatus(userId, w).kept).length,
-        closed,
+        kept: pledgeWeeks(userId).filter((w) => b.pledgeStatus(userId, w).kept).length,
+        closed: pledgeWeeks(userId).length,
         stepDays: stepBy.get(userId) ?? 0,
         bestHit: bestHit ? { sport: bestHit.sport, minutes: bestHit.minutes, damage: bestHit.damage } : null,
         badges: stats.find((s) => s.id === userId)?.achievements.filter((a) => !a.live) ?? [],
@@ -75,7 +77,7 @@ export function midseason(b: Battle, preview = false, userId?: string) {
     patrols: patrols.length,
     jointTrainings: hits.filter((h) => h.companions.length >= 2).length,
     pledgesKept: kept,
-    pledgesTotal: b.participants.length * closed,
+    pledgesTotal: b.participants.reduce((a, id) => a + pledgeWeeks(id).length, 0),
     pot: b.ledger.pot,
     top,
     stepKing: stepKing ? { name: heroName(stepKing[0]), days: stepKing[1] } : null,

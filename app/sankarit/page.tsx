@@ -115,7 +115,7 @@ export default async function Sankarit({ searchParams }: { searchParams: { tab?:
                 <div className="grow" style={{ minWidth: 0 }}>
                   <div className="who">{s.name}{s.id === user.id ? ' (sinä)' : ''}</div>
                   <div className="facts">
-                    {tab === 'lupaukset' ? `${s.pledgesKept}/${s.closedWeeks} lupausta pidetty · ${fmt(s.damage)} voimaa`
+                    {tab === 'lupaukset' ? `${s.pledgesKept}/${s.closedWeeks} lupausta pidetty${s.excusedWeeks ? ` · 🤒 ${s.excusedWeeks}` : ''} · ${fmt(s.damage)} voimaa`
                       : tab === 'vahinko' ? `${fmt(s.damage)} voimaa · ${s.hitCount} iskua`
                       : `${s.stepDays} askelpäivää · pisin putki ${s.longestStreak}`}
                   </div>

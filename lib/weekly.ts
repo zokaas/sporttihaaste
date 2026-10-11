@@ -32,7 +32,9 @@ export function daysInWeek(week: number) {
 export function weekPledgeTarget(pledge: number, week: number, sickDays: number) {
   const days = daysInWeek(week);
   const healthy = Math.max(0, days - Math.min(days, sickDays));
-  return Math.round(((pledge * healthy) / 7) * 2) / 2;
+  const target = Math.round(((pledge * healthy) / 7) * 2) / 2;
+  // Yksikin terve päivä: tavoite vähintään 0,5 h, jotta pyöristys ei tee lupauksesta mahdotonta.
+  return healthy > 0 && pledge > 0 ? Math.max(0.5, target) : target;
 }
 
 /** Voimassa oleva lupaus viikolla: viimeisin muutos, joka alkaa viimeistään tällä viikolla. */
