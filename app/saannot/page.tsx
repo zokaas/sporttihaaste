@@ -105,7 +105,7 @@ export default async function Saannot() {
       <section className="card">
         <h2 className="display">Lupaus</h2>
         <p style={{ margin: 0 }}>Lupaat, montako tuntia treenaat viikossa. Lupaukseen lasketaan voima ilman bonuksia jaettuna sadalla: tunti uintia on 2 h, tunti joogaa 0,5 h.</p>
-        <p style={{ margin: 0 }}>Pidetty lupaus tuo +{PLEDGE_BONUS} ensi-iskuun, kun viikko lukittuu. Tulostaulun ykkönen on se, joka pitää lupauksensa useimmin.</p>
+        <p style={{ margin: 0 }}>Pidetty lupaus tuo +{PLEDGE_BONUS} ensi-iskuun, kun viikko lukittuu. Tulostaulun ykkönen on se, joka pitää lupauksensa useimmin: järjestys menee pidettyjen lupausten osuuden mukaan (kun lupausviikkoja on vähintään 3), tasapelissä enemmän pidettyjä ensin. Koko viikon sairaus ei laske osuutta.</p>
         <p className="muted small" style={{ margin: 0 }}>Viikko 1 kestää 4 päivää (to 1.10.–su 4.10.), joten sen tavoite on lupaus × 4/7. Sairaspäivät pienentävät tavoitetta.</p>
       </section>
 

@@ -150,10 +150,20 @@ export function heroStats(b: Battle, avatarUrl: (p: string | null) => string | n
 }
 
 /** Järjestys: pidetyt lupaukset, sitten vahinko. */
-/** Eniten pidettyjä lupauksia; tasapelissä vähemmän rikottuja (sairausvapautetut eivät ole rikottuja), sitten voima. */
+/** Lupausviikkoja vähintään tämän verran, ennen kuin pidettyjen osuus ratkaisee järjestyksen. */
+const RANK_MIN_WEEKS = 3;
+
+/**
+ * Lupausjärjestys: pidettyjen osuus (sairausvapautetut viikot eivät ole mukana), kun lupausviikkoja on
+ * vähintään RANK_MIN_WEEKS; muuten nämä jäävät perään. Tasapelissä enemmän pidettyjä, vähemmän rikottuja, sitten voima.
+ */
 export function rankByPledges(stats: HeroStats[]) {
+  const enough = (x: HeroStats) => (x.closedWeeks >= RANK_MIN_WEEKS ? 1 : 0);
+  const share = (x: HeroStats) => (enough(x) ? x.pledgesKept / x.closedWeeks : 0);
   const broken = (x: HeroStats) => x.closedWeeks - x.pledgesKept;
-  return [...stats].sort((a, c) => c.pledgesKept - a.pledgesKept || broken(a) - broken(c) || c.damage - a.damage);
+  return [...stats].sort(
+    (a, c) => enough(c) - enough(a) || share(c) - share(a) || c.pledgesKept - a.pledgesKept || broken(a) - broken(c) || c.damage - a.damage,
+  );
 }
 
 /** Tulevat juhlapäivät (nimi- ja syntymäpäivät) seuraavan n päivän ajalta, tänään mukaan lukien. */
