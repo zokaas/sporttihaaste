@@ -2,9 +2,9 @@
 import type { Battle } from './stats';
 import { PATROL_DAY_DAMAGE, STEP_DAY_DAMAGE } from './rules';
 import { BOSS_WEEK, helsinkiToday, seasonWeek, weekRange } from './season';
-import { bonusTenths, hpPlan, weekActual, type WeekActual } from './hpcheck';
+import { bonusTenths, hpPlan, usualBonusPct, weekActual, type WeekActual } from './hpcheck';
 
-export type Difficulty = { level: 'easy' | 'medium' | 'hard' | 'mega'; tenths: number; need: number };
+export type Difficulty = { level: 'easy' | 'medium' | 'hard' | 'mega'; tenths: number; need: number; usualTenths: number | null };
 
 /** Treenin keskimääräinen perusvoima päättyneiltä viikoilta (ennen ensimmäistä viikkoa arvio 90). */
 function avgHitBase(b: NonNullable<Battle>) {
@@ -36,13 +36,19 @@ const weekKilled = (b: NonNullable<Battle>, week: number) => Boolean(b.ledger?.k
 
 /**
  * Viikon vaikeus: kuinka moni treeni kymmenestä tarvitsee bonuksen (tällä tahdilla, jos tiedossa).
- * Helppo 0/10, keski 1–4/10, vaikea 5–8/10, megamonsteri 9/10 tai enemmän. Loppupomolle ei lasketa (ensi-isku muuttaa tarpeen).
+ * Helppo 0/10, keski 1–4/10, vaikea 5–8/10, megamonsteri 9/10 tai enemmän. Rajat suhteutetaan porukan tavalliseen
+ * bonustasoon: jos tarve on enintään se, mitä on tähän asti tehty, viikko on keskivaikea; vaikea vasta, kun tarvitaan
+ * selvästi enemmän (yli 4/10 tavallista enemmän). Loppupomolle ei lasketa (ensi-isku muuttaa tarpeen).
  */
 export function weekDifficulty(b: NonNullable<Battle>, week = b.week): Difficulty | null {
   if (week < 1 || week >= BOSS_WEEK || !b.monsters.get(week)?.hp || weekKilled(b, week)) return null;
-  const p = seasonPlan(b).plan[week - 1];
+  const s = seasonPlan(b);
+  const p = s.plan[week - 1];
   if (!p) return null;
   const tenths = bonusTenths(p.needPctAtPace ?? p.needPct);
-  const level = tenths === 0 ? 'easy' : tenths <= 4 ? 'medium' : tenths <= 8 ? 'hard' : 'mega';
-  return { level, tenths, need: p.needAtPace ?? p.need };
+  const usual = usualBonusPct(s.actuals, s.closedWeeks);
+  const usualTenths = usual == null ? null : bonusTenths(usual);
+  const u = usualTenths ?? 0;
+  const level = tenths === 0 ? 'easy' : tenths <= Math.max(4, u) ? 'medium' : tenths <= Math.max(8, u + 4) ? 'hard' : 'mega';
+  return { level, tenths, need: p.needAtPace ?? p.need, usualTenths };
 }

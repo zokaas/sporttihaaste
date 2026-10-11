@@ -34,6 +34,8 @@ export function hpPlan(totalPledgeHours: number, hpByWeek: number[], actuals: Re
   const closed = closedWeeks.filter((w) => actuals[w]);
   const pledgeRate = closed.length ? closed.reduce((a, w) => a + actuals[w].trainingBase, 0) / closed.reduce((a, w) => a + base(w), 0) : null;
   const stepRate = closed.length ? closed.reduce((a, w) => a + actuals[w].steps, 0) / closed.reduce((a, w) => a + steps(w), 0) : null;
+  // Kela korvaa sairaspäivien treenejä: sen keskimääräinen voima päivässä mukaan tahtiin.
+  const kelaPerDay = closed.length ? closed.reduce((a, w) => a + actuals[w].kela, 0) / closed.reduce((a, w) => a + daysOf(w), 0) : 0;
   return hpByWeek.map((hp, i) => {
     const week = i + 1;
     const pledgeBase = Math.round(base(week));
@@ -43,11 +45,18 @@ export function hpPlan(totalPledgeHours: number, hpByWeek: number[], actuals: Re
     let needAtPace: number | null = null;
     if (pledgeRate != null && stepRate != null && pledgeRate > 0) {
       const trained = pledgeRate * pledgeBase;
-      needAtPace = Math.round(Math.max(0, hp - trained - stepRate * stepsEst));
+      needAtPace = Math.round(Math.max(0, hp - trained - stepRate * stepsEst - kelaPerDay * daysOf(week)));
       needPctAtPace = Math.round((needAtPace / trained) * 100);
     }
     return { week, hp, pledgeBase, stepsEst, need, needPct: pledgeBase ? Math.round((need / pledgeBase) * 100) : 0, needPctAtPace, needAtPace, actual: actuals[week] ?? null };
   }).filter((p) => p.week <= BOSS_WEEK);
+}
+
+/** Porukan tavallinen bonustaso: päättyneiden viikkojen bonukset prosentteina treenien perusvoimasta (null, jos ei vielä tiedetä). */
+export function usualBonusPct(actuals: Record<number, WeekActual>, closedWeeks: number[]) {
+  const closed = closedWeeks.filter((w) => actuals[w]);
+  const base = closed.reduce((a, w) => a + actuals[w].trainingBase, 0);
+  return base ? Math.round((closed.reduce((a, w) => a + actuals[w].bonus, 0) / base) * 100) : null;
 }
 
 /** Kuinka moni treeni kymmenestä tarvitsee yhden bonuksen (+50 %), kun bonusta tarvitaan pct % treenien päälle. */

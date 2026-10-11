@@ -159,7 +159,7 @@ assert.deepEqual(potParts(0, 0, 0), []);
 console.log('Ensi-iskutestit menivät läpi.');
 
 // HP:n realismi
-import { bonusTenths, hpPlan, weekActual } from './hpcheck.ts';
+import { bonusTenths, hpPlan, usualBonusPct, weekActual } from './hpcheck.ts';
 {
   const plan = hpPlan(40, [4500, 7000], {}, []);
   assert.deepEqual([plan[0].pledgeBase, plan[0].stepsEst, plan[1].pledgeBase, plan[1].stepsEst], [2286, 1571, 4000, 2750], 'viikko 1 on 4/7');
@@ -170,5 +170,10 @@ import { bonusTenths, hpPlan, weekActual } from './hpcheck.ts';
   // Toteutunut tahti: treenit puolet lupauksista ja askeleet puolet arviosta
   const half = hpPlan(40, [4500, 7000], { 1: { trainingBase: 1143, bonus: 0, steps: 786, kela: 0 } }, [1]);
   assert.equal(half[1].needPctAtPace, Math.round(((7000 - 2000.25 - 1375.3) / 2000.25) * 100));
+  // Kela (sairaspäivät) lasketaan tahtiin: 400 voimaa 4 päivässä = 100/pv → 700 viikolla 2.
+  const sick = hpPlan(40, [4500, 7000], { 1: { trainingBase: 1143, bonus: 0, steps: 786, kela: 400 } }, [1]);
+  assert.equal(sick[1].needAtPace, Math.round(7000 - 2000.25 - 1375.3 - 700));
+  assert.equal(usualBonusPct({ 1: { trainingBase: 1000, bonus: 300, steps: 0, kela: 0 } }, [1]), 30);
+  assert.equal(usualBonusPct({}, []), null);
 }
 console.log('HP-realismitestit menivät läpi.');
