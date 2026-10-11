@@ -390,6 +390,15 @@ details.companions[open] { padding-bottom: 12px; }
 .card.teaser { flex-direction: row; align-items: center; gap: 14px; background: radial-gradient(ellipse at 20% 50%, #2a1512, var(--surface) 70%); }
 .teaser-shadow { flex: 0 0 72px; width: 72px; height: 56px; filter: blur(1.5px); }
 .teaser-text { margin: 4px 0 0; font-style: italic; color: var(--light); }
+.early-reveal { gap: 10px; }
+.early-reveal-img { width: 100%; max-height: 38vh; object-fit: contain; border-radius: 14px; animation: early-in 1.8s ease-out both; }
+@keyframes early-in {
+  from { filter: brightness(0) blur(10px); transform: scale(0.94); }
+  60% { filter: brightness(0.45) blur(2px); }
+  to { filter: brightness(0.9) grayscale(0.2); transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .early-reveal-img { animation: none; filter: brightness(0.9) grayscale(0.2); } }
+.early-img { flex: 0 0 84px; width: 84px; height: 84px; object-fit: cover; border-radius: 12px; filter: grayscale(0.35) brightness(0.8); }
 .season-chart { margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .season-chart svg { width: 100%; height: auto; display: block; }
 .season-chart .grid { stroke: var(--line); stroke-width: 1; }

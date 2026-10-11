@@ -98,7 +98,10 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   // Ylläpitäjä saa heikkoudet suoraan taulusta, muut näkymästä (migraatio 029).
   const upcomingWeaknesses = (m: PublicMonster) => [...new Set((m.teaser_weaknesses ?? [m.weakness, ...(m.parts ?? []).map((p) => p.weakness)]).filter((w): w is string => Boolean(w)))];
   const teaserOpen = today >= addDays(weekRange(week).end, -2);
-  const byWeek = new Map(monsterList.map((m) => [m.week, m.week > week
+  // Ennakkopaljastus: seuraava monsteri on paljastunut ennen viikkonsa alkua (näkymän paljastusaika on jo ohi).
+  const nextPublic = ((publicMonsters ?? []) as { week: number; revealed_at?: string | null }[]).find((m) => m.week === week + 1);
+  const nextEarly = week < BOSS_WEEK && today === helsinkiToday() && Boolean(nextPublic?.revealed_at && Date.parse(nextPublic.revealed_at) <= Date.now());
+  const byWeek = new Map(monsterList.map((m) => [m.week, m.week > week && !(nextEarly && m.week === week + 1)
     ? { ...m, name: null, description: null, weakness: null, image_path: null, parts: null, taunt_half: null, taunt_low: null, boss_whisper: null, hit_lines: null, hit_crit: null, taunt_full: null, taunt_backlog: null, teaser: m.week === week + 1 && teaserOpen ? m.teaser ?? null : null,
         teaser_weaknesses: m.week === week + 1 && teaserOpen ? upcomingWeaknesses(m) : null }
     : m]));
@@ -133,7 +136,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
 
   // Armonaika: maanantaina klo 12 asti edellinen viikko on vielä auki kirjauksille.
   const grace = graceWeek(today);
-  const base = { gate, week, today, grace, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, kela, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
+  const base = { gate, week, today, grace, nextEarly, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, kela, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
 
   if (!hpLocked && !hpPreview) return { ...base, hpLocked, hpPreview, required: participants, ledger: null, events: [] as LedgerEvent[], ledgerInput: null };
 

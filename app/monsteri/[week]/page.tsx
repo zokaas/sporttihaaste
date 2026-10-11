@@ -20,7 +20,7 @@ const helsinki = (ms: number, opts: Intl.DateTimeFormatOptions) => new Intl.Date
 export default async function Monsteri({ params }: { params: { week: string } }) {
   const { battle: b } = await requireHero();
   const week = Number(params.week);
-  if (!Number.isInteger(week) || week < 1 || week > BOSS_WEEK || week > b.week) notFound();
+  if (!Number.isInteger(week) || week < 1 || week > BOSS_WEEK || (week > b.week && !(b.nextEarly && week === b.week + 1))) notFound();
 
   const m = b.monsters.get(week);
   const title = m?.name ?? (week === BOSS_WEEK ? 'Loppupomo' : `Viikon ${week} monsteri`);
@@ -62,7 +62,8 @@ export default async function Monsteri({ params }: { params: { week: string } })
         maxHp={m?.hp ?? 1}
         padded={view?.dam ?? 0}
         backlog={week < b.week && !killed}
-        revealed={Boolean(m?.name)}
+        // Ennakkoon paljastunut (nukkuva) monsteri ei kuluta maanantain paljastusanimaatiota.
+        revealed={Boolean(m?.name) && week <= b.week}
         dead={Boolean(killed)}
         ownHit={null}
         zoom={m?.name ? images : undefined}
@@ -93,7 +94,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
         <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">Tila</span>
           <span>{killed?.killedAt ? <span className="ok">Kaatui {helsinki(killed.killedAt, { weekday: 'short', day: 'numeric', month: 'numeric' })}</span>
             : view?.dam ? <span style={{ color: 'var(--gold)' }}>{fmt(view.hp)} HP, sinettirajalla</span>
-            : view ? `${fmt(view.hp)} / ${fmt(m?.hp ?? 0)} HP` : '–'}</span>
+            : view ? `${fmt(view.hp)} / ${fmt(m?.hp ?? 0)} HP` : week > b.week ? 'Nukkuu, herää ma klo 00' : '–'}</span>
         </div>
         {blow ? <div className="row" style={{ justifyContent: 'space-between' }}><span className="muted">Viimeinen isku</span><Link href={`/sankari/${blow}`}>⚔️ {heroName(blow)}</Link></div> : null}
       </section>
