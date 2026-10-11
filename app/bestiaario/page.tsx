@@ -56,11 +56,13 @@ export default async function Bestiaario() {
             const w = i + 1;
             const voima = b.hits.filter((h) => seasonWeek(h.trained_on) === w).reduce((a, h) => a + h.damage, 0)
               + b.steps.filter((x) => seasonWeek(x.day) === w).length * STEP_DAY_DAMAGE
-              + b.patrols.filter((p) => seasonWeek(p.day) === w).length * PATROL_DAY_DAMAGE;
+              + b.patrols.filter((p) => seasonWeek(p.day) === w).length * PATROL_DAY_DAMAGE
+              // Kela-iskut (sairaspäivät) lyövät monsteria siinä missä treenitkin.
+              + b.kela.filter((k) => seasonWeek(k.day) === w).reduce((a, k) => a + k.damage, 0);
             return { week: w, voima, hp: b.monsters.get(w)?.hp ?? null, current: w === b.week && seasonWeek(b.today) <= BOSS_WEEK };
           })}
         />
-        <p className="muted small" style={{ margin: 0 }}>Kun pylväs nousee viivan yli, porukka teki viikossa enemmän voimaa kuin viikon monsterissa on HP:ta.</p>
+        <p className="muted small" style={{ margin: 0 }}>Kun pylväs nousee viivan yli, porukka teki viikossa enemmän voimaa kuin viikon monsterissa on HP:ta. Voimaan lasketaan treenit, askeleet, megamarssit ja Kela.</p>
       </section>
 
       <section className="card">
