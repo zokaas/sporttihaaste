@@ -36,7 +36,7 @@ const GLOSSARY: [string, string][] = [
 ];
 
 const FAQ: [string, string][] = [
-  ['Unohdin kirjata treenin. Ehtiikö vielä?', 'Kyllä. Viikon treenit, askeleet ja sairaspäivät voi kirjata vielä seuraavana maanantaina klo 12 asti (armonaika). Sen jälkeen viikko lukittuu. Sunnuntai-iltana tulee muistutus, jos viikolta puuttuu jotain.'],
+  ['Unohdin kirjata treenin. Ehtiikö vielä?', 'Kyllä. Viikon treenit, askeleet ja sairaspäivät voi kirjata vielä seuraavana maanantaina klo 12 asti (armonaika). Sen jälkeen viikko lukittuu. Sunnuntai-iltana tulee muistutus, jos viikolta puuttuu jotain (ei, jos viikon monsteri on jo kaatunut).'],
   ['Kirjasin väärin. Miten korjaan?', 'Poista isku Kirjaa treeni -sivulla ja kirjaa uudelleen. Sekin onnistuu vain kuluvan viikon aikana.'],
   ['Sairastuin. Mitä teen?', 'Merkitse Minä-sivun päivärivin alle 🤒 ne päivät, joina olit kipeä (kuluvalta viikolta). Jos merkitset tämän päivän, voit valita jatkuuko sairaus: silloin tulevat päivät merkitään itsestään, kunnes painat Olen taas terve. Jokainen sairaspäivä pienentää viikon lupausta 1/7:lla (yksikin terve päivä: vähintään 0,5 h). Koko viikon sairaana olet vapautettu: viikkoa ei lasketa lupaustilastoihin eikä se katkaise 🤝-putkea. yksikin sairaspäivä vapauttaa sen viikon sinetistä, ja megamarssiin riittävät terveet. Jokaisesta sairaspäivästä Kela iskee monsteria klo 9 (tai heti, jos merkitset sen myöhemmin) lupauksesi päiväosuudella (lupaus ÷ 7 × 100, esim. 4 h lupauksella 57), jotta porukka ei jää jälkeen. Kela-voima ei täytä sinettiä.'],
   ['Mitä askelkuittaus tarkoittaa?', `Kuittaa päivä, jona kävelit vähintään ${STEP_GOAL.toLocaleString('fi-FI')} askelta. Jokainen kuitattu päivä tuo ${STEP_DAY_DAMAGE} voimaa, mutta askeleet eivät täytä sinettiä.`],
@@ -139,7 +139,7 @@ export default async function Saannot() {
         <ul className="rules-list">
           <li><strong>👁️ Uusi monsteri</strong>: joka maanantai klo {QUIET_END}, heikkoudet mukana. Jos viikon monsteri kaatui etuajassa, seuraava paljastuu jo sunnuntai-iltana (aikaisintaan klo 19) ja maanantaina tulee ⚔️ herätys.</li>
           <li><strong>⚔️ Perjantaimuistutus</strong>: pe klo {QUIET_END}. Jos sinulta puuttuu jotain (lupauksen tunnit, isku sinettiin tai askelkuittauksia), saat listan; jos kaikki on kunnossa, saat kehun.</li>
-          <li><strong>⏳ Viikko lukittuu</strong>: su illalla, vain jos sinulta puuttuu vielä jotain.</li>
+          <li><strong>⏳ Viikko lukittuu</strong>: su illalla, vain jos sinulta puuttuu vielä jotain eikä viikon monsteri ole jo kaatunut.</li>
           <li><strong>💀 Monsteri kaatui</strong>, <strong>💥 kaksikon tai kolmikon osa kaatui</strong> ja <strong>⭐ Megamarssi</strong>: heti kaikille.</li>
           <li><strong>⚔️ Vain sinä puutut sinetistä</strong>: perjantaista alkaen sille, jonka isku viimeisenä puuttuu.</li>
           <li><strong>⏳ Sinetti odottaa sinua</strong>: kun joku painaa Muistuta puuttuvia (kukin voi muistuttaa kerran kolmessa tunnissa).</li>

@@ -39,8 +39,10 @@ export async function GET(request: Request) {
     // Virheestä ilmoitus ylläpitäjille, jotta muistutuksen puuttuminen huomataan.
     const msg = e instanceof Error ? e.message : String(e);
     console.error('Iltaajo', e);
+    // Avain pois, jotta ajon voi ajaa uudelleen käsin (jo muistutuksen saaneet voivat saada sen toiseen kertaan).
+    await supabase.from('notifications_sent').delete().eq('key', `sunday-${week}`);
     const { data: admins } = await supabase.from('profiles').select('id').eq('is_admin', true);
-    await sendPush(supabase, { title: '⚠️ Sunnuntain muistutus epäonnistui', body: msg.slice(0, 180), url: '/yllapito' }, (admins ?? []).map((a) => a.id)).catch(() => 0);
+    await sendPush(supabase, { title: '⚠️ Sunnuntain muistutus epäonnistui', body: `${msg.slice(0, 140)} Aja uudelleen: Vercel → Cron Jobs → /api/cron/ilta.`, url: '/yllapito' }, (admins ?? []).map((a) => a.id)).catch(() => 0);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
