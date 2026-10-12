@@ -614,6 +614,7 @@ body:has(.boss-realm) .app > :is(section, .card):not(.stage) { animation: quake 
 .recap-images { display: flex; gap: 8px; overflow-x: auto; }
 .recap-img { width: 120px; height: 120px; object-fit: contain; background: var(--deep); border-radius: 12px; display: block; }
 .recap-img.dead { filter: grayscale(1) brightness(0.8); }
+.recap-img.backlog, .modal .recap-img.backlog { width: 64px; height: 64px; align-self: flex-end; }
 .recap-images > .zoom-img:only-child { flex: 1; }
 /* Yksi monsteri: koko kuva näkyy (ei rajausta), korkeintaan 300 px korkea. */
 .recap-images > .zoom-img:only-child .recap-img { width: 100%; height: auto; max-height: 300px; }

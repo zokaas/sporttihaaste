@@ -10,12 +10,17 @@ export default function RecapCard({ r }: { r: WeekRecap }) {
     <div className="recap">
       <span className="recap-kicker">Viikko {r.week} päättyi</span>
       {r.killed.length ? <h2 className="display recap-title ok">💀 {r.killed.join(' ja ')} kaatui!</h2> : null}
+      {r.backlogKilled.length ? (
+        r.killed.length
+          ? <p className="ok" style={{ margin: 0 }}>Myös rästi {r.backlogKilled.join(' ja ')} kaatui.</p>
+          : <h2 className="display recap-title ok">💀 Rästi {r.backlogKilled.join(' ja ')} kaatui!</h2>
+      ) : null}
       {r.survived.map((s) => <h2 key={s.name} className="display recap-title" style={{ color: 'var(--blood-text)' }}>😈 {s.name} jäi henkiin</h2>)}
       {r.images.length ? (
         <div className="recap-images">
           {r.images.map((im) => {
             const src = monsterImageUrl(im.path)!;
-            return <ZoomImg key={im.path} className={`recap-img${im.dead ? ' dead' : ''}`} src={resizedImage(src, 384)} full={src} width={120} height={120} />;
+            return <ZoomImg key={im.path} className={`recap-img${im.dead ? ' dead' : ''}${im.backlog && r.killed.length ? ' backlog' : ''}`} src={resizedImage(src, 384)} full={src} width={120} height={120} />;
           })}
         </div>
       ) : null}
