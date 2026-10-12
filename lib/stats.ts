@@ -183,7 +183,9 @@ export function upcomingCelebrations(b: Battle, days = 14) {
 
 export type WeekRecap = {
   week: number;
+  /** Viikolla kaatuneet: ensin viikon oma monsteri, rästit (aiemmilta viikoilta) erikseen backlogKilled-listassa. */
   killed: string[];
+  backlogKilled: string[];
   survived: { name: string; hp: number }[];
   damage: number;
   bonusShare: number;
@@ -196,7 +198,7 @@ export type WeekRecap = {
   pledgesKept: number;
   participants: number;
   /** Viikon kaatuneiden ja henkiin jääneiden monstereiden kuvat (kaksikolla ja kolmikolla osat). */
-  images: { path: string; dead: boolean }[];
+  images: { path: string; dead: boolean; backlog?: boolean }[];
   /** Viikon ensi-iskukertymän erittely. */
   potFrom: { label: string; value: number }[];
   /** Lupauksensa pitäneet nimeltä. */
@@ -231,15 +233,18 @@ export function weekRecap(b: Battle, w: number): WeekRecap | null {
 
   const weekEnd = weekRange(w).end;
   const killedWeeks = after.killed.filter((k) => !killedBefore.has(k.week)).map((k) => k.week);
+  const ownKilled = killedWeeks.filter((wk) => wk >= w);
+  const backlogKilled = killedWeeks.filter((wk) => wk < w);
   const imagesOf = (week: number, dead: boolean) => {
     const m = b.monsters.get(week);
     const paths = m?.parts?.length ? m.parts.map((p) => p.image_path) : [m?.image_path];
-    return paths.filter((x): x is string => Boolean(x)).map((path) => ({ path, dead }));
+    return paths.filter((x): x is string => Boolean(x)).map((path) => ({ path, dead, backlog: week < w }));
   };
   return {
     week: w,
-    killed: killedWeeks.map(nameOf),
-    images: [...killedWeeks.flatMap((wk) => imagesOf(wk, true)), ...after.alive.flatMap((f) => imagesOf(f.week, false))],
+    killed: ownKilled.map(nameOf),
+    backlogKilled: backlogKilled.map(nameOf),
+    images: [...ownKilled.flatMap((wk) => imagesOf(wk, true)), ...backlogKilled.flatMap((wk) => imagesOf(wk, true)), ...after.alive.flatMap((f) => imagesOf(f.week, false))],
     survived: after.alive.map((f) => ({ name: nameOf(f.week), hp: f.hp })),
     damage,
     // Bonukset prosentteina treenien perusvoiman päälle (sama luku kuin ylläpidon HP-laskurissa).
@@ -274,6 +279,7 @@ export function recapText(r: WeekRecap) {
   const fmt = (n: number) => n.toLocaleString('fi-FI');
   const lines = [`⚔️ MONSTERIJAHTI – viikko ${r.week}`, ''];
   if (r.killed.length) lines.push(`💀 Kaatui: ${r.killed.join(', ')}`);
+  if (r.backlogKilled.length) lines.push(`💀 Rästi kaatui: ${r.backlogKilled.join(', ')}`);
   for (const s of r.survived) lines.push(`😈 Jäi henkiin: ${s.name} (${fmt(s.hp)} HP rästiin)`);
   lines.push(`💥 Voimaa ${fmt(r.damage)} = ${powerParts(r).join(' + ')}`);
   if (r.lostToSeal) lines.push(`🛡️ Sinetti jäi vajaaksi: ${fmt(r.lostToSeal)} voimaa sinettirajan yli menetettiin`);
