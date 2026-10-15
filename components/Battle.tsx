@@ -311,7 +311,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
             {log.map((e, i) => (
               <li key={i}>
                 {/* Treenikuva rivin vasemmassa reunassa. */}
-                {e.photo ? <ZoomImg className="hit-photo" src={resizedImage(e.photo, 96)} full={e.photo} width={40} height={40} /> : null}
+                {e.photo ? <ZoomImg className="hit-photo" src={resizedImage(e.photo, 256)} full={e.photo} width={40} height={40} /> : null}
                 <div style={{ minWidth: 0 }}>
                   <div><strong>{e.icon} {e.title}</strong>{e.crit ? <span className="tag">KRIITTINEN</span> : null}</div>
                   <div className="when">{e.by} · {formatDay(e.day)} · {ago(e.at)}</div>
