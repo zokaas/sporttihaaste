@@ -251,7 +251,7 @@ export default function MonsterStage(p: Props) {
         {p.boss ? <div className="stage-sky" /> : null}
         {groupImages.length > 1 ? (
           <>
-            <img className="stage-backdrop" src={resizedImage(groupImages[0], 96)} alt="" />
+            <img className="stage-backdrop" src={resizedImage(groupImages[0], 256)} alt="" />
             <div className="stage-group">
               {groupImages.map((src) => <img key={src} className="stage-group-img" src={src} alt="" />)}
             </div>
@@ -259,7 +259,7 @@ export default function MonsterStage(p: Props) {
         ) : image ? (
           <>
             {/* Tausta on sumennettu, joten siihen riittää pieni kuva: kevyempi ladata ja piirtää. */}
-            <img className="stage-backdrop" src={resizedImage(image, 96)} alt="" />
+            <img className="stage-backdrop" src={resizedImage(image, 256)} alt="" />
             <img className="stage-img" src={image} alt="" />
           </>
         ) : (

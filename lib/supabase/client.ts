@@ -10,6 +10,9 @@ export function createClient() {
  * puhelinnäyttöön (3× tiheys) ja laatu pidetään korkeana, jotta kuvat pysyvät terävinä. Leveyden pitää olla Nextin sallituissa kooissa.
  */
 function optimized(url: string, width: number, quality: number) {
+  // Hätäkytkin: NEXT_PUBLIC_DIRECT_IMAGES=1 Vercelissä ohittaa kuvaoptimoinnin (kuvat suoraan Supabasesta),
+  // jos Vercelin ilmaiskiintiö loppuu. Kuvat on jo pienennetty latausvaiheessa, joten ne toimivat sellaisenaan.
+  if (process.env.NEXT_PUBLIC_DIRECT_IMAGES === '1') return url;
   return `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=${quality}`;
 }
 
