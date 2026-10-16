@@ -5,7 +5,7 @@ import { markNavigation, markPop, wasPop } from '@/lib/navHistory';
 
 const key = (path: string) => `mj_scroll_${path}`;
 // Alasivut (sankari, monsteri, raportit, korjaukset) avautuvat aina ylhäältä; kohta palautetaan vain takaisin tultaessa.
-const SUBPAGE = /^\/(sankari|monsteri|raportti)\/|^\/yllapito\/korjaukset/;
+const SUBPAGE = /^\/(sankari|monsteri|raportti)\/|^\/yllapito\/(korjaukset|sairaudet)/;
 let firstPath: string | null = null;
 // Sivu avautuu ylhäältä, jos siellä ei ole käyty 10 minuuttiin (tilanne on ehtinyt muuttua, ja keskeltä
 // avautuva sivu hämmentää). Takaisin palatessa kohta palautuu ajasta riippumatta.

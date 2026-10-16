@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminLogHit } from '@/app/kirjaa/actions';
 import { SPECIAL_WEAKNESSES } from '@/lib/rules';
-import { adminDeleteHit, adminDeleteSick, adminSetSick } from '@/app/yllapito/korjaukset/actions';
+import { adminDeleteHit, adminDeleteSick, adminEndSick, adminSetSick, adminToggleSickDay } from '@/app/yllapito/korjaukset/actions';
 
 type Hero = { id: string; name: string };
 
@@ -96,9 +96,30 @@ export function AdminSickForm({ heroes, min, max }: { heroes: Hero[]; min: strin
         <label className="field grow">Alkaen<input className="input" type="date" min={min} value={start} onChange={(e) => setStart(e.target.value)} /></label>
         <label className="field grow">Viimeinen päivä<input className="input" type="date" min={start} value={end} onChange={(e) => setEnd(e.target.value)} /></label>
       </div>
-      <span className="muted small">Jätä viimeinen päivä tyhjäksi, jos sairaus jatkuu.</span>
+      <span className="muted small">Jätä viimeinen päivä tyhjäksi, jos sairaus jatkuu. Jakson päivien treenit poistuvat (kipeänä ei treenata).</span>
       <button type="button" className="btn" disabled={busy} onClick={() => run(() => adminSetSick(userId, start, end || null), 'Sairaus merkitty.')}>Merkitse kipeäksi</button>
       <Msg msg={msg} />
     </div>
+  );
+}
+
+/** Viikkoruudukon solu: napautus merkitsee päivän sairaaksi tai terveeksi. */
+export function SickCell({ userId, day, sick, disabled, label }: { userId: string; day: string; sick: boolean; disabled: boolean; label: string }) {
+  const { busy, run } = useRun();
+  return (
+    <button type="button" className={`sick-cell${sick ? ' on' : ''}`} disabled={disabled || busy} aria-pressed={sick} aria-label={label} title={label}
+      onClick={() => (sick || confirm(`${label}: merkitäänkö kipeäksi? Päivän treenit ja askeleet poistuvat.`)) && run(() => adminToggleSickDay(userId, day, !sick), sick ? 'Päivä merkitty terveeksi.' : 'Päivä merkitty sairaaksi.')}>
+      {sick ? '🤒' : busy ? '…' : ''}
+    </button>
+  );
+}
+
+export function EndSickButton({ id, name }: { id: number; name: string }) {
+  const { busy, run } = useRun();
+  return (
+    <button type="button" className="btn btn-ghost" style={{ minHeight: 36, padding: '0 10px', fontSize: 13 }} disabled={busy}
+      onClick={() => confirm(`Merkitäänkö ${name} terveeksi tästä päivästä alkaen?`) && run(() => adminEndSick(id), 'Merkitty terveeksi.')}>
+      Terve tänään
+    </button>
   );
 }
