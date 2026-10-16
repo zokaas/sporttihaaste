@@ -259,6 +259,11 @@ export default async function Yllapito({ searchParams }: { searchParams: { osio?
       {tab === 'nyt' ? (
         <>
       <section className="card">
+        <h2 className="display">🤒 Kipeänä nyt</h2>
+        <p style={{ margin: 0 }}>{battle.sickNow.length ? battle.sickNow.map((id) => battle.heroes.find((x) => x.id === id)?.hero_name ?? '?').join(', ') : <span className="muted">Kaikki ovat terveinä.</span>}</p>
+        <Link className="btn btn-ghost" href="/yllapito/sairaudet">Hallitse sairauksia</Link>
+      </section>
+      <section className="card">
         <h2 className="display">Ilmoittautuneet {locked.length}/10</h2>
         <ul className="people">
           {(heroes ?? []).map((h) => {
@@ -490,7 +495,8 @@ export default async function Yllapito({ searchParams }: { searchParams: { osio?
         <form action={testFridayReminder}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Kokeile perjantain muistutusta (vain itsellesi)</button></form>
         <Hint id="admin-friday">Perjantain muistutus lähtee automaattisesti pe klo 9 niille, joilta puuttuu lupauksen tunteja, isku sinettiin tai askelkuittauksia.</Hint>
       </section>
-      <Link className="btn btn-ghost" href="/yllapito/korjaukset">🛠️ Korjaukset: iskut, sairaudet ja varmuuskopio</Link>
+      <Link className="btn btn-ghost" href="/yllapito/korjaukset">🛠️ Korjaukset: iskut ja varmuuskopio</Link>
+      <Link className="btn btn-ghost" href="/yllapito/sairaudet">🤒 Sairaudet</Link>
         </>
       ) : null}
     </>

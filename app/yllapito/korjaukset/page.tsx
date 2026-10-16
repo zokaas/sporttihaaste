@@ -6,7 +6,7 @@ import { loadSports } from '@/lib/sports';
 import { hitBonusText } from '@/lib/rules';
 import { SEASON_START, formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { today } from '@/lib/today';
-import { AdminHitForm, AdminSickForm, DeleteRow } from '@/components/AdminTools';
+import { AdminHitForm, DeleteRow } from '@/components/AdminTools';
 import { revalidatePath } from 'next/cache';
 import { writeBackup } from '@/lib/backup';
 
@@ -44,10 +44,9 @@ export default async function Korjaukset({ searchParams }: { searchParams: { vko
   const current = Math.min(BOSS_WEEK, Math.max(1, seasonWeek(now)));
   const week = Math.min(BOSS_WEEK, Math.max(1, Number(searchParams.vko) || current));
   const { start, end } = weekRange(week);
-  const [{ data: heroes }, { data: hits }, { data: sick }, sports] = await Promise.all([
+  const [{ data: heroes }, { data: hits }, sports] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, pledge_locked_at').order('hero_name'),
     supabase.from('hits').select('*').gte('trained_on', start).lte('trained_on', end).order('trained_on', { ascending: false }).order('created_at', { ascending: false }),
-    supabase.from('sick_periods').select('*').order('starts_on', { ascending: false }),
     loadSports(supabase),
   ]);
   // Automaattiset varmuuskopiot (migraatio 034): uusimmat ensin, latauslinkit voimassa tunnin.
@@ -93,23 +92,7 @@ export default async function Korjaukset({ searchParams }: { searchParams: { vko
         <AdminHitForm heroes={heroList} sports={sports.map((s) => s.name)} min={SEASON_START} max={maxDay} />
       </section>
 
-      <section className="card">
-        <h2 className="display">Sairaudet</h2>
-        <AdminSickForm heroes={heroList} min={SEASON_START} max={maxDay} />
-        {(sick ?? []).length ? (
-          <ul className="people">
-            {(sick ?? []).map((p) => (
-              <li key={p.id}>
-                <div className="grow">
-                  <div className="who">{name(p.user_id)}</div>
-                  <div className="facts">{formatDay(p.starts_on)} – {p.ends_on ? formatDay(p.ends_on) : 'jatkuu'}</div>
-                </div>
-                <DeleteRow id={p.id} kind="sick" />
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </section>
+      <Link className="btn btn-ghost" href="/yllapito/sairaudet">🤒 Sairaudet: kuka on kipeänä, viikkoruudukko ja jaksot</Link>
 
       <section className="card" id="varmuuskopio">
         <h2 className="display">Varmuuskopio</h2>
