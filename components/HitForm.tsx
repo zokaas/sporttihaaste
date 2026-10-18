@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CATEGORIES, SPECIAL_WEAKNESSES, hitDamage, specialOf, type Category, type Weakness } from '@/lib/rules';
+import { CATEGORIES, SPECIAL_WEAKNESSES, hitDamage, pledgeNote, specialOf, type Category, type Weakness } from '@/lib/rules';
 import { formatDay } from '@/lib/season';
 import { logHit } from '@/app/kirjaa/actions';
 import Hint from '@/components/Hint';
@@ -162,6 +162,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
           {preview.bonuses.map((b) => <div key={b.label}>{b.label}: +{b.pct} %</div>)}
           {preview.pct === 200 && preview.bonuses.reduce((a, b) => a + b.pct, 0) > 200 ? <div className="muted small">Bonusten katto on +200 %.</div> : null}
           <div style={{ fontSize: 18, fontWeight: 600, marginTop: 4 }}>Isku: {preview.damage}</div>
+          <div className="muted small">🤝 {pledgeNote(minutes, sport!.value)}{preview.bonuses.length ? ' (bonukset eivät kasvata lupausta)' : ''}</div>
         </div>
       ) : null}
 

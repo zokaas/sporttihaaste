@@ -87,7 +87,7 @@ export default function MyWeek(p: Props) {
           id="pledge-hours"
           title={<div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline' }}><span className="muted small">Lupaustunnit</span><strong className={kept ? 'ok' : ''} style={{ fontSize: 22 }}>{p.target > 0 ? <>{h(p.hours)} / {h(p.target)}{kept ? ' ✓' : ''}</> : h(p.hours)}</strong></div>}
         >
-          Lupaustunnit lasketaan lajin arvolla: tunti useimpia lajeja = 1 h, tunti uintia = 2 h, tunti joogaa, liikkuvuutta tai golfia = 0,5 h. Bonukset eivät kasvata lupaustunteja.
+          Lupaustunnit lasketaan lajin arvolla: tunti useimpia lajeja = 1 h, raskaat lajit (esim. uinti) tuplasti ja kevyet lajit (esim. jooga, liikkuvuus, golf) puolet ajasta. Bonukset eivät kasvata lupaustunteja. Jokaisen iskun kohdalla näkyy, paljonko se kerrytti lupausta.
         </Hint>
         {p.target > 0 ? <div className="hpbar"><span style={{ width: `${pct}%`, background: kept ? 'var(--moss-text)' : 'var(--ember)' }} /></div> : null}
         <span className="muted small">

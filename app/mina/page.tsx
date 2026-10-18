@@ -8,6 +8,7 @@ import { requireHero } from '@/lib/page';
 import { avatarUrl } from '@/lib/supabase/client';
 import { myWeekProps } from '@/lib/myweek';
 import { formatDay, isGateDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
+import { pledgeNote } from '@/lib/rules';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,7 @@ const duration = (min: number) => [Math.floor(min / 60) ? `${Math.floor(min / 60
 
 export default async function Mina() {
   const { battle: b, user, me } = await requireHero();
+  const sportValue = (name: string) => b.sports.find((s) => s.name === name)?.value ?? 100;
   const img = avatarUrl(me.avatar_path);
   const inSeason = seasonWeek(b.today) >= 1 && seasonWeek(b.today) <= BOSS_WEEK;
   const names = new Map(b.heroes.map((h) => [h.id, h.hero_name ?? '']));
@@ -56,6 +58,7 @@ export default async function Mina() {
                     <div className="who">{h.sport} {duration(h.minutes)} <span className="ok">{h.damage}</span></div>
                     <div className="facts">
                       {formatDay(h.trained_on)}
+                      {` · ${pledgeNote(h.minutes, sportValue(h.sport))}`}
                       {h.bonus_pct ? ` · bonus +${h.bonus_pct} %` : ''}
                       {h.companions.length ? ` · mukana ${h.companions.map((id) => names.get(id)).filter(Boolean).join(', ')}` : ''}
                     </div>
