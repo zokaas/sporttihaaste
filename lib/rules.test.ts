@@ -160,6 +160,10 @@ console.log('Ensi-iskutestit menivät läpi.');
 
 // HP:n realismi
 import { bonusTenths, hpPlan, usualBonusPct, weekActual } from './hpcheck.ts';
+import { pledgeNote } from './rules.ts';
+assert.equal(pledgeNote(15, 50), '0,13 h lupaukseen · kevyt laji ½');
+assert.equal(pledgeNote(45, 100), '0,75 h lupaukseen');
+assert.equal(pledgeNote(30, 200), '1 h lupaukseen · raskas laji ×2');
 {
   const plan = hpPlan(40, [4500, 7000], {}, []);
   assert.deepEqual([plan[0].pledgeBase, plan[0].stepsEst, plan[1].pledgeBase, plan[1].stepsEst], [2286, 1571, 4000, 2750], 'viikko 1 on 4/7');

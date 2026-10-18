@@ -127,6 +127,13 @@ export function pledgeHours(minutes: number, sportValue: number) {
   return ((minutes / 60) * sportValue) / 100;
 }
 
+/** Iskun lupausosuus tekstinä, esim. "0,13 h lupaukseen · kevyt laji ½" (lajin arvo 50 = puolet ajasta, 200 = tuplasti). */
+export function pledgeNote(minutes: number, sportValue: number) {
+  const hours = String(Math.round(pledgeHours(minutes, sportValue) * 100) / 100).replace('.', ',');
+  const kind = sportValue < 100 ? ' · kevyt laji ½' : sportValue > 100 ? ' · raskas laji ×2' : '';
+  return `${hours} h lupaukseen${kind}`;
+}
+
 /** Sairauden suhteuttama lupaus, pyöristettynä lähimpään puoleen tuntiin. */
 export function adjustedPledge(pledge: number, sickDays: number) {
   const healthy = Math.max(0, 7 - Math.min(7, sickDays));
