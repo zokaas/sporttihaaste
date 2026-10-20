@@ -35,7 +35,7 @@ type Props = {
   ownHit: number | null;
   /** Oman iskun otsikko (oletus "Osumasi!", esim. askelkuittauksella "👣 Askeleet!"). */
   ownLabel?: string;
-  /** Oma isku oli kriittinen (bonuksia vähintään +100 %). */
+  /** Oma isku oli tuplavoima (bonuksia vähintään +100 %). */
   crit?: boolean;
   /** Paljastus ja osuma-animaatiot (vain etusivun nykyiselle monsterille). */
   effects?: boolean;
@@ -225,7 +225,7 @@ export default function MonsterStage(p: Props) {
     // Ilman animaatiota palkki hyppää suoraan uuteen HP:hen (muuten se jäisi edelliseen arvoon).
     if (damage <= 0 || reduced) setShownHp(p.hp);
     if (damage > 0 && !reduced) {
-      strike(damage, p.ownHit != null ? (p.crit ? 'KRIITTINEN!' : p.ownLabel ?? 'Osumasi!') : null, Boolean(p.crit && p.ownHit != null), Math.min(p.maxHp, p.hp + damage));
+      strike(damage, p.ownHit != null ? (p.crit ? 'TUPLAVOIMA!' : p.ownLabel ?? 'Osumasi!') : null, Boolean(p.crit && p.ownHit != null), Math.min(p.maxHp, p.hp + damage));
       if (p.ownHit != null && 'vibrate' in navigator) navigator.vibrate(p.crit ? [80, 40, 80, 40, 160] : [60, 40, 120]);
     }
     if (p.ownHit != null) window.history.replaceState(null, '', window.location.pathname);

@@ -232,7 +232,7 @@ function MonsterRow({ monster, current = false }: { monster: Monster; current?: 
                     <textarea className="input" rows={3} style={{ padding: 12 }} value={part.hit_lines ?? ''} onChange={(e) => setPart(i, { hit_lines: e.target.value })} />
                   </label>
                   <label className="field">
-                    Kriittinen isku
+                    Tuplavoimaisku
                     <input className="input" value={part.hit_crit ?? ''} onChange={(e) => setPart(i, { hit_crit: e.target.value })} />
                   </label>
                   <label className="field">
@@ -394,7 +394,7 @@ function LinePreview({ m }: { m: Monster }) {
       <div style={{ display: 'grid', gap: 14, marginTop: 10, padding: 14, borderRadius: 14, background: 'var(--deep)' }}>
         <Bubbles title="Täysi HP" lines={stageTaunt(speaker, hp) ?? []} />
         <Bubbles title="Iskureaktiot (yksi arvotaan)" lines={hits} />
-        <Bubbles title="Kriittinen isku" lines={crits} />
+        <Bubbles title="Tuplavoimaisku" lines={crits} />
         {parts?.slice(0, -1).map((p, i) => <Bubbles key={i} title={`Kun ${p.name || `osa ${i + 1}`} kaatuu (myös ilmoituksena)`} lines={[fallLine(parts, i)].filter((l): l is Line => Boolean(l))} />)}
         <Bubbles title="HP alle 50 %" lines={stageTaunt(speaker, hp * 0.45) ?? []} />
         <Bubbles title="HP alle 20 %" lines={stageTaunt(speaker, hp * 0.1) ?? []} />

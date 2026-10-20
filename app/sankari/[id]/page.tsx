@@ -121,7 +121,7 @@ export default async function Sankari({ params }: { params: { id: string } }) {
             ))}
           </div>
         ) : <p className="muted" style={{ margin: 0 }}>Ei vielä merkkejä.</p>}
-        <p className="muted small" style={{ margin: 0 }}>Merkit pysyvät koko kauden, ja tasot nousevat: 🤝 lupaukset putkeen (3/6/9), 👣 askelputki (7/14/21), ⚔️ viimeinen isku (1/3/5), 💥 kriittinen isku (1/5/10), 🎯 heikkousiskut (5/10/20), 👥 yhteistreenipäivät (5/10/20). 🏆 Viikon sankari näkyy seuraavan viikon ajan ja 🔥 niin kauan kuin askelputki on käynnissä.</p>
+        <p className="muted small" style={{ margin: 0 }}>Merkit pysyvät koko kauden, ja tasot nousevat: 🤝 lupaukset putkeen (3/6/9), 👣 askelputki (7/14/21), ⚔️ viimeinen isku (1/3/5), 💥 tuplavoimaiskut (1/5/10), 🎯 heikkousiskut (5/10/20), 👥 yhteistreenipäivät (5/10/20). 🏆 Viikon sankari näkyy seuraavan viikon ajan ja 🔥 niin kauan kuin askelputki on käynnissä.</p>
       </section>
 
       <section className="card">
