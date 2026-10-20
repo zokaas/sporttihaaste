@@ -27,6 +27,7 @@ const GLOSSARY: [string, string][] = [
   ['Juhlapäivä', 'Kenen tahansa sankarin nimi- tai syntymäpäivä. Silloin kaikkien iskut tekevät +50 %.'],
   ['Yhteistreeni', 'Vähintään kolmen hengen treeni (+50 %). Koko porukka yhdessä (kaikki sinä päivänä terveet) tekee +100 %.'],
   ['Tuplavoima', 'Isku, jonka bonukset ovat yhteensä vähintään +100 %, eli isku on vähintään tuplasti perusvoimaansa.'],
+  ['Triplavoima', 'Kolme bonusta samassa iskussa (vähintään +150 %).'],
   ['Askelkuittaus', `Päivä, jona kävelit vähintään ${STEP_GOAL.toLocaleString('fi-FI')} askelta: +${STEP_DAY_DAMAGE}.`],
   ['Megamarssi', `Päivä, jona kaikki terveet kuittaavat askeleensa: +${PATROL_DAY_DAMAGE}.`],
   ['Lupaus', `Montako tuntia treenaat viikossa. Pidetty lupaus tuo +${PLEDGE_BONUS} ensi-iskuun.`],

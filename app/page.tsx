@@ -62,7 +62,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
     return (
       <>
         <Nav current="/" />
-        <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1'} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
+        <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1' || searchParams.krit === '2'} triple={searchParams.krit === '2'} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
       </>
     );
   }
@@ -79,7 +79,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
           names={new Map(gateBattle.heroes.map((h) => [h.id, h.hero_name ?? '']))}
           stepped={gateBattle.steps.filter((x) => x.day === today()).length}
           ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null}
-          crit={searchParams.krit === '1'}
+          crit={searchParams.krit === '1' || searchParams.krit === '2'}
           offsetMs={testOffsetMs()}
         />
       ) : null}

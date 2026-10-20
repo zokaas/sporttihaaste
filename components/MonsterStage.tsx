@@ -38,6 +38,8 @@ type Props = {
   ownLabel?: string;
   /** Oma isku oli tuplavoima (bonuksia vähintään +100 %). */
   crit?: boolean;
+  /** Oma isku oli triplavoima (kolme bonusta, vähintään +150 %). */
+  triple?: boolean;
   /** Paljastus ja osuma-animaatiot (vain etusivun nykyiselle monsterille). */
   effects?: boolean;
   /** Kaatunut monsteri: harmaa ja liikkumaton. */
@@ -128,7 +130,7 @@ const PART_FALL_MS = 2800;
 export default function MonsterStage(p: Props) {
   const state = stateOf(p.hp, p.maxHp, p.padded, Boolean(p.dead));
   const [shownHp, setShownHp] = useState(p.hp);
-  const [flying, setFlying] = useState<{ n: number; label: string | null; crit: boolean } | null>(null);
+  const [flying, setFlying] = useState<{ n: number; label: string | null; crit: boolean; triple?: boolean } | null>(null);
   const [zoomed, setZoomed] = useState(false);
   const [hit, setHit] = useState(false);
   const [revealing, setRevealing] = useState(false);
@@ -215,7 +217,7 @@ export default function MonsterStage(p: Props) {
     const later = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms));
     const strike = (n: number, label: string | null, crit: boolean, from: number) => {
       setShownHp(from);
-      setFlying({ n, label, crit });
+      setFlying({ n, label, crit, triple: Boolean(label && p.triple) });
       setHit(true);
       // Oma isku jättää hetkeksi kynnenjäljen monsteriin.
       if (label) { setClaw(Date.now()); later(() => setClaw(0), 2200); }
@@ -228,7 +230,7 @@ export default function MonsterStage(p: Props) {
       }
       later(() => setShownHp(p.hp), 450);
       later(() => setHit(false), 900);
-      later(() => setFlying(null), crit ? 2300 : 1800);
+      later(() => setFlying(null), p.triple && label ? 2800 : crit ? 2300 : 1800);
     };
 
     const hpKey = `mj_hp_${p.week}`;
@@ -263,12 +265,12 @@ export default function MonsterStage(p: Props) {
     // Ilman animaatiota palkki hyppää suoraan uuteen HP:hen (muuten se jäisi edelliseen arvoon).
     if (damage <= 0 || reduced) setShownHp(p.hp);
     if (damage > 0 && !reduced) {
-      strike(damage, p.ownHit != null ? (p.crit ? 'TUPLAVOIMA!' : p.ownLabel ?? 'Osumasi!') : null, Boolean(p.crit && p.ownHit != null), Math.min(p.maxHp, p.hp + damage));
-      if (p.ownHit != null && 'vibrate' in navigator) navigator.vibrate(p.crit ? [80, 40, 80, 40, 160] : [60, 40, 120]);
+      strike(damage, p.ownHit != null ? (p.triple ? '🔥 TRIPLAVOIMA!' : p.crit ? 'TUPLAVOIMA!' : p.ownLabel ?? 'Osumasi!') : null, Boolean(p.crit && p.ownHit != null), Math.min(p.maxHp, p.hp + damage));
+      if (p.ownHit != null && 'vibrate' in navigator) navigator.vibrate(p.triple ? [80, 40, 80, 40, 80, 40, 300] : p.crit ? [80, 40, 80, 40, 160] : [60, 40, 120]);
     }
     if (p.ownHit != null) window.history.replaceState(null, '', window.location.pathname);
     return () => timers.current.forEach(clearTimeout);
-  }, [p.effects, p.week, p.hp, p.maxHp, p.ownHit, p.crit, p.revealed, p.boss, p.potStrike]);
+  }, [p.effects, p.week, p.hp, p.maxHp, p.ownHit, p.crit, p.triple, p.revealed, p.boss, p.potStrike]);
 
   const pct = Math.max(0, Math.min(100, (shownHp / p.maxHp) * 100));
   // Pato näytetään suhteessa kolmannekseen monsterin HP:sta, jotta pienikin pato näkyy.
@@ -333,7 +335,7 @@ export default function MonsterStage(p: Props) {
       {p.endMs ? <div className="stage-top"><span className="stage-week">{p.label ?? (p.boss ? 'Loppupomo' : `Viikko ${p.currentWeek ?? p.week}`)}</span><Countdown endMs={p.endMs} offsetMs={p.offsetMs} /></div> : null}
 
       {flying ? (
-        <div className={`stage-damage${flying.label ? ' own' : ''}${flying.crit ? ' crit' : ''}`} aria-live="polite">
+        <div className={`stage-damage${flying.label ? ' own' : ''}${flying.crit ? ' crit' : ''}${flying.triple ? ' triple' : ''}`} aria-live="polite">
           −{fmt(flying.n)}{flying.label ? <small>{flying.label}</small> : null}
         </div>
       ) : null}
