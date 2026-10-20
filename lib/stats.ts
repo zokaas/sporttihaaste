@@ -118,7 +118,7 @@ export function heroStats(b: Battle, avatarUrl: (p: string | null) => string | n
       ['🤝', 'Sanansa pitävä', keptBest, [3, 6, 9], (n) => `${n} lupausta pidetty peräkkäin`],
       ['👣', 'Askelputki', streak, [7, 14, 21], (n) => `${n} askelpäivää putkeen`],
       ['⚔️', 'Viimeinen isku', blowCount, [1, 3, 5], (n) => (n === 1 ? 'Kaatoi monsterin' : `Kaatoi ${n} monsteria`)],
-      ['💥', 'Kriittinen', crits, [1, 5, 10], (n) => (n === 1 ? 'Isku vähintään +100 % bonuksella' : `${n} iskua vähintään +100 % bonuksella`)],
+      ['💥', 'Tuplavoima', crits, [1, 5, 10], (n) => (n === 1 ? 'Isku vähintään +100 % bonuksella' : `${n} iskua vähintään +100 % bonuksella`)],
       ['🎯', 'Heikkousmetsästäjä', weak, [5, 10, 20], (n) => `${n} iskua monsterin heikkouteen`],
       ['👥', 'Porukan liima', together, [5, 10, 20], (n) => `${n} yhteistreenipäivää`],
     ];

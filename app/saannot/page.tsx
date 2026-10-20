@@ -26,7 +26,7 @@ const GLOSSARY: [string, string][] = [
   ['Heikkous', 'Viikon monsterin heikko kohta: joko lajiryhmä (esim. kestävyys) tai yksittäinen laji (esim. uinti). Joskus heikkous on erikoisheikkous, esim. urheilu mamun tai lapsen kanssa, urheilija on nainen tai urheilu kenen tahansa isän kanssa: silloin laji on vapaa ja kirjauksessa merkitset itse, että ehto täyttyi. Heikkouteen osuvat treenit tekevät +50 %. Kaksikolla ja kolmikolla jokaisella osalla on oma heikkoutensa, ja kaikki ne ovat voimassa koko viikon. Yksi treeni saa silti enintään yhden heikkousbonuksen.'],
   ['Juhlapäivä', 'Kenen tahansa sankarin nimi- tai syntymäpäivä. Silloin kaikkien iskut tekevät +50 %.'],
   ['Yhteistreeni', 'Vähintään kolmen hengen treeni (+50 %). Koko porukka yhdessä (kaikki sinä päivänä terveet) tekee +100 %.'],
-  ['Kriittinen isku', 'Isku, jonka bonukset ovat yhteensä vähintään +100 %.'],
+  ['Tuplavoima', 'Isku, jonka bonukset ovat yhteensä vähintään +100 %, eli isku on vähintään tuplasti perusvoimaansa.'],
   ['Askelkuittaus', `Päivä, jona kävelit vähintään ${STEP_GOAL.toLocaleString('fi-FI')} askelta: +${STEP_DAY_DAMAGE}.`],
   ['Megamarssi', `Päivä, jona kaikki terveet kuittaavat askeleensa: +${PATROL_DAY_DAMAGE}.`],
   ['Lupaus', `Montako tuntia treenaat viikossa. Pidetty lupaus tuo +${PLEDGE_BONUS} ensi-iskuun.`],
@@ -121,7 +121,7 @@ export default async function Saannot() {
           <li><strong>🤝 Sanansa pitävä</strong>: lupaus pidetty peräkkäisinä viikkoina 3 / 6 / 9. Koko viikon sairaus ei katkaise putkea.</li>
           <li><strong>👣 Askelputki</strong>: askeleet kuitattu peräkkäisinä päivinä 7 / 14 / 21.</li>
           <li><strong>⚔️ Viimeinen isku</strong>: kaadoit monsterin 1 / 3 / 5 kertaa.</li>
-          <li><strong>💥 Kriittinen</strong>: isku vähintään +100 % bonuksella 1 / 5 / 10 kertaa.</li>
+          <li><strong>💥 Tuplavoima</strong>: isku vähintään +100 % bonuksella 1 / 5 / 10 kertaa.</li>
           <li><strong>🎯 Heikkousmetsästäjä</strong>: iskut monsterin heikkouteen 5 / 10 / 20.</li>
           <li><strong>👥 Porukan liima</strong>: yhteistreenipäivät 5 / 10 / 20.</li>
         </ul>
