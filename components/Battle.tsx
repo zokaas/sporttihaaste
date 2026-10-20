@@ -18,6 +18,7 @@ import RecapPrompt from '@/components/RecapPrompt';
 import EarlyReveal from '@/components/EarlyReveal';
 import RecapCard from '@/components/RecapCard';
 import { activeWeaknesses, stageParts, weaknessesOf } from '@/lib/trio';
+import { parseFx } from '@/lib/fx';
 import Hint from '@/components/Hint';
 import TodayCard from '@/components/TodayCard';
 import { isSickOn } from '@/lib/weekly';
@@ -56,7 +57,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const heroById = new Map(heroes.map((h) => [h.id, h]));
   const nameOf = (w: number) => monsters.get(w)?.name ?? (w === BOSS_WEEK ? 'Loppupomo' : `Viikon ${w} monsteri`);
   const blows = finalBlows(data);
-  const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), images: (monsters.get(k.week)?.parts ?? []).map((x) => monsterImageUrl(x.image_path)).filter((x): x is string => Boolean(x)), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Megamarssi' : null, killedAt: k.killedAt }));
+  const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), images: (monsters.get(k.week)?.parts ?? []).map((x) => monsterImageUrl(x.image_path)).filter((x): x is string => Boolean(x)), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Megamarssi' : null, killedAt: k.killedAt, fx: parseFx(monsters.get(k.week)?.fx) }));
   const missing = target ? required.filter((id) => !target.hitters.includes(id)) : [];
   const view = target ? sealView(target, required) : null;
   // Monsterin repliikki HP:n mukaan: ylläpidon kirjoittama tai oletus.
@@ -195,6 +196,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           offsetMs={offsetMs}
           boss={target.week === BOSS_WEEK}
           potStrike={potBeforeBoss}
+          fx={parseFx(monsters.get(target.week)?.fx)}
         />
       ) : (
         <section className="card">

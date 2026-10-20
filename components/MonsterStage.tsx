@@ -7,6 +7,7 @@ import { resizedImage } from '@/lib/supabase/client';
 import { Viewer } from '@/components/ImageViewer';
 import { localKey } from '@/lib/localKey';
 import type { Line } from '@/lib/taunts';
+import { fxEmojis, type MonsterFx } from '@/lib/fx';
 
 /** Puhekuplan sisältö: puhujan nimi (moniosaisella) ja repliikki. */
 function Speech({ line }: { line: Line }) {
@@ -62,7 +63,44 @@ type Props = {
   potStrike?: number;
   /** Monsterikolmikko: osat kaatuvat järjestyksessä, etummainen näytetään isona. */
   parts?: StagePart[] | null;
+  /** Erikoisefekti: emojit pöllähtävät iskusta (eivät näy muulloin). */
+  fx?: MonsterFx | null;
 };
+
+/**
+ * Efektin partikkelit vain iskun hetkellä: pölähdys osumakohdasta ja tyylin mukainen suihku (~2,5 s).
+ * Voimistuu monsterin heiketessä: haavoittunut ×1,5, horjuva ×2 isommilla emojeilla; finale = koko ruudun loppupurkaus.
+ */
+export function StageFx({ fx, burst, level = 'healthy' }: { fx: MonsterFx; burst: boolean; level?: 'healthy' | 'hurt' | 'dying' | 'finale' }) {
+  const [shot, setShot] = useState(0);
+  useEffect(() => {
+    if (!burst) return;
+    const at = Date.now();
+    setShot(at);
+    const t = setTimeout(() => setShot((x) => (x === at ? 0 : x)), 2600);
+    return () => clearTimeout(t);
+  }, [burst]);
+  const emojis = fxEmojis(fx.emoji);
+  if (!emojis.length || !shot) return null;
+  const pick = (i: number) => emojis[i % emojis.length];
+  const mult = level === 'finale' ? 3 : level === 'dying' ? 2 : level === 'hurt' ? 1.5 : 1;
+  const size = level === 'finale' || level === 'dying' ? 1.4 : 1;
+  const shower = Math.round((fx.style === 'shake' ? 0 : fx.style === 'puff' ? 5 : 8) * mult);
+  const bursts = Math.round(9 * mult);
+  const reach = level === 'finale' ? 2.2 : level === 'dying' ? 1.4 : 1;
+  return (
+    <div key={shot} className={`stage-fx fx-${fx.style} fx-level-${level}`}>
+      {Array.from({ length: shower }, (_, i) => (
+        <i key={i} style={{ left: `${4 + ((i * 37) % 92)}%`, animationDelay: `${((i * 0.23) % 0.9).toFixed(2)}s`, fontSize: `${Math.round((18 + (i % 3) * 6) * size)}px` }}>{pick(i)}</i>
+      ))}
+      {Array.from({ length: bursts }, (_, i) => {
+        const a = (i / bursts) * Math.PI * 2;
+        const r = 1 + (i % 3) * 0.2;
+        return <b key={`b${i}`} style={{ fontSize: `${Math.round(28 * size)}px`, ['--dx' as string]: `${Math.round(Math.cos(a) * 110 * reach * r)}px`, ['--dy' as string]: `${Math.round((Math.sin(a) * 90 - 20) * reach * r)}px` }}>{pick(i)}</b>;
+      })}
+    </div>
+  );
+}
 
 const fmt = (n: number) => n.toLocaleString('fi-FI');
 
@@ -237,7 +275,7 @@ export default function MonsterStage(p: Props) {
   const damPct = Math.min(100, (p.padded / Math.max(1, p.maxHp / 3)) * 100);
   const label = `${p.title}, ${fmt(p.hp)} / ${fmt(p.maxHp)} HP.`;
   const nearDeath = state === 'dying' && p.hp / p.maxHp < 0.1;
-  const className = `stage state-${state}${offscreen ? ' is-offscreen' : ''}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
+  const className = `stage state-${state}${p.fx && hit && (p.fx.style === 'shake' || state === 'dying') ? ' fx-roar' : ''}${offscreen ? ' is-offscreen' : ''}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
   const sealDone = p.seal ? p.seal.filter((s) => !s.excused).every((s) => s.hit) : false;
 
   const image = front ? front.image ?? p.image : p.image;
@@ -287,6 +325,7 @@ export default function MonsterStage(p: Props) {
             {Array.from({ length: 9 }, (_, i) => <i key={i} style={{ left: `${6 + ((i * 41) % 88)}%`, animationDelay: `${(i * 1.7) % 9}s`, animationDuration: `${8 + (i % 4) * 2}s` }} />)}
           </div>
         ) : null}
+        {p.fx && state !== 'dead' ? <StageFx fx={p.fx} burst={hit} level={state === 'dying' ? 'dying' : state === 'hurt' ? 'hurt' : 'healthy'} /> : null}
         <div className="stage-vignette" />
         {state === 'shielded' ? <div className="stage-shield" /> : null}
       </div>
