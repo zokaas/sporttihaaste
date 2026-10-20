@@ -436,16 +436,23 @@ function FxEditor({ m, busy, onSave }: { m: Monster; busy: boolean; onSave: (fx:
   );
 }
 
-/** Pieni esikatselu: tausta, partikkelit ja napautuksella isku. */
+/** Pieni esikatselu: tausta, partikkelit ja napautuksella isku. Tason voi vaihtaa (efekti voimistuu loppua kohden). */
 function FxPreview({ fx }: { fx: MonsterFx }) {
   const [hit, setHit] = useState(0);
+  const [level, setLevel] = useState<'healthy' | 'hurt' | 'dying' | 'finale'>('healthy');
+  const levels = [['healthy', 'Täysi HP'], ['hurt', 'Alle 50 %'], ['dying', 'Alle 20 %'], ['finale', 'Kaatuu']] as const;
   return (
-    <button type="button" className={`fx-preview${fx.style === 'shake' && hit ? ' fx-roar' : ''}`} onClick={() => { setHit(Date.now()); setTimeout(() => setHit(0), 900); }} aria-label="Esikatselu: napauta iskeäksesi" disabled={Boolean(hit)}>
-      <div className="stage-art">
-        <div className="stage-img fx-preview-dummy">👾</div>
-        <StageFx fx={fx} burst={Boolean(hit)} />
+    <>
+      <div className="chips">
+        {levels.map(([id, label]) => <button key={id} type="button" className="chip" aria-pressed={level === id} onClick={() => setLevel(id)}>{label}</button>)}
       </div>
-      <span className="muted small fx-preview-hint">Napauta = isku</span>
-    </button>
+      <button type="button" className={`fx-preview${hit && (fx.style === 'shake' || level === 'dying') ? ' fx-roar' : ''}`} onClick={() => { setHit(Date.now()); setTimeout(() => setHit(0), 900); }} aria-label="Esikatselu: napauta iskeäksesi" disabled={Boolean(hit)}>
+        <div className="stage-art">
+          <div className="stage-img fx-preview-dummy">👾</div>
+          <StageFx fx={fx} burst={Boolean(hit)} level={level} />
+        </div>
+        <span className="muted small fx-preview-hint">Napauta = isku</span>
+      </button>
+    </>
   );
 }

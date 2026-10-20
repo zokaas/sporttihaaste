@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react';
 import { localKey } from '@/lib/localKey';
 import { release, requestTurn } from '@/lib/overlayQueue';
+import { StageFx } from '@/components/MonsterStage';
+import type { MonsterFx } from '@/lib/fx';
 
-type Kill = { week: number; name: string; image: string | null; images?: string[]; blow: string | null; killedAt?: number };
+type Kill = { week: number; name: string; image: string | null; images?: string[]; blow: string | null; killedAt?: number; fx?: MonsterFx | null };
 
 type Options = {
   /** Muistin avain: montako kaatoa on jo nähty (portinvartijalla oma). */
@@ -49,6 +51,7 @@ export default function KillFinale({ killed, kills, storageKey = 'mj_killed', sh
           // Kaksikko tai kolmikko: kaikki osat murenevat yhdessä
           <div className="finale-group">{k.images.map((src) => <img key={src} className="finale-img" src={src} alt="" />)}</div>
         ) : k.image ? <img className="finale-img" src={k.image} alt="" /> : <div className="finale-img finale-skull">💀</div>}
+        {k.fx ? <StageFx fx={k.fx} burst level="finale" /> : null}
         <div className="finale-ash" aria-hidden="true">
           {Array.from({ length: 18 }, (_, i) => (
             <i key={i} style={{ left: `${8 + ((i * 37) % 84)}%`, animationDelay: `${0.9 + (i % 6) * 0.18}s`, ['--drift' as string]: `${((i * 53) % 60) - 30}px` }} />

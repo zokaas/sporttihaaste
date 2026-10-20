@@ -57,7 +57,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   const heroById = new Map(heroes.map((h) => [h.id, h]));
   const nameOf = (w: number) => monsters.get(w)?.name ?? (w === BOSS_WEEK ? 'Loppupomo' : `Viikon ${w} monsteri`);
   const blows = finalBlows(data);
-  const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), images: (monsters.get(k.week)?.parts ?? []).map((x) => monsterImageUrl(x.image_path)).filter((x): x is string => Boolean(x)), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Megamarssi' : null, killedAt: k.killedAt }));
+  const kills = ledger.killed.map((k) => ({ week: k.week, name: nameOf(k.week), image: monsterImageUrl(monsters.get(k.week)?.image_path), images: (monsters.get(k.week)?.parts ?? []).map((x) => monsterImageUrl(x.image_path)).filter((x): x is string => Boolean(x)), blow: blows[k.week] ? heroById.get(blows[k.week])?.hero_name ?? 'Megamarssi' : null, killedAt: k.killedAt, fx: parseFx(monsters.get(k.week)?.fx) }));
   const missing = target ? required.filter((id) => !target.hitters.includes(id)) : [];
   const view = target ? sealView(target, required) : null;
   // Monsterin repliikki HP:n mukaan: ylläpidon kirjoittama tai oletus.

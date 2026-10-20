@@ -67,8 +67,11 @@ type Props = {
   fx?: MonsterFx | null;
 };
 
-/** Efektin partikkelit vain iskun hetkellä: pölähdys osumakohdasta ja tyylin mukainen suihku (~2,5 s). */
-export function StageFx({ fx, burst }: { fx: MonsterFx; burst: boolean }) {
+/**
+ * Efektin partikkelit vain iskun hetkellä: pölähdys osumakohdasta ja tyylin mukainen suihku (~2,5 s).
+ * Voimistuu monsterin heiketessä: haavoittunut ×1,5, horjuva ×2 isommilla emojeilla; finale = koko ruudun loppupurkaus.
+ */
+export function StageFx({ fx, burst, level = 'healthy' }: { fx: MonsterFx; burst: boolean; level?: 'healthy' | 'hurt' | 'dying' | 'finale' }) {
   const [shot, setShot] = useState(0);
   useEffect(() => {
     if (!burst) return;
@@ -80,15 +83,20 @@ export function StageFx({ fx, burst }: { fx: MonsterFx; burst: boolean }) {
   const emojis = fxEmojis(fx.emoji);
   if (!emojis.length || !shot) return null;
   const pick = (i: number) => emojis[i % emojis.length];
-  const shower = fx.style === 'shake' ? 0 : fx.style === 'puff' ? 5 : 8;
+  const mult = level === 'finale' ? 3 : level === 'dying' ? 2 : level === 'hurt' ? 1.5 : 1;
+  const size = level === 'finale' || level === 'dying' ? 1.4 : 1;
+  const shower = Math.round((fx.style === 'shake' ? 0 : fx.style === 'puff' ? 5 : 8) * mult);
+  const bursts = Math.round(9 * mult);
+  const reach = level === 'finale' ? 2.2 : level === 'dying' ? 1.4 : 1;
   return (
-    <div key={shot} className={`stage-fx fx-${fx.style}`}>
+    <div key={shot} className={`stage-fx fx-${fx.style} fx-level-${level}`}>
       {Array.from({ length: shower }, (_, i) => (
-        <i key={i} style={{ left: `${8 + ((i * 37) % 84)}%`, animationDelay: `${((i * 0.23) % 0.7).toFixed(2)}s`, fontSize: `${18 + (i % 3) * 6}px` }}>{pick(i)}</i>
+        <i key={i} style={{ left: `${4 + ((i * 37) % 92)}%`, animationDelay: `${((i * 0.23) % 0.9).toFixed(2)}s`, fontSize: `${Math.round((18 + (i % 3) * 6) * size)}px` }}>{pick(i)}</i>
       ))}
-      {Array.from({ length: 9 }, (_, i) => {
-        const a = (i / 9) * Math.PI * 2;
-        return <b key={`b${i}`} style={{ ['--dx' as string]: `${Math.round(Math.cos(a) * 110)}px`, ['--dy' as string]: `${Math.round(Math.sin(a) * 90 - 20)}px` }}>{pick(i)}</b>;
+      {Array.from({ length: bursts }, (_, i) => {
+        const a = (i / bursts) * Math.PI * 2;
+        const r = 1 + (i % 3) * 0.2;
+        return <b key={`b${i}`} style={{ fontSize: `${Math.round(28 * size)}px`, ['--dx' as string]: `${Math.round(Math.cos(a) * 110 * reach * r)}px`, ['--dy' as string]: `${Math.round((Math.sin(a) * 90 - 20) * reach * r)}px` }}>{pick(i)}</b>;
       })}
     </div>
   );
@@ -267,7 +275,7 @@ export default function MonsterStage(p: Props) {
   const damPct = Math.min(100, (p.padded / Math.max(1, p.maxHp / 3)) * 100);
   const label = `${p.title}, ${fmt(p.hp)} / ${fmt(p.maxHp)} HP.`;
   const nearDeath = state === 'dying' && p.hp / p.maxHp < 0.1;
-  const className = `stage state-${state}${p.fx?.style === 'shake' && hit ? ' fx-roar' : ''}${offscreen ? ' is-offscreen' : ''}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
+  const className = `stage state-${state}${p.fx && hit && (p.fx.style === 'shake' || state === 'dying') ? ' fx-roar' : ''}${offscreen ? ' is-offscreen' : ''}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
   const sealDone = p.seal ? p.seal.filter((s) => !s.excused).every((s) => s.hit) : false;
 
   const image = front ? front.image ?? p.image : p.image;
@@ -317,7 +325,7 @@ export default function MonsterStage(p: Props) {
             {Array.from({ length: 9 }, (_, i) => <i key={i} style={{ left: `${6 + ((i * 41) % 88)}%`, animationDelay: `${(i * 1.7) % 9}s`, animationDuration: `${8 + (i % 4) * 2}s` }} />)}
           </div>
         ) : null}
-        {p.fx && state !== 'dead' ? <StageFx fx={p.fx} burst={hit} /> : null}
+        {p.fx && state !== 'dead' ? <StageFx fx={p.fx} burst={hit} level={state === 'dying' ? 'dying' : state === 'hurt' ? 'hurt' : 'healthy'} /> : null}
         <div className="stage-vignette" />
         {state === 'shielded' ? <div className="stage-shield" /> : null}
       </div>
