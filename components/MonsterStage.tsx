@@ -38,7 +38,7 @@ type Props = {
   ownLabel?: string;
   /** Oma isku oli tuplavoima (bonuksia vähintään +100 %). */
   crit?: boolean;
-  /** Oma isku oli triplavoima (bonusten katto +200 %). */
+  /** Oma isku oli triplavoima (kolme bonusta, vähintään +150 %). */
   triple?: boolean;
   /** Paljastus ja osuma-animaatiot (vain etusivun nykyiselle monsterille). */
   effects?: boolean;
