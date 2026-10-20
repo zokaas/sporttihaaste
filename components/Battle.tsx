@@ -37,9 +37,9 @@ function ago(iso: string) {
   return `${Math.round(h / 24)} pv sitten`;
 }
 
-type Props = { data: BattleData; userId: string; ownHit?: number | null; crit?: boolean; offsetMs?: number; isAdmin?: boolean };
+type Props = { data: BattleData; userId: string; ownHit?: number | null; crit?: boolean; triple?: boolean; offsetMs?: number; isAdmin?: boolean };
 
-export default function Battle({ data, userId, ownHit = null, crit = false, offsetMs = 0, isAdmin = false }: Props) {
+export default function Battle({ data, userId, ownHit = null, crit = false, triple = false, offsetMs = 0, isAdmin = false }: Props) {
   const { week, ledger, monsters, heroes, participants, required } = data;
 
   if (!ledger) {
@@ -110,10 +110,10 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
   };
   // Jokainen rivi samassa muodossa: toiminto otsikkona, tekijä ja päivä alla.
   const log = [
-    ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, icon: '⚔️', title: `${h.sport} ${h.minutes} min`, by: withCompanions(h.user_id, h.companions), day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, bonus: hitBonusText(h), photo: hitPhotoUrl(h.photo_path) })),
-    ...data.steps.filter((st) => seasonWeek(st.day) === week).map((st) => ({ at: st.created_at, icon: '👣', title: 'Askeleet', by: heroById.get(st.user_id)?.hero_name ?? '?', day: st.day, dmg: STEP_DAY_DAMAGE, crit: false, bonus: '', photo: null })),
-    ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, icon: '⭐', title: 'Megamarssi', by: 'Koko porukka', day: p.day, dmg: 250, crit: false, bonus: '', photo: null })),
-    ...data.kela.filter((k) => seasonWeek(k.day) === week).map((k) => ({ at: new Date(helsinkiMs(k.day, KELA_TIME)).toISOString(), icon: '🏥', title: 'Kela', by: heroName(k.userId), day: k.day, dmg: k.damage, crit: false, bonus: '', photo: null })),
+    ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, icon: '⚔️', title: `${h.sport} ${h.minutes} min`, by: withCompanions(h.user_id, h.companions), day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, triple: h.bonus_pct >= 200, bonus: hitBonusText(h), photo: hitPhotoUrl(h.photo_path) })),
+    ...data.steps.filter((st) => seasonWeek(st.day) === week).map((st) => ({ at: st.created_at, icon: '👣', title: 'Askeleet', by: heroById.get(st.user_id)?.hero_name ?? '?', day: st.day, dmg: STEP_DAY_DAMAGE, crit: false, triple: false, bonus: '', photo: null })),
+    ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, icon: '⭐', title: 'Megamarssi', by: 'Koko porukka', day: p.day, dmg: 250, crit: false, triple: false, bonus: '', photo: null })),
+    ...data.kela.filter((k) => seasonWeek(k.day) === week).map((k) => ({ at: new Date(helsinkiMs(k.day, KELA_TIME)).toISOString(), icon: '🏥', title: 'Kela', by: heroName(k.userId), day: k.day, dmg: k.damage, crit: false, triple: false, bonus: '', photo: null })),
   ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 6);
 
   return (
@@ -187,6 +187,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           href={`/monsteri/${target.week}`}
           ownHit={ownHit}
           crit={crit}
+          triple={triple}
           effects
           seal={showSeal ? seal : undefined}
           endMs={endMs}
@@ -315,7 +316,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
                 {/* Treenikuva rivin vasemmassa reunassa. */}
                 {e.photo ? <ZoomImg className="hit-photo" src={resizedImage(e.photo, 256)} full={e.photo} width={40} height={40} /> : null}
                 <div style={{ minWidth: 0 }}>
-                  <div><strong>{e.icon} {e.title}</strong>{e.crit ? <span className="tag">TUPLAVOIMA</span> : null}</div>
+                  <div><strong>{e.icon} {e.title}</strong>{e.triple ? <span className="tag triple">🔥 TRIPLAVOIMA</span> : e.crit ? <span className="tag">TUPLAVOIMA</span> : null}</div>
                   <div className="when">{e.by} · {formatDay(e.day)} · {ago(e.at)}</div>
                   {e.bonus ? <div className="bonus">{e.bonus}</div> : null}
                 </div>
