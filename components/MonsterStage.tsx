@@ -63,25 +63,33 @@ type Props = {
   potStrike?: number;
   /** Monsterikolmikko: osat kaatuvat järjestyksessä, etummainen näytetään isona. */
   parts?: StagePart[] | null;
-  /** Erikoisefekti: emojit leijuvat taustalla ja pöllähtävät iskusta. */
+  /** Erikoisefekti: emojit pöllähtävät iskusta (eivät näy muulloin). */
   fx?: MonsterFx | null;
 };
 
-/** Efektin partikkelit: taustalla jatkuvasti (paitsi tärinätyylillä) ja purkauksena iskun hetkellä. */
+/** Efektin partikkelit vain iskun hetkellä: pölähdys osumakohdasta ja tyylin mukainen suihku (~2,5 s). */
 export function StageFx({ fx, burst }: { fx: MonsterFx; burst: boolean }) {
+  const [shot, setShot] = useState(0);
+  useEffect(() => {
+    if (!burst) return;
+    const at = Date.now();
+    setShot(at);
+    const t = setTimeout(() => setShot((x) => (x === at ? 0 : x)), 2600);
+    return () => clearTimeout(t);
+  }, [burst]);
   const emojis = fxEmojis(fx.emoji);
-  if (!emojis.length) return null;
+  if (!emojis.length || !shot) return null;
   const pick = (i: number) => emojis[i % emojis.length];
-  const ambient = fx.style === 'shake' ? 0 : fx.style === 'puff' ? 5 : 7;
+  const shower = fx.style === 'shake' ? 0 : fx.style === 'puff' ? 5 : 8;
   return (
-    <div className={`stage-fx fx-${fx.style}`}>
-      {Array.from({ length: ambient }, (_, i) => (
-        <i key={i} style={{ left: `${8 + ((i * 37) % 84)}%`, animationDelay: `${(i * 1.9) % 8}s`, animationDuration: `${7 + (i % 3) * 2}s`, fontSize: `${18 + (i % 3) * 6}px` }}>{pick(i)}</i>
+    <div key={shot} className={`stage-fx fx-${fx.style}`}>
+      {Array.from({ length: shower }, (_, i) => (
+        <i key={i} style={{ left: `${8 + ((i * 37) % 84)}%`, animationDelay: `${((i * 0.23) % 0.7).toFixed(2)}s`, fontSize: `${18 + (i % 3) * 6}px` }}>{pick(i)}</i>
       ))}
-      {burst ? Array.from({ length: 9 }, (_, i) => {
+      {Array.from({ length: 9 }, (_, i) => {
         const a = (i / 9) * Math.PI * 2;
         return <b key={`b${i}`} style={{ ['--dx' as string]: `${Math.round(Math.cos(a) * 110)}px`, ['--dy' as string]: `${Math.round(Math.sin(a) * 90 - 20)}px` }}>{pick(i)}</b>;
-      }) : null}
+      })}
     </div>
   );
 }

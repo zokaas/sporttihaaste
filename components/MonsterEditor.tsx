@@ -418,7 +418,7 @@ function FxEditor({ m, busy, onSave }: { m: Monster; busy: boolean; onSave: (fx:
   return (
     <fieldset className="field-group">
       <legend>✨ Erikoisefekti</legend>
-      <span className="muted small">Emojit leijuvat monsterin päällä ja pöllähtävät jokaisesta iskusta. Esim. 💨 pierupilviksi, 🧾💸 kuiteiksi, ❄️ lumeksi. Näkyy vasta paljastuksen jälkeen.</span>
+      <span className="muted small">Emojit pöllähtävät näkyviin, kun monsteria lyödään (muulloin ei efektiä). Esim. 💨 pierupilviksi, 🧾💸 kuiteiksi, ❄️ lumeksi. Näkyy vasta paljastuksen jälkeen.</span>
       <div className="row">
         <label className="field grow">Emojit (1–6)<input className="input" value={emoji} placeholder="💨" onChange={(e) => setEmoji(e.target.value)} /></label>
         <label className="field grow">Tyyli
@@ -440,10 +440,10 @@ function FxEditor({ m, busy, onSave }: { m: Monster; busy: boolean; onSave: (fx:
 function FxPreview({ fx }: { fx: MonsterFx }) {
   const [hit, setHit] = useState(0);
   return (
-    <button type="button" className={`fx-preview${fx.style === 'shake' && hit ? ' fx-roar' : ''}`} onClick={() => { setHit(Date.now()); setTimeout(() => setHit(0), 900); }} aria-label="Esikatselu: napauta iskeäksesi">
+    <button type="button" className={`fx-preview${fx.style === 'shake' && hit ? ' fx-roar' : ''}`} onClick={() => { setHit(Date.now()); setTimeout(() => setHit(0), 900); }} aria-label="Esikatselu: napauta iskeäksesi" disabled={Boolean(hit)}>
       <div className="stage-art">
         <div className="stage-img fx-preview-dummy">👾</div>
-        <StageFx fx={fx} burst={Boolean(hit)} key={hit} />
+        <StageFx fx={fx} burst={Boolean(hit)} />
       </div>
       <span className="muted small fx-preview-hint">Napauta = isku</span>
     </button>
