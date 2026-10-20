@@ -18,6 +18,7 @@ import RecapPrompt from '@/components/RecapPrompt';
 import EarlyReveal from '@/components/EarlyReveal';
 import RecapCard from '@/components/RecapCard';
 import { activeWeaknesses, stageParts, weaknessesOf } from '@/lib/trio';
+import { parseFx } from '@/lib/fx';
 import Hint from '@/components/Hint';
 import TodayCard from '@/components/TodayCard';
 import { isSickOn } from '@/lib/weekly';
@@ -195,6 +196,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, offs
           offsetMs={offsetMs}
           boss={target.week === BOSS_WEEK}
           potStrike={potBeforeBoss}
+          fx={parseFx(monsters.get(target.week)?.fx)}
         />
       ) : (
         <section className="card">

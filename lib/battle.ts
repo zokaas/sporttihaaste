@@ -34,6 +34,8 @@ export type PublicMonster = {
   hit_crit?: string | null;
   taunt_full?: string | null;
   taunt_backlog?: string | null;
+  /** Erikoisefekti (migraatio 035). */
+  fx?: unknown;
   /** Tulevan viikon heikkoudet vihjeeseen (migraatio 029; ylläpitäjällä lasketaan suoraan taulusta). */
   teaser_weaknesses?: string[] | null;
 };
@@ -58,12 +60,19 @@ export function hoursInWeek(hits: Hit[], userId: string, week: number, sports: S
   return hits.filter((h) => h.user_id === userId && seasonWeek(h.trained_on) === week).reduce((a, h) => a + pledgeHours(h.minutes, value(h.sport)), 0);
 }
 
+const MONSTER_COLS = 'week, hp, name, description, weakness, image_path, parts, taunt_half, taunt_low, teaser, boss_whisper, hit_lines, hit_crit, taunt_full, taunt_backlog';
+/** Monsterit taulusta; efektit (migraatio 035) mukaan, jos sarake on jo olemassa. */
+async function loadMonsters(supabase: SupabaseClient) {
+  const withFx = await supabase.from('monsters').select(`${MONSTER_COLS}, fx`).order('week');
+  return withFx.error ? supabase.from('monsters').select(MONSTER_COLS).order('week') : withFx;
+}
+
 /** Lataa kauden tilanteen ja laskee sen kirjauksista. Kuluva viikko on vielä auki. */
 export async function loadBattle(supabase: SupabaseClient, today: string) {
   const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }, sports, { data: gateRow }] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at'),
     // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot. Haetaan rinnakkain.
-    supabase.from('monsters').select('week, hp, name, description, weakness, image_path, parts, taunt_half, taunt_low, teaser, boss_whisper, hit_lines, hit_crit, taunt_full, taunt_backlog').order('week'),
+    loadMonsters(supabase),
     supabase.from('monsters_public').select('*').order('week'),
     loadHits(supabase),
     supabase.from('step_days').select('user_id, day, created_at'),
@@ -102,7 +111,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const nextPublic = ((publicMonsters ?? []) as { week: number; revealed_at?: string | null }[]).find((m) => m.week === week + 1);
   const nextEarly = week < BOSS_WEEK && today === helsinkiToday() && Boolean(nextPublic?.revealed_at && Date.parse(nextPublic.revealed_at) <= Date.now());
   const byWeek = new Map(monsterList.map((m) => [m.week, m.week > week && !(nextEarly && m.week === week + 1)
-    ? { ...m, name: null, description: null, weakness: null, image_path: null, parts: null, taunt_half: null, taunt_low: null, boss_whisper: null, hit_lines: null, hit_crit: null, taunt_full: null, taunt_backlog: null, teaser: m.week === week + 1 && teaserOpen ? m.teaser ?? null : null,
+    ? { ...m, name: null, description: null, weakness: null, image_path: null, parts: null, taunt_half: null, taunt_low: null, boss_whisper: null, hit_lines: null, hit_crit: null, taunt_full: null, taunt_backlog: null, fx: null, teaser: m.week === week + 1 && teaserOpen ? m.teaser ?? null : null,
         teaser_weaknesses: m.week === week + 1 && teaserOpen ? upcomingWeaknesses(m) : null }
     : m]));
 

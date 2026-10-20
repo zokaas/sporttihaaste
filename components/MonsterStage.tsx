@@ -7,6 +7,7 @@ import { resizedImage } from '@/lib/supabase/client';
 import { Viewer } from '@/components/ImageViewer';
 import { localKey } from '@/lib/localKey';
 import type { Line } from '@/lib/taunts';
+import { fxEmojis, type MonsterFx } from '@/lib/fx';
 
 /** Puhekuplan sisältö: puhujan nimi (moniosaisella) ja repliikki. */
 function Speech({ line }: { line: Line }) {
@@ -62,7 +63,28 @@ type Props = {
   potStrike?: number;
   /** Monsterikolmikko: osat kaatuvat järjestyksessä, etummainen näytetään isona. */
   parts?: StagePart[] | null;
+  /** Erikoisefekti: emojit leijuvat taustalla ja pöllähtävät iskusta. */
+  fx?: MonsterFx | null;
 };
+
+/** Efektin partikkelit: taustalla jatkuvasti (paitsi tärinätyylillä) ja purkauksena iskun hetkellä. */
+export function StageFx({ fx, burst }: { fx: MonsterFx; burst: boolean }) {
+  const emojis = fxEmojis(fx.emoji);
+  if (!emojis.length) return null;
+  const pick = (i: number) => emojis[i % emojis.length];
+  const ambient = fx.style === 'shake' ? 0 : fx.style === 'puff' ? 5 : 7;
+  return (
+    <div className={`stage-fx fx-${fx.style}`}>
+      {Array.from({ length: ambient }, (_, i) => (
+        <i key={i} style={{ left: `${8 + ((i * 37) % 84)}%`, animationDelay: `${(i * 1.9) % 8}s`, animationDuration: `${7 + (i % 3) * 2}s`, fontSize: `${18 + (i % 3) * 6}px` }}>{pick(i)}</i>
+      ))}
+      {burst ? Array.from({ length: 9 }, (_, i) => {
+        const a = (i / 9) * Math.PI * 2;
+        return <b key={`b${i}`} style={{ ['--dx' as string]: `${Math.round(Math.cos(a) * 110)}px`, ['--dy' as string]: `${Math.round(Math.sin(a) * 90 - 20)}px` }}>{pick(i)}</b>;
+      }) : null}
+    </div>
+  );
+}
 
 const fmt = (n: number) => n.toLocaleString('fi-FI');
 
@@ -237,7 +259,7 @@ export default function MonsterStage(p: Props) {
   const damPct = Math.min(100, (p.padded / Math.max(1, p.maxHp / 3)) * 100);
   const label = `${p.title}, ${fmt(p.hp)} / ${fmt(p.maxHp)} HP.`;
   const nearDeath = state === 'dying' && p.hp / p.maxHp < 0.1;
-  const className = `stage state-${state}${offscreen ? ' is-offscreen' : ''}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
+  const className = `stage state-${state}${p.fx?.style === 'shake' && hit ? ' fx-roar' : ''}${offscreen ? ' is-offscreen' : ''}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
   const sealDone = p.seal ? p.seal.filter((s) => !s.excused).every((s) => s.hit) : false;
 
   const image = front ? front.image ?? p.image : p.image;
@@ -287,6 +309,7 @@ export default function MonsterStage(p: Props) {
             {Array.from({ length: 9 }, (_, i) => <i key={i} style={{ left: `${6 + ((i * 41) % 88)}%`, animationDelay: `${(i * 1.7) % 9}s`, animationDuration: `${8 + (i % 4) * 2}s` }} />)}
           </div>
         ) : null}
+        {p.fx && state !== 'dead' ? <StageFx fx={p.fx} burst={hit} /> : null}
         <div className="stage-vignette" />
         {state === 'shielded' ? <div className="stage-shield" /> : null}
       </div>

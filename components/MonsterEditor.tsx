@@ -8,6 +8,8 @@ import { bossWhisper } from '@/lib/boss';
 import { CATEGORIES, SPECIAL_WEAKNESSES, SPORTS, type Sport } from '@/lib/rules';
 import { fallLine, stageTaunt, type Line } from '@/lib/taunts';
 import type { MonsterPart } from '@/lib/trio';
+import { FX_STYLES, fxEmojis, parseFx, type FxStyle, type MonsterFx } from '@/lib/fx';
+import { StageFx } from '@/components/MonsterStage';
 
 export type Monster = {
   week: number;
@@ -27,6 +29,7 @@ export type Monster = {
   hit_crit?: string | null;
   taunt_full?: string | null;
   taunt_backlog?: string | null;
+  fx?: unknown;
 };
 
 type PartLines = { taunt_backlog?: string | null; taunt_full?: string | null; taunt_half?: string | null; taunt_low?: string | null; hit_lines?: string | null; hit_crit?: string | null; fall_line?: string | null };
@@ -289,7 +292,7 @@ function MonsterRow({ monster, current = false }: { monster: Monster; current?: 
           <textarea className="input" rows={4} style={{ padding: 12 }} placeholder={'Auts!\nTuoko oli kaikki?\nKutittaa.'} value={m.hit_lines ?? ''} onChange={(e) => setM({ ...m, hit_lines: e.target.value })} />
         </label>
         <label className="field">
-          Reaktio kriittiseen iskuun
+          Reaktio tuplavoimaiskuun
           <input className="input" placeholder="AARGH! Mistä tuo tuli?!" value={m.hit_crit ?? ''} onChange={(e) => setM({ ...m, hit_crit: e.target.value })} />
         </label>
         <label className="field">
@@ -307,6 +310,7 @@ function MonsterRow({ monster, current = false }: { monster: Monster; current?: 
           </label>
         ) : null}
         <LinePreview m={m} />
+        <FxEditor m={m} busy={busy} onSave={(fx) => save({ fx })} />
         {m.week < BOSS_WEEK ? (
           <label className="field">
             Loppupomon kuiskaus, kun tämä monsteri kaatuu
@@ -402,5 +406,46 @@ function LinePreview({ m }: { m: Monster }) {
         <span className="small" style={{ color: '#c9c1b4' }}>Tyhjät kentät näkyvät oletusrepliikkeinä. Moniosaisella kaatunut osa vaikenee.</span>
       </div>
     </details>
+  );
+}
+
+/** Erikoisefekti: emojit + tyyli, esikatselu pienessä näyttämössä. Tallentuu heti omalla napillaan (migraatio 035). */
+function FxEditor({ m, busy, onSave }: { m: Monster; busy: boolean; onSave: (fx: MonsterFx | null) => void }) {
+  const saved = parseFx(m.fx);
+  const [emoji, setEmoji] = useState(saved?.emoji ?? '');
+  const [style, setStyle] = useState<FxStyle>(saved?.style ?? 'float');
+  const fx = fxEmojis(emoji).length ? { emoji, style } : null;
+  return (
+    <fieldset className="field-group">
+      <legend>✨ Erikoisefekti</legend>
+      <span className="muted small">Emojit leijuvat monsterin päällä ja pöllähtävät jokaisesta iskusta. Esim. 💨 pierupilviksi, 🧾💸 kuiteiksi, ❄️ lumeksi. Näkyy vasta paljastuksen jälkeen.</span>
+      <div className="row">
+        <label className="field grow">Emojit (1–6)<input className="input" value={emoji} placeholder="💨" onChange={(e) => setEmoji(e.target.value)} /></label>
+        <label className="field grow">Tyyli
+          <select className="input" value={style} onChange={(e) => setStyle(e.target.value as FxStyle)}>
+            {FX_STYLES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+          </select>
+        </label>
+      </div>
+      {fx ? <FxPreview fx={fx} /> : null}
+      <div className="row">
+        <button type="button" className="btn grow" disabled={busy} onClick={() => onSave(fx)}>Tallenna efekti</button>
+        {saved ? <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => { setEmoji(''); onSave(null); }}>Poista</button> : null}
+      </div>
+    </fieldset>
+  );
+}
+
+/** Pieni esikatselu: tausta, partikkelit ja napautuksella isku. */
+function FxPreview({ fx }: { fx: MonsterFx }) {
+  const [hit, setHit] = useState(0);
+  return (
+    <button type="button" className={`fx-preview${fx.style === 'shake' && hit ? ' fx-roar' : ''}`} onClick={() => { setHit(Date.now()); setTimeout(() => setHit(0), 900); }} aria-label="Esikatselu: napauta iskeäksesi">
+      <div className="stage-art">
+        <div className="stage-img fx-preview-dummy">👾</div>
+        <StageFx fx={fx} burst={Boolean(hit)} key={hit} />
+      </div>
+      <span className="muted small fx-preview-hint">Napauta = isku</span>
+    </button>
   );
 }

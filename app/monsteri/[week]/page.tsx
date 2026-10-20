@@ -11,6 +11,7 @@ import { formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { activeWeaknesses, groupName, stageParts } from '@/lib/trio';
 import Hint from '@/components/Hint';
 import { ZoomImg } from '@/components/ImageViewer';
+import { parseFx } from '@/lib/fx';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,6 +68,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
         dead={Boolean(killed)}
         ownHit={null}
         zoom={m?.name ? images : undefined}
+        fx={parseFx(m?.fx)}
       />
       {m?.description ? <p className="narrator">{m.description}</p> : null}
 
