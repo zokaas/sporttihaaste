@@ -105,6 +105,14 @@ export async function GET(request: Request) {
     }
   });
 
+  // 3a. Päiväkirja (migraatio 036): päivän merkinnästä ilmoitus kaikille kerran.
+  await step('päiväkirja', async () => {
+    const { data: entry, error } = await supabase.from('diary').select('title, body').eq('day', day).maybeSingle();
+    if (error || !entry || !(await once(`diary-${day}`))) return;
+    const body = entry.body.length > 180 ? `${entry.body.slice(0, 177).trimEnd()}…` : entry.body;
+    result.päiväkirja = await sendPush(supabase, { title: `📜 ${entry.title || 'Päiväkirja'}`, body, url: '/' });
+  });
+
   // 3b. Portinvartija (29.–30.9.): aamumuistutus, jos se on vielä pystyssä
   await step('portinvartija', async () => {
     if (!isGateDay(day) || !(await once(`gate-${day}`))) return;

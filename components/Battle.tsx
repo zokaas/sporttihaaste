@@ -19,6 +19,8 @@ import EarlyReveal from '@/components/EarlyReveal';
 import RecapCard from '@/components/RecapCard';
 import { activeWeaknesses, stageParts, weaknessesOf } from '@/lib/trio';
 import { parseFx } from '@/lib/fx';
+import type { DiaryEntry } from '@/lib/diary';
+import DiaryCard from '@/components/DiaryCard';
 import Hint from '@/components/Hint';
 import TodayCard from '@/components/TodayCard';
 import { isSickOn } from '@/lib/weekly';
@@ -37,9 +39,9 @@ function ago(iso: string) {
   return `${Math.round(h / 24)} pv sitten`;
 }
 
-type Props = { data: BattleData; userId: string; ownHit?: number | null; crit?: boolean; triple?: boolean; offsetMs?: number; isAdmin?: boolean };
+type Props = { data: BattleData; diary?: DiaryEntry[]; userId: string; ownHit?: number | null; crit?: boolean; triple?: boolean; offsetMs?: number; isAdmin?: boolean };
 
-export default function Battle({ data, userId, ownHit = null, crit = false, triple = false, offsetMs = 0, isAdmin = false }: Props) {
+export default function Battle({ data, diary = [], userId, ownHit = null, crit = false, triple = false, offsetMs = 0, isAdmin = false }: Props) {
   const { week, ledger, monsters, heroes, participants, required } = data;
 
   if (!ledger) {
@@ -290,6 +292,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
         ? <p className="note" style={{ margin: 0 }}>🤒 Olet merkinnyt itsesi kipeäksi tänään, joten askelia ei tarvita. Parane pian!</p>
         : null}
 
+      {diary.length ? <DiaryCard entries={diary} today={data.today} /> : null}
       <TodayCard b={data} showNextReveal={!teaser && !early} />
 
       {backlog.length || (target && target.week < week) ? (

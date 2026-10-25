@@ -19,6 +19,7 @@ import ConfirmButton from '@/components/ConfirmButton';
 import ClearLocalState from '@/components/ClearLocalState';
 import MonsterEditor, { type Monster } from '@/components/MonsterEditor';
 import GateEditor from '@/components/GateEditor';
+import DiaryEditor from '@/components/DiaryEditor';
 import type { GateRow } from '@/lib/gate';
 import Nav from '@/components/Nav';
 import Hint from '@/components/Hint';
@@ -310,6 +311,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { osio?
         <Hint id="admin-monsters" className="muted">Nimi, kuvaus, heikkous ja kuva näkyvät muille vasta monsterin viikon alkaessa (viikko 1: to 1.10., muut maanantaisin klo 00.00).</Hint>
         <MonsterEditor currentWeek={battle.week} monsters={(monsters ?? []) as Monster[]} sports={battle.sports.filter((x) => x.active)} />
       </section>
+      <DiaryEditor today={today()} />
       {helsinkiToday() > GATE_DAY ? (
         <details className="card admin-past">
           <summary>👁️ Portinvartija (ohi)</summary>

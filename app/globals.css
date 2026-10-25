@@ -686,3 +686,7 @@ details.admin-past > summary { cursor: pointer; padding: 12px 0; color: var(--mu
 .fx-preview .stage-art { position: absolute; inset: 0; }
 .fx-preview-dummy { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; }
 .fx-preview-hint { position: absolute; right: 8px; bottom: 6px; }
+/* Päiväkirja (migraatio 036) */
+.card.diary { background: linear-gradient(160deg, #241a12, var(--surface) 70%); border-color: #4a3420; }
+.diary-body { margin: 0; white-space: pre-line; font-style: italic; line-height: 1.5; }
+.diary-old { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }

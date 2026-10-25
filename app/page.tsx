@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { loadDiary } from '@/lib/diary';
 import PushToggle from '@/components/PushToggle';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
@@ -62,7 +63,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
     return (
       <>
         <Nav current="/" />
-        <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1' || searchParams.krit === '2'} triple={searchParams.krit === '2'} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
+        <Battle data={battle} diary={await loadDiary(supabase, battle.week, today())} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1' || searchParams.krit === '2'} triple={searchParams.krit === '2'} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
       </>
     );
   }
