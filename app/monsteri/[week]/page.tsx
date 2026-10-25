@@ -62,6 +62,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
         image={monsterImageUrl(m?.image_path)}
         weakness={weak || null}
         parts={parts}
+        choose={choose}
         hp={killed ? 0 : view ? view.hp : m?.hp ?? 0}
         maxHp={m?.hp ?? 1}
         padded={view?.dam ?? 0}
