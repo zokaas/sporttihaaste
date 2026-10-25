@@ -8,13 +8,14 @@ import { Viewer } from '@/components/ImageViewer';
 import { localKey } from '@/lib/localKey';
 import type { Line } from '@/lib/taunts';
 import { fxEmojis, type MonsterFx } from '@/lib/fx';
+import { readTarget, writeTarget, TARGET_EVENT } from '@/lib/target';
 
 /** Puhekuplan sisältö: puhujan nimi (moniosaisella) ja repliikki. */
 function Speech({ line }: { line: Line }) {
   return <>{line.who ? <b className="stage-taunt-who">{line.who}</b> : null}“{line.text}”</>;
 }
 
-export type StagePart = { name: string; image: string | null; hp: number; left: number; dead: boolean };
+export type StagePart = { name: string; image: string | null; hp: number; left: number; dead: boolean; weakness?: string | null };
 
 export type SealHero = { id: string; initial: string; avatar: string | null; hit: boolean; excused: boolean; name: string };
 
@@ -65,6 +66,8 @@ type Props = {
   potStrike?: number;
   /** Monsterikolmikko: osat kaatuvat järjestyksessä, etummainen näytetään isona. */
   parts?: StagePart[] | null;
+  /** Kohteen valinta: sankari selaa osia (nuolet, pyyhkäisy, kortit) ja lyö valittua. */
+  choose?: boolean;
   /** Erikoisefekti: emojit pöllähtävät iskusta (eivät näy muulloin). */
   fx?: MonsterFx | null;
 };
@@ -179,8 +182,46 @@ export default function MonsterStage(p: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taunt, offscreen, revealing, pageVisible, modalOpen, tauntKey]);
   const parts = p.parts?.length ? p.parts : null;
-  const front = parts ? parts.find((x) => !x.dead) ?? parts[parts.length - 1] : null;
+  const choose = Boolean(p.choose && parts && !p.dead);
+  // Kohteen valinta: valittu osa muistetaan (sama valinta kirjauslomakkeella ja askelkuittauksessa).
+  const [picked, setPicked] = useState<number | null>(null);
+  useEffect(() => {
+    if (!choose) return;
+    setPicked(readTarget());
+    const sync = (e: Event) => setPicked((e as CustomEvent<number>).detail);
+    window.addEventListener(TARGET_EVENT, sync);
+    return () => window.removeEventListener(TARGET_EVENT, sync);
+  }, [choose]);
+  const firstAlive = parts ? parts.findIndex((x) => !x.dead) : -1;
+  const sel = choose && picked != null && parts?.[picked] && !parts[picked].dead ? picked : firstAlive;
+  const front = parts ? parts[sel] ?? parts[parts.length - 1] : null;
   const deadParts = parts ? parts.filter((x) => x.dead).length : 0;
+  const deadKey = parts ? parts.map((x, i) => (x.dead ? i : -1)).filter((i) => i >= 0).join(',') : '';
+  const pick = (i: number) => { if (parts?.[i] && !parts[i].dead) { setPicked(i); writeTarget(i); } };
+  const step = (dir: 1 | -1) => {
+    if (!parts) return;
+    for (let k = 1; k <= parts.length; k++) {
+      const i = (sel + dir * k + parts.length * k) % parts.length;
+      if (!parts[i].dead) return pick(i);
+    }
+  };
+  // Pyyhkäisy vaihtaa osaa; pyyhkäisyn jälkeinen napautus ei avaa monsterin sivua.
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const swiped = useRef(false);
+  const swipe = choose ? {
+    onTouchStart: (e: React.TouchEvent) => { touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; swiped.current = false; },
+    onTouchEnd: (e: React.TouchEvent) => {
+      const t = touch.current;
+      touch.current = null;
+      if (!t) return;
+      const dx = e.changedTouches[0].clientX - t.x;
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(e.changedTouches[0].clientY - t.y)) { swiped.current = true; step(dx < 0 ? 1 : -1); }
+    },
+    onClickCapture: (e: React.MouseEvent) => { if (swiped.current) { e.preventDefault(); e.stopPropagation(); swiped.current = false; } },
+  } : {};
+  const stop = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); };
+  // Osan vaihto näyttää sen puhekuplan uudelleen.
+  useEffect(() => { if (choose) setTaunt('on'); }, [choose, sel]);
 
   // Kun näyttämö on vieritetty pois näkyvistä, sen jatkuvat animaatiot pysäytetään: vieritys pysyy sulavana.
   useEffect(() => {
@@ -197,12 +238,15 @@ export default function MonsterStage(p: Props) {
   const partFellRef = useRef(false);
   useEffect(() => {
     if (!p.effects || !parts) return;
-    const key = `mj_parts_${p.week}`;
-    const before = Number(read(key) ?? deadParts);
-    write(key, String(deadParts));
-    if (deadParts > before && deadParts < parts.length) {
+    // Kaatuneiden osien indeksit: kohteen valinnassa osat voivat kaatua missä järjestyksessä tahansa.
+    const key = `mj_partdead_${p.week}`;
+    const stored = read(key);
+    write(key, deadKey);
+    const before = new Set((stored ?? deadKey).split(',').filter(Boolean).map(Number));
+    const fell = parts.findIndex((x, i) => x.dead && !before.has(i));
+    if (fell >= 0 && deadParts < parts.length) {
       partFellRef.current = true;
-      const name = parts[deadParts - 1].name;
+      const name = parts[fell].name;
       let t = 0;
       const show = () => { setPartFall(name); t = window.setTimeout(() => setPartFall(null), PART_FALL_MS); };
       if ((window as unknown as { __mjModalOpen?: boolean }).__mjModalOpen) {
@@ -212,7 +256,7 @@ export default function MonsterStage(p: Props) {
       show();
       return () => clearTimeout(t);
     }
-  }, [p.effects, p.week, deadParts]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [p.effects, p.week, deadKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!p.effects) { setShownHp(p.hp); return; }
@@ -275,18 +319,25 @@ export default function MonsterStage(p: Props) {
     return () => timers.current.forEach(clearTimeout);
   }, [p.effects, p.week, p.hp, p.maxHp, p.ownHit, p.crit, p.triple, p.revealed, p.boss, p.potStrike]);
 
-  const pct = Math.max(0, Math.min(100, (shownHp / p.maxHp) * 100));
+  // Kohteen valinnassa palkki näyttää valitun osan HP:n (oma isku valuu siihen).
+  const pct = choose && front
+    ? Math.max(0, Math.min(100, ((front.left + Math.max(0, shownHp - p.hp)) / Math.max(1, front.hp)) * 100))
+    : Math.max(0, Math.min(100, (shownHp / p.maxHp) * 100));
   // Pato näytetään suhteessa kolmannekseen monsterin HP:sta, jotta pienikin pato näkyy.
   const damPct = Math.min(100, (p.padded / Math.max(1, p.maxHp / 3)) * 100);
   const label = `${p.title}, ${fmt(p.hp)} / ${fmt(p.maxHp)} HP.`;
   const nearDeath = state === 'dying' && p.hp / p.maxHp < 0.1;
-  const className = `stage state-${state}${p.fx && hit && (p.fx.style === 'shake' || state === 'dying') ? ' fx-roar' : ''}${offscreen ? ' is-offscreen' : ''}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
+  const className = `stage state-${state}${p.fx && hit && (p.fx.style === 'shake' || state === 'dying') ? ' fx-roar' : ''}${offscreen ? ' is-offscreen' : ''}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}${choose ? ' is-choose' : ''}`;
   const sealDone = p.seal ? p.seal.filter((s) => !s.excused).every((s) => s.hit) : false;
 
   const image = front ? front.image ?? p.image : p.image;
   // Kaatunut kaksikko tai kolmikko näytetään koko porukkana.
   const groupImages = p.dead && parts ? parts.map((x) => x.image).filter((x): x is string => Boolean(x)) : [];
   const title = front && !p.dead ? front.name : p.title;
+  const weakness = choose ? (front?.weakness ? `${front.weakness}` : null) : p.weakness;
+  // Kohteen valinnassa valittu osa puhuu (muuten kaikki kuplat).
+  const ownTaunts = choose && front ? taunts.filter((l) => l.who === front.name) : [];
+  const shownTaunts = ownTaunts.length ? ownTaunts : taunts;
 
   const content = (
     <>
@@ -346,11 +397,11 @@ export default function MonsterStage(p: Props) {
       <div className="stage-info">
         {/* Puhekupla nimen yläpuolella, jotta se ei peitä kuvan kasvoja (ne ovat yleensä kuvan yläosassa). */}
         {reply && hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status"><Speech line={hitLine} /></div>
-          : taunts.length && !p.dead && taunt !== 'gone' ? taunts.map((l, i) => (
+          : shownTaunts.length && !p.dead && taunt !== 'gone' ? shownTaunts.map((l, i) => (
             <div key={`taunt-${i}`} className={`stage-taunt${taunt === 'fading' ? ' fading' : ''}`} role="note" style={i && taunt !== 'fading' ? { animationDelay: `${i * 0.6}s` } : undefined}><Speech line={l} /></div>
           )) : null}
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
-        {parts ? (
+        {choose && parts ? null : parts ? (
           <div className="stage-parts" aria-label={`${groupName(parts.length)}: ${deadParts}/${parts.length} kaatunut`}>
             {parts.map((x) => (
               <span key={x.name} className={`stage-part${x.dead ? ' dead' : ''}${x === front && !p.dead ? ' front' : ''}`} title={`${x.name}${x.dead ? ' – kaatunut' : ''}`}>
@@ -360,16 +411,38 @@ export default function MonsterStage(p: Props) {
             <span className="stage-parts-label">{groupName(parts.length)} {deadParts}/{parts.length}</span>
           </div>
         ) : null}
-        <h2 className="display stage-title">{title}</h2>
-        {p.weakness ? <span className="pill">Heikkous: {p.weakness} +50 %</span> : null}
-        <div className={`stage-hp${parts ? ' segmented' : ''}`} role="meter" aria-label="Monsterin HP" aria-valuemin={0} aria-valuemax={p.maxHp} aria-valuenow={p.hp}>
+        {choose && parts ? (
+          <div className="stage-choose">
+            <button type="button" className="stage-arrow" aria-label="Edellinen osa" onClick={(e) => { stop(e); step(-1); }}>‹</button>
+            <h2 className="display stage-title">{title}</h2>
+            <button type="button" className="stage-arrow" aria-label="Seuraava osa" onClick={(e) => { stop(e); step(1); }}>›</button>
+          </div>
+        ) : <h2 className="display stage-title">{title}</h2>}
+        {weakness ? <span className="pill">Heikkous: {weakness} +50 %</span> : null}
+        <div className={`stage-hp${parts && !choose ? ' segmented' : ''}`} role="meter" aria-label={choose ? `${title}: HP` : 'Monsterin HP'} aria-valuemin={0} aria-valuemax={choose && front ? front.hp : p.maxHp} aria-valuenow={choose && front ? front.left : p.hp}>
           <span style={{ width: `${pct}%` }} />
-          {parts ? parts.slice(0, -1).reduce<{ at: number; marks: number[] }>((acc, x) => { acc.at += x.hp; acc.marks.push(acc.at); return acc; }, { at: 0, marks: [] }).marks.map((at) => <i key={at} style={{ left: `${100 - (at / p.maxHp) * 100}%` }} />) : null}
+          {parts && !choose ? parts.slice(0, -1).reduce<{ at: number; marks: number[] }>((acc, x) => { acc.at += x.hp; acc.marks.push(acc.at); return acc; }, { at: 0, marks: [] }).marks.map((at) => <i key={at} style={{ left: `${100 - (at / p.maxHp) * 100}%` }} />) : null}
         </div>
         <div className="stage-hptext">
-          <span>{fmt(Math.max(0, p.hp))} / {fmt(p.maxHp)} HP</span>
+          <span>{choose && front ? `${fmt(front.left)} / ${fmt(front.hp)} HP` : `${fmt(Math.max(0, p.hp))} / ${fmt(p.maxHp)} HP`}</span>
           <span className="stage-state">{state === 'dead' ? 'Kaatunut' : state === 'shielded' ? 'Sinetti kesken' : state === 'dying' ? 'Horjuu!' : state === 'hurt' ? 'Haavoittunut' : ''}</span>
         </div>
+        {choose && parts ? (
+          <div className="stage-targets" role="group" aria-label={`${groupName(parts.length)}: valitse kohde`}>
+            {parts.map((x, i) => (
+              <button key={x.name} type="button" className={`stage-target${i === sel ? ' sel' : ''}${x.dead ? ' dead' : ''}`} disabled={x.dead} aria-pressed={i === sel}
+                onClick={(e) => { stop(e); pick(i); }}>
+                <span className="stage-target-head">
+                  <span className="stage-target-img">{x.image ? <img src={resizedImage(x.image, 128)} alt="" /> : <b>{x.dead ? '✝' : x.name.slice(0, 1)}</b>}</span>
+                  <span className="stage-target-name">{x.name}</span>
+                </span>
+                <span className="stage-target-hp"><i style={{ width: `${x.dead ? 0 : Math.max(2, Math.min(100, (x.left / Math.max(1, x.hp)) * 100))}%` }} /></span>
+                <span className="stage-target-num">{x.dead ? '✝ Kaatunut' : `${fmt(x.left)} / ${fmt(x.hp)} HP`}</span>
+                {x.weakness && !x.dead ? <span className="stage-target-weak">🎯 {x.weakness}</span> : null}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {p.seal?.length ? (
           <div className={`stage-seal${sealDone ? ' done' : ''}`} aria-label={`Sinetti: ${p.seal.filter((s) => s.hit).length} / ${p.seal.filter((s) => !s.excused || s.hit).length} lyönyt`}>
             {p.seal.map((s) => (
@@ -400,7 +473,7 @@ export default function MonsterStage(p: Props) {
   );
 
   return p.href
-    ? <Link ref={(el) => { rootRef.current = el; }} href={p.href} className={className} aria-label={`${label} Avaa monsterin sivu.`}>{content}</Link>
+    ? <Link ref={(el) => { rootRef.current = el; }} href={p.href} className={className} aria-label={`${label} Avaa monsterin sivu.`} {...swipe}>{content}</Link>
     : p.zoom?.length ? (
       <>
         <section ref={(el) => { rootRef.current = el; }} className={`${className} is-zoomable`} aria-label={`${label} Avaa kuva.`} role="button" tabIndex={0}
@@ -408,5 +481,5 @@ export default function MonsterStage(p: Props) {
         {zoomed ? <Viewer images={p.zoom} onClose={() => setZoomed(false)} /> : null}
       </>
     )
-    : <section ref={(el) => { rootRef.current = el; }} className={className} aria-label={label}>{content}</section>;
+    : <section ref={(el) => { rootRef.current = el; }} className={className} aria-label={label} {...swipe}>{content}</section>;
 }

@@ -30,6 +30,8 @@ export type Monster = {
   taunt_full?: string | null;
   taunt_backlog?: string | null;
   fx?: unknown;
+  /** Kohteen valinta (moniosainen): sankari valitsee, mihin osaan lyö. */
+  choose_target?: boolean;
 };
 
 type PartLines = { taunt_backlog?: string | null; taunt_full?: string | null; taunt_half?: string | null; taunt_low?: string | null; hit_lines?: string | null; hit_crit?: string | null; fall_line?: string | null };
@@ -198,11 +200,17 @@ function MonsterRow({ monster, current = false }: { monster: Monster; current?: 
             </select>
           </label>
         ) : null}
+        {parts ? (
+          <label className="family-check">
+            <input type="checkbox" checked={Boolean(m.choose_target)} disabled={busy} onChange={(e) => save({ choose_target: e.target.checked })} />
+            <span><strong>Sankari valitsee kohteen</strong><span className="muted small">Jokaisella osalla oma HP. Sankari valitsee, ketä lyö; osan kaatava ylijäämä menee ensi-iskuun. Viimeinen elossa oleva kaatuu, kun sinetti on täynnä.</span></span>
+          </label>
+        ) : null}
         {parts ? parts.map((part, i) => {
           const src = monsterImageUrl(part.image_path);
           return (
             <fieldset key={i} className="card" style={{ margin: 0, gap: 10 }}>
-              <legend className="small muted">Osa {i + 1}{i === parts.length - 1 ? ' (kaatuu viimeisenä, kun sinetti täyttyy)' : ''}</legend>
+              <legend className="small muted">Osa {i + 1}{i === parts.length - 1 && !m.choose_target ? ' (kaatuu viimeisenä, kun sinetti täyttyy)' : ''}</legend>
               {src ? <img src={src} alt="" style={{ width: '100%', borderRadius: 14 }} /> : null}
               <label className="btn btn-ghost" style={{ minHeight: 44 }}>
                 {src ? 'Vaihda kuva' : 'Lataa kuva'}

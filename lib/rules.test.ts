@@ -88,6 +88,35 @@ r = computeLedger({ ...base, events: [ev(1, 1, 'a', 500), ev(2, 1, 'a', 100), ev
 assert.deepEqual(r.killed.map((k) => k.week), [1, 2]);
 assert.equal(r.pot, 200);
 
+// 3b) Kohteen valinta: kaksikko [500, 500] viikolla 1
+{
+  const pe = (at: number, userId: string, damage: number, part: number | null, isTraining = true) => ({ week: 1, at, userId, damage, isTraining, part });
+  const pb = { ...base, partsByWeek: { 1: [500, 500] } };
+  // Osan 2 kaataa a: ylijäämä 100 ensi-iskuun, ei osaan 1
+  let q = computeLedger({ ...pb, events: [pe(1, 'a', 600, 1)] }, 1, true);
+  assert.equal(q.pot, 100);
+  assert.deepEqual(q.alive[0].parts, [{ hp: 500, dead: false }, { hp: 0, dead: true }]);
+  assert.deepEqual(q.partFalls, [{ week: 1, part: 1, at: 1 }]);
+  // Kaatuneeseen osaan kohdistettu isku osuu elossa olevaan
+  q = computeLedger({ ...pb, events: [pe(1, 'a', 600, 1), pe(2, 'b', 200, 1)] }, 1, true);
+  assert.equal(q.alive[0].hp, 300);
+  // Viimeinen osa kaatuu vasta, kun sinetti on täynnä (c puuttuu): pato
+  q = computeLedger({ ...pb, events: [pe(1, 'a', 600, 1), pe(2, 'b', 700, 0)] }, 1, true);
+  assert.equal(q.killed.length, 0);
+  assert.equal(q.alive[0].padded, 200);
+  // c lyö (askel ei riitä sinettiin, treeni riittää): kaatuu, viimeisen osan ylijäämä pottiin
+  q = computeLedger({ ...pb, events: [pe(1, 'a', 600, 1), pe(2, 'b', 700, 0), pe(3, 'c', 50, 0)] }, 1);
+  assert.equal(q.killed.length, 1);
+  assert.equal(q.pot, 100 + 250);
+  // Ilman kohdetta isku osuu etummaiseen; molemmat osat elossa → ei osakaatumista
+  q = computeLedger({ ...pb, events: [pe(1, 'a', 300, null), pe(2, 'b', 300, 1)] }, 1, true);
+  assert.deepEqual(q.alive[0].parts, [{ hp: 200, dead: false }, { hp: 200, dead: false }]);
+  // Sunnuntai: viimeinen osa padolla → jatkaa rästinä 1 HP:lla, kaatunut osa pysyy kaatuneena
+  q = computeLedger({ ...pb, events: [pe(1, 'a', 600, 0), pe(2, 'b', 700, 1)] }, 2, true);
+  assert.deepEqual(q.alive[0].parts, [{ hp: 0, dead: true }, { hp: 1, dead: false }]);
+  assert.equal(q.lostToSeal, 200);
+}
+
 // 4) Sinetti täyttyy pienellä iskulla, kun HP on jo nollassa
 r = computeLedger({ ...base, events: [ev(1, 1, 'a', 1200), ev(1, 2, 'b', 10), ev(1, 3, 'c', 10)] }, 1);
 assert.equal(r.killed.length, 1);

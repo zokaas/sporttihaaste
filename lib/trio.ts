@@ -45,16 +45,24 @@ export function activeWeaknesses(m: { hp?: number | null; weakness?: Weakness | 
   return weaknessesOf(m);
 }
 
-/** Näyttämön osat: HP-tila ja kuva osittain. `image` muuntaa tallennuspolun osoitteeksi. */
+/**
+ * Näyttämön osat: HP-tila, heikkous ja kuva osittain. `image` muuntaa tallennuspolun osoitteeksi.
+ * `live`: kohteen valinnassa osien todellinen tila taistelukirjanpidosta (järjestyksestä riippumaton).
+ */
 export function stageParts(
   m: { hp?: number | null; parts?: MonsterPart[] | null } | null | undefined,
   hpLeft: number,
   killed: boolean,
   image: (path: string | null | undefined) => string | null,
+  live?: { hp: number; dead: boolean }[] | null,
 ) {
   if (!m?.parts?.length || !m.hp) return null;
   const states = partStates(m.hp, hpLeft, m.parts.length, killed);
-  return m.parts.map((part, i) => ({ name: part.name, image: image(part.image_path), ...states[i] }));
+  const hps = partHps(m.hp, m.parts.length);
+  return m.parts.map((part, i) => ({
+    name: part.name, image: image(part.image_path), weakness: part.weakness ?? null,
+    ...(live?.[i] ? { hp: hps[i], left: killed || live[i].dead ? 0 : live[i].hp, dead: killed || live[i].dead } : states[i]),
+  }));
 }
 
 /** "Kaksikko" tai "Kolmikko" osien määrän mukaan. */

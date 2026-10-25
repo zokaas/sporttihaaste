@@ -1,6 +1,6 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { loadBattle } from './battle';
+import { choosesTarget, loadBattle } from './battle';
 import { sendOnce } from './push';
 import { testDay, today } from './today';
 import { addDays, weekRange, BOSS_WEEK, isGateDay, earlyRevealMs } from './season';
@@ -73,14 +73,17 @@ async function notifyPartFalls(supabase: SupabaseClient, b: Battle) {
   for (const f of b.ledger?.alive ?? []) {
     const m = b.monsters.get(f.week);
     if (!m?.parts?.length || !m.hp) continue;
-    const states = partStates(m.hp, sealView(f, b.required).hp, m.parts.length, false);
-    for (let i = 0; i < m.parts.length - 1; i++) {
-      if (!states[i].dead) continue;
-      const line = fallLine(m.parts, i);
-      const rest = m.parts.slice(i + 1).map((p) => p.name).join(' ja ');
+    // Kohteen valinnassa osat kaatuvat missä järjestyksessä tahansa: tila tulee taistelukirjanpidosta.
+    const choose = choosesTarget(m) && f.parts;
+    const dead = choose ? f.parts!.map((x) => x.dead) : partStates(m.hp, sealView(f, b.required).hp, m.parts.length, false).map((x) => x.dead);
+    for (let i = 0; i < m.parts.length; i++) {
+      if (!dead[i] || (!choose && i === m.parts.length - 1)) continue;
+      const line = !choose || !dead[i + 1] ? fallLine(m.parts, i) : null;
+      const rest = m.parts.filter((_, j) => !dead[j]).map((p) => p.name).join(' ja ');
+      if (!rest) continue;
       await sendOnce(supabase, `part-${f.week}-${i}`, {
         title: `💥 ${m.parts[i].name} kaatui!`,
-        body: line ? `${line.who}: ”${line.text}”` : `${rest} ${i + 2 < m.parts.length ? 'jatkavat' : 'jatkaa'} vielä taistelua.`,
+        body: line ? `${line.who}: ”${line.text}”` : `${rest} ${m.parts.filter((_, j) => !dead[j]).length > 1 ? 'jatkavat' : 'jatkaa'} vielä taistelua.`,
       });
     }
   }

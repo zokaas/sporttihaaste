@@ -181,6 +181,29 @@ table.plain th, table.plain td { text-align: left; padding: 6px 4px; border-bott
 .stage-part.dead { filter: grayscale(1) brightness(0.5); position: relative; }
 .stage-part.dead::after { content: '✝'; position: absolute; inset: 0; display: grid; place-items: center; color: var(--light); font-size: 16px; }
 .stage-parts-label { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-left: 4px; }
+/* Kohteen valinta: nuolet nimen vieressä ja osakortit HP-palkkeineen. */
+/* Kohteen valinta: kuva omalla alueellaan, tiedot (kupla, nimi, HP, osat) sen alla, jotta kuva ei peity. */
+.stage.is-choose { height: auto; max-height: none; min-height: 0; display: flex; flex-direction: column; }
+.stage.is-choose .stage-art { position: relative; inset: auto; width: 100%; aspect-ratio: 1 / 1; max-height: 420px; flex: none; }
+/* Tekstit ovat kuvan alla, joten kuvaa ei tarvitse tummentaa alhaalta. */
+.stage.is-choose .stage-img { object-position: center; }
+.stage.is-choose .stage-vignette { background: linear-gradient(to bottom, rgba(0, 0, 0, 0.35), transparent 22%, transparent 88%, var(--deep)); }
+.stage.is-choose .stage-info { position: relative; padding-top: 12px; background: var(--deep); }
+.stage-choose { width: 100%; display: flex; align-items: center; gap: 8px; }
+.stage-choose .stage-title { flex: 1; min-width: 0; }
+.stage-arrow { flex: none; width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(0, 0, 0, 0.35); color: var(--light); font-size: 18px; line-height: 1; display: grid; place-items: center; cursor: pointer; }
+.stage-targets { width: 100%; display: flex; gap: 6px; }
+.stage-target { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 5px; padding: 8px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.05); color: var(--light); font: inherit; text-align: left; cursor: pointer; }
+.stage-target.sel { border: 2px solid var(--gold); padding: 7px; background: rgba(232, 176, 74, 0.1); box-shadow: 0 0 10px rgba(230, 180, 90, 0.45); }
+.stage-target.dead { filter: grayscale(1) brightness(0.55); cursor: default; }
+.stage-target-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.stage-target-img { flex: none; width: 30px; height: 30px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: #2a2320; font-size: 13px; }
+.stage-target-img img { width: 100%; height: 100%; object-fit: cover; }
+.stage-target-name { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stage-target-hp { width: 100%; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.15); overflow: hidden; }
+.stage-target-hp i { display: block; height: 100%; background: var(--blood); }
+.stage-target-num { font-size: 12px; color: #e6ddd2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stage-target-weak { align-self: flex-start; max-width: 100%; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; background: #2f4a3f; color: #e8f2ea; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .part-fall { animation-duration: 2.8s; }
 .stage-hptext { width: 100%; display: flex; justify-content: space-between; font-size: 13px; color: #d8cfc4; }
 .stage-state { font-weight: 600; color: var(--blood-text); }
@@ -686,3 +709,10 @@ details.admin-past > summary { cursor: pointer; padding: 12px 0; color: var(--mu
 .fx-preview .stage-art { position: absolute; inset: 0; }
 .fx-preview-dummy { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; }
 .fx-preview-hint { position: absolute; right: 8px; bottom: 6px; }
+/* Kohteen valinta (moniosainen monsteri) */
+.target-pick { display: flex; gap: 8px; }
+.target-card { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 6px; border-radius: 12px; border: 1px solid var(--line); background: var(--ground); color: var(--text); cursor: pointer; font: inherit; }
+.target-card img, .target-card b { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; display: flex; align-items: center; justify-content: center; background: var(--deep); font-size: 20px; }
+.target-card .target-name { font-weight: 700; font-size: 13px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.target-card.sel { border: 2px solid var(--gold); box-shadow: 0 0 10px rgba(224, 178, 90, 0.35); }
+.target-card.dead { opacity: 0.45; filter: grayscale(1); cursor: default; }

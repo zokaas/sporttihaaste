@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { avatarUrl, hitPhotoUrl, monsterImageUrl, resizedImage } from '@/lib/supabase/client';
 import { ZoomImg } from '@/components/ImageViewer';
-import type { loadBattle } from '@/lib/battle';
+import { choosesTarget, type loadBattle } from '@/lib/battle';
 import { computeLedger, hitBonusText, potParts, sealView, STEP_DAY_DAMAGE } from '@/lib/rules';
 import { finalBlows, weekRecap } from '@/lib/stats';
 import { addDays, formatDay, helsinkiMs, KELA_TIME, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_START } from '@/lib/season';
@@ -63,7 +63,11 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
   // Monsterin repliikki HP:n mukaan: ylläpidon kirjoittama tai oletus.
   const targetMonster = target ? monsters.get(target.week) : undefined;
   // Kaksikolla ja kolmikolla elossa olevat osat puhuvat omat repliikkinsä.
-  const taunt = view ? stageTaunt(targetMonster, view.hp, target.week < week) : null;
+  // Kohteen valinnassa osat kaatuvat missä järjestyksessä tahansa: tila tulee taistelukirjanpidosta.
+  const choose = choosesTarget(targetMonster);
+  const liveParts = choose ? target?.parts ?? null : null;
+  const deadParts = liveParts ? liveParts.map((x) => x.dead) : null;
+  const taunt = view ? stageTaunt(targetMonster, view.hp, target.week < week, deadParts) : null;
   // Sinetti tulee näkyviin vasta viikon perjantaina: alkuviikon näkymä on kevyt. Sääntö on silti voimassa
   // koko viikon; padon kortti näytetään aina, koska silloin voimaa on vaakalaudalla.
   const showSeal = data.today >= addDays(weekRange(week).end, -2);
@@ -108,10 +112,16 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
     const shown = names.length > 3 ? `${names.slice(0, 3).join(', ')} + ${names.length - 3} muuta` : names.join(', ');
     return `${heroName(userId)}${shown ? ` + ${shown}` : ''}`;
   };
+  // Kohteen valinnassa rivi kertoo, mihin osaan isku osui.
+  const aimed = (part: number | null | undefined) => {
+    const m = monsters.get(week);
+    const name = choosesTarget(m) && part != null ? m?.parts?.[part]?.name : null;
+    return name ? ` → ${name}` : '';
+  };
   // Jokainen rivi samassa muodossa: toiminto otsikkona, tekijä ja päivä alla.
   const log = [
-    ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, icon: '⚔️', title: `${h.sport} ${h.minutes} min`, by: withCompanions(h.user_id, h.companions), day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, triple: h.bonus_pct >= 150, bonus: hitBonusText(h), photo: hitPhotoUrl(h.photo_path) })),
-    ...data.steps.filter((st) => seasonWeek(st.day) === week).map((st) => ({ at: st.created_at, icon: '👣', title: 'Askeleet', by: heroById.get(st.user_id)?.hero_name ?? '?', day: st.day, dmg: STEP_DAY_DAMAGE, crit: false, triple: false, bonus: '', photo: null })),
+    ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, icon: '⚔️', title: `${h.sport} ${h.minutes} min${aimed(h.target_part)}`, by: withCompanions(h.user_id, h.companions), day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, triple: h.bonus_pct >= 150, bonus: hitBonusText(h), photo: hitPhotoUrl(h.photo_path) })),
+    ...data.steps.filter((st) => seasonWeek(st.day) === week).map((st) => ({ at: st.created_at, icon: '👣', title: `Askeleet${aimed(st.target_part)}`, by: heroById.get(st.user_id)?.hero_name ?? '?', day: st.day, dmg: STEP_DAY_DAMAGE, crit: false, triple: false, bonus: '', photo: null })),
     ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, icon: '⭐', title: 'Megamarssi', by: 'Koko porukka', day: p.day, dmg: 250, crit: false, triple: false, bonus: '', photo: null })),
     ...data.kela.filter((k) => seasonWeek(k.day) === week).map((k) => ({ at: new Date(helsinkiMs(k.day, KELA_TIME)).toISOString(), icon: '🏥', title: 'Kela', by: heroName(k.userId), day: k.day, dmg: k.damage, crit: false, triple: false, bonus: '', photo: null })),
   ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 6);
@@ -178,7 +188,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
           title={nameOf(target.week)}
           image={monsterImageUrl(monsters.get(target.week)?.image_path)}
           weakness={activeWeaknesses(monsters.get(target.week), view!.hp).join(', ') || null}
-          parts={stageParts(monsters.get(target.week), view!.hp, false, monsterImageUrl)}
+          parts={stageParts(monsters.get(target.week), view!.hp, false, monsterImageUrl, liveParts)}
+          choose={choose}
           hp={view!.hp}
           maxHp={monsters.get(target.week)?.hp ?? 1}
           padded={view!.dam}
@@ -193,7 +204,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
           endMs={endMs}
           currentWeek={week}
           taunt={taunt}
-          hitLine={ownHit != null ? stageHitLine(targetMonster, view!.hp, crit, ownHit) : null}
+          hitLine={ownHit != null ? stageHitLine(targetMonster, view!.hp, crit, ownHit, deadParts) : null}
           offsetMs={offsetMs}
           boss={target.week === BOSS_WEEK}
           potStrike={potBeforeBoss}
