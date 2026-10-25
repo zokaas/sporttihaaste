@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { readTarget } from '@/lib/target';
 import { useRouter } from 'next/navigation';
 import { toggleSickDay, toggleStep } from '@/app/actions';
 import { showStrike } from '@/components/StrikeToastHost';
@@ -46,7 +47,7 @@ export default function MyWeek(p: Props) {
   // Tämän päivän kuittaus näyttää iskuikkunan kuten Lyö-valikko; menneiden päivien jälkikuittaus on hiljainen.
   async function stepDay(day: string, on: boolean) {
     const live = on && day === today;
-    const res = await toggleStep(day, on, live);
+    const res = await toggleStep(day, on, live, readTarget());
     if (res.ok && live && res.strike) showStrike({ strike: res.strike, damage: STEP_DAY_DAMAGE, label: '👣 Askeleet!' });
     return res;
   }

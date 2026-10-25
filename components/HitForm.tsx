@@ -7,6 +7,10 @@ import { logHit } from '@/app/kirjaa/actions';
 import Hint from '@/components/Hint';
 import { createClient } from '@/lib/supabase/client';
 import { shrinkJpeg } from '@/lib/image';
+import { readTarget, writeTarget } from '@/lib/target';
+
+/** Kohteen valinta: moniosaisen monsterin osa. */
+export type TargetPart = { index: number; name: string; image: string | null; hp: number; weakness: Weakness | null; dead: boolean };
 
 type Props = {
   days: string[];
@@ -16,6 +20,8 @@ type Props = {
   healthyByDay: Record<string, number>;
   weakness: Weakness[];
   celebrations: Record<string, string[]>;
+  /** Kohteen valinta päällä: elossa olevat ja kaatuneet osat. */
+  targets?: TargetPart[] | null;
 };
 
 
@@ -25,7 +31,17 @@ function duration(min: number) {
   return [h ? `${h} h` : '', m ? `${m} min` : ''].filter(Boolean).join(' ');
 }
 
-export default function HitForm({ days, sports, companions, weakness, celebrations, healthyByDay }: Props) {
+export default function HitForm({ days, sports, companions, weakness: weekWeakness, celebrations, healthyByDay, targets }: Props) {
+  // Kohteen valinta: oletuksena etusivulla viimeksi valittu osa (tai etummainen elossa oleva).
+  const firstAlive = targets?.find((t) => !t.dead)?.index ?? null;
+  const [target, setTarget] = useState<number | null>(firstAlive);
+  useEffect(() => {
+    const saved = readTarget();
+    if (saved != null && targets?.some((t) => t.index === saved && !t.dead)) setTarget(saved);
+  }, [targets]);
+  const chosen = targets?.find((t) => t.index === target) ?? null;
+  // Vain lyötävän osan heikkous tehoaa.
+  const weakness: Weakness[] = targets ? (chosen?.weakness ? [chosen.weakness] : []) : weekWeakness;
   const router = useRouter();
   const [day, setDay] = useState(days[days.length - 1]);
   const [sportName, setSportName] = useState('');
@@ -74,7 +90,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
         return setError('Kuvan tallennus epäonnistui. Poista kuva tai yritä uudelleen.');
       }
     }
-    const res = await logHit({ day, sport: sport.name, minutes, companions: withIds, special: claim, photo: photoPath });
+    const res = await logHit({ day, sport: sport.name, minutes, companions: withIds, special: claim, photo: photoPath, target: targets ? target : null });
     setBusy(false);
     if (!res.ok) return setError(res.error);
     // Etusivulla isku näkyy lentävänä lukuna ja HP-palkki laskee.
@@ -84,6 +100,22 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
 
   return (
     <section className="card">
+      {targets ? (
+        <fieldset className="field-group">
+          <legend>Ketä lyöt?</legend>
+          <div className="target-pick">
+            {targets.map((t) => (
+              <button key={t.index} type="button" className={`target-card${t.index === target ? ' sel' : ''}${t.dead ? ' dead' : ''}`} disabled={t.dead} aria-pressed={t.index === target}
+                onClick={() => { setTarget(t.index); writeTarget(t.index); }}>
+                {t.image ? <img src={t.image} alt="" /> : <b>{t.dead ? '✝' : t.name.slice(0, 1)}</b>}
+                <span className="target-name">{t.name}</span>
+                <span className="muted small">{t.dead ? 'Kaatunut' : `${t.hp.toLocaleString('fi-FI')} HP`}</span>
+                {t.weakness && !t.dead ? <span className="small ok">{t.weakness}</span> : null}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
       <fieldset className="field-group">
         <legend>Päivä</legend>
         <div className="chips">

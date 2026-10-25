@@ -9,6 +9,7 @@ import { finalBlows } from '@/lib/stats';
 import { STEP_DAY_DAMAGE, hitBonusText, sealView } from '@/lib/rules';
 import { formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { activeWeaknesses, groupName, stageParts } from '@/lib/trio';
+import { choosesTarget } from '@/lib/battle';
 import Hint from '@/components/Hint';
 import { ZoomImg } from '@/components/ImageViewer';
 import { parseFx } from '@/lib/fx';
@@ -33,7 +34,9 @@ export default async function Monsteri({ params }: { params: { week: string } })
   const { start, end } = weekRange(week);
   // Kaatuneella ei näytetä heikkoutta; elossa olevalla kaikkien osien heikkoudet (voimassa koko viikon).
   const weak = killed ? '' : activeWeaknesses(m, view ? view.hp : m?.hp ?? 0).join(', ');
-  const parts = stageParts(m, killed ? 0 : view?.hp ?? m?.hp ?? 0, Boolean(killed), monsterImageUrl);
+  // Kohteen valinnassa osien tila tulee taistelukirjanpidosta (kaatumisjärjestys vapaa).
+  const choose = choosesTarget(m);
+  const parts = stageParts(m, killed ? 0 : view?.hp ?? m?.hp ?? 0, Boolean(killed), monsterImageUrl, choose ? fighter?.parts : null);
 
   // Kuvat koko ruudulle: kaksikolla ja kolmikolla osien kuvat, muuten monsterin kuva.
   const partImages = (parts ?? []).map((x) => x.image).filter((x): x is string => Boolean(x));
@@ -74,7 +77,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
 
       {parts && m?.parts ? (
         <section className="card">
-          <Hint id="trio" title={<h2 className="display">{groupName(m!.parts!.length)}</h2>}>Osat jakavat viikon HP:n tasan ja kaatuvat järjestyksessä. Viimeinen kaatuu vasta, kun sinetti on täynnä.</Hint>
+          <Hint id="trio" title={<h2 className="display">{groupName(m!.parts!.length)}</h2>}>{choose ? 'Osat jakavat viikon HP:n tasan. Valitse etusivulla, ketä lyöt: jokaisella osalla on oma HP ja heikkous. Viimeinen elossa oleva kaatuu vasta, kun sinetti on täynnä.' : 'Osat jakavat viikon HP:n tasan ja kaatuvat järjestyksessä. Viimeinen kaatuu vasta, kun sinetti on täynnä.'}</Hint>
           <ul className="people">
             {m.parts.map((part, i) => (
               <li key={i} style={parts[i].dead ? { opacity: 0.6 } : undefined}>
@@ -152,6 +155,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
                   <div className="who">{heroName(h.user_id)} <span className="muted" style={{ fontWeight: 400 }}>· {h.sport} {h.minutes} min</span></div>
                   <div className="facts">
                     {formatDay(h.trained_on)}
+                    {choose && h.target_part != null && m?.parts?.[h.target_part] ? ` · → ${m.parts[h.target_part].name}` : ''}
                     {h.companions.length ? ` · mukana ${h.companions.map(heroName).join(', ')}` : ''}
                     {h.all_together ? ' · kaikki yhdessä!' : ''}
                   </div>

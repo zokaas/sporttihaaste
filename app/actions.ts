@@ -26,7 +26,7 @@ function done(error: { message: string } | null): Result {
 }
 
 /** Kuittaa tai peruu askelpäivän (+50). */
-export async function toggleStep(day: string, on: boolean, withStrike = false): Promise<Result & { strike?: StrikeSummary }> {
+export async function toggleStep(day: string, on: boolean, withStrike = false, target: number | null = null): Promise<Result & { strike?: StrikeSummary }> {
   if (previewOnly()) return { ok: false, error: PREVIEW_ERROR };
   const { supabase, user } = await me();
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
@@ -35,9 +35,12 @@ export async function toggleStep(day: string, on: boolean, withStrike = false): 
     const { data: sick } = await supabase.from('sick_periods').select('user_id, starts_on, ends_on').eq('user_id', user.id);
     if (isSickOn((sick ?? []) as SickPeriod[], user.id, day)) return { ok: false, error: 'Päivä on merkitty sairaspäiväksi. Poista sairausmerkintä ensin, jos kävelit silti.' };
   }
-  const { error } = on
-    ? await supabase.from('step_days').upsert({ user_id: user.id, day })
+  // Kohteen valinta (migraatio 036): askeleet osuvat valittuun osaan. Ilman saraketta tallennetaan ilman kohdetta.
+  const stepRow = { user_id: user.id, day, ...(Number.isInteger(target) && target! >= 0 && target! < 3 ? { target_part: target } : {}) };
+  let { error } = on
+    ? await supabase.from('step_days').upsert(stepRow)
     : await supabase.from('step_days').delete().eq('user_id', user.id).eq('day', day);
+  if (on && error && 'target_part' in stepRow && error.message.includes('target_part')) ({ error } = await supabase.from('step_days').upsert({ user_id: user.id, day }));
   if (!error && on) await afterStep(supabase, day).catch(() => {});
   const res = done(error);
   // Lyö-valikko näyttää iskuikkunan: monsterin tilanne askelten jälkeen.

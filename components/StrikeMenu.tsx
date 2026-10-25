@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { readTarget } from '@/lib/target';
 // @ts-expect-error react-dom-tyyppejä ei ole asennettu; createPortal on Nextin mukana.
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
@@ -26,7 +27,7 @@ export default function StrikeMenu({ day, stepped }: { day: string | null; stepp
     if (!day) return;
     setBusy(true);
     setMsg(null);
-    const res = await toggleStep(day, true, true);
+    const res = await toggleStep(day, true, true, readTarget());
     setBusy(false);
     if (!res.ok) return setMsg({ ok: false, text: res.error });
     // Sivu pysyy paikallaan: monsteri ottaa askeleet vastaan pienessä iskuikkunassa ruudun yläreunassa.
