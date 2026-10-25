@@ -1,6 +1,6 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { loadBattle } from './battle';
+import { choosesTarget, loadBattle } from './battle';
 import { sealView } from './rules';
 import { hitReaction, lineText, stageHitLine } from './taunts';
 import { BOSS_WEEK, isGateDay } from './season';
@@ -9,7 +9,7 @@ import { monsterImageUrl } from './supabase/client';
 export type StrikeSummary = { name: string; image: string | null; hp: number; maxHp: number; reaction: string } | null;
 
 /** Nykyisen vastustajan tilanne juuri tehdyn kirjauksen jälkeen: näytetään pienessä iskuikkunassa. */
-export async function strikeSummary(supabase: SupabaseClient, today: string): Promise<StrikeSummary> {
+export async function strikeSummary(supabase: SupabaseClient, today: string, aim: number | null = null): Promise<StrikeSummary> {
   const b = await loadBattle(supabase, today);
   // Portinvartijan päivinä iskut osuvat portinvartijaan.
   if (isGateDay(today)) {
@@ -24,6 +24,7 @@ export async function strikeSummary(supabase: SupabaseClient, today: string): Pr
     image: monsterImageUrl(m?.image_path),
     hp: view.hp,
     maxHp: m?.hp ?? 1,
-    reaction: lineText(stageHitLine(m, view.hp, false)),
+    // Kohteen valinnassa vastaa lyöty osa.
+    reaction: lineText(choosesTarget(m) && target.parts ? stageHitLine(m, view.hp, false, 0, target.parts.map((x) => x.dead), aim) : stageHitLine(m, view.hp, false)),
   };
 }

@@ -45,7 +45,7 @@ export async function toggleStep(day: string, on: boolean, withStrike = false, t
   if (!error && on) await afterStep(supabase, day).catch(() => {});
   const res = done(error);
   // Lyö-valikko näyttää iskuikkunan: monsterin tilanne askelten jälkeen.
-  if (res.ok && on && withStrike) return { ...res, strike: await strikeSummary(supabase, today()).catch(() => null) };
+  if (res.ok && on && withStrike) return { ...res, strike: await strikeSummary(supabase, today(), target).catch(() => null) };
   return res;
 }
 

@@ -19,7 +19,7 @@ import Hint from '@/components/Hint';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string; krit?: string; finaali?: string } }) {
+export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string; krit?: string; finaali?: string; kohde?: string } }) {
   const supabase = createClient();
   navVisibility().catch(() => {});
   const user = await currentUser();
@@ -62,7 +62,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
     return (
       <>
         <Nav current="/" />
-        <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1' || searchParams.krit === '2'} triple={searchParams.krit === '2'} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
+        <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1' || searchParams.krit === '2'} triple={searchParams.krit === '2'} aim={searchParams.kohde ? Number(searchParams.kohde) : null} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
       </>
     );
   }

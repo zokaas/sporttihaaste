@@ -169,24 +169,19 @@ export default function MonsterStage(p: Props) {
   const taunts: Line[] = typeof p.taunt === 'string' ? [{ who: null, text: p.taunt }] : p.taunt ?? [];
   const hitLine: Line | null = typeof p.hitLine === 'string' ? { who: null, text: p.hitLine } : p.hitLine ?? null;
   const tauntKey = taunts.map((l) => `${l.who}:${l.text}`).join('|');
-  // Kaksikolla ja kolmikolla repliikit näytetään yksi kerrallaan, kukin lukuajan verran.
-  const [tauntIdx, setTauntIdx] = useState(0);
-  useEffect(() => { setTaunt('on'); setTauntIdx(0); }, [tauntKey]);
+  useEffect(() => { setTaunt('on'); }, [tauntKey]);
   useEffect(() => {
     if (taunt === 'gone') return;
     if (taunt === 'fading') {
-      const t = window.setTimeout(() => {
-        // Seuraava osa puhuu, tai kaikki ovat puhuneet.
-        if (!choose && tauntIdx + 1 < taunts.length) { setTauntIdx(tauntIdx + 1); setTaunt('on'); } else setTaunt('gone');
-      }, 600);
+      const t = window.setTimeout(() => setTaunt('gone'), 600);
       return () => clearTimeout(t);
     }
     if (offscreen || revealing || !pageVisible || modalOpen) return;
-    const line = choose ? shownTaunt : taunts[tauntIdx];
+    const line = shownTaunt;
     const t = window.setTimeout(() => setTaunt('fading'), Math.max(TAUNT_MS, line ? readMs(line.text) : 0));
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taunt, tauntIdx, offscreen, revealing, pageVisible, modalOpen, tauntKey]);
+  }, [taunt, offscreen, revealing, pageVisible, modalOpen, tauntKey]);
   const parts = p.parts?.length ? p.parts : null;
   const choose = Boolean(p.choose && parts && !p.dead);
   // Kohteen valinta: valittu osa muistetaan (sama valinta kirjauslomakkeella ja askelkuittauksessa).
@@ -341,10 +336,10 @@ export default function MonsterStage(p: Props) {
   const groupImages = p.dead && parts ? parts.map((x) => x.image).filter((x): x is string => Boolean(x)) : [];
   const title = front && !p.dead ? front.name : p.title;
   const weakness = choose ? (front?.weakness ? `${front.weakness}` : null) : p.weakness;
-  // Kohteen valinnassa valittu osa puhuu (muuten kaikki kuplat).
-  const ownTaunts = choose && front ? taunts.filter((l) => l.who === front.name) : [];
-  // Kohteen valinnassa valitun osan kupla; muuten osat puhuvat vuorotellen.
-  const shownTaunt = choose ? (ownTaunts.length ? ownTaunts : taunts)[0] : taunts[tauntIdx];
+  const ownTaunts = front && !p.dead ? taunts.filter((l) => l.who === front.name) : [];
+  // Moniosaisella puhuu vain näytetty osa (valittu tai etummainen), ei vuoropuhelua.
+  // Muiden osien repliikit eivät näy; yhteinen repliikki (ilman puhujaa) käy kenelle tahansa.
+  const shownTaunt = (ownTaunts.length ? ownTaunts : parts ? taunts.filter((l) => !l.who) : taunts)[0];
 
   const content = (
     <>
@@ -405,7 +400,7 @@ export default function MonsterStage(p: Props) {
         {/* Puhekupla nimen yläpuolella, jotta se ei peitä kuvan kasvoja (ne ovat yleensä kuvan yläosassa). */}
         {reply && hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status"><Speech line={hitLine} /></div>
           : shownTaunt && !p.dead && taunt !== 'gone' ? (
-            <div key={`taunt-${choose ? sel : tauntIdx}`} className={`stage-taunt${taunt === 'fading' ? ' fading' : ''}`} role="note"><Speech line={shownTaunt} /></div>
+            <div key={`taunt-${sel}`} className={`stage-taunt${taunt === 'fading' ? ' fading' : ''}`} role="note"><Speech line={shownTaunt} /></div>
           ) : null}
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
         {choose && parts ? null : parts ? (
