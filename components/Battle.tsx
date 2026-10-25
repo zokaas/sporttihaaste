@@ -177,6 +177,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
           <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
             {early.hp ? <span className="pill">Voima: {fmt(early.hp)} HP</span> : null}
             {earlyWeak.length ? <span className="pill">{earlyWeak.length > 1 ? 'Heikkoudet' : 'Heikkous'}: {earlyWeak.join(', ')}</span> : null}
+            {choosesTarget(early) ? <span className="pill">🎯 Valitset itse, ketä lyöt</span> : null}
           </div>
           <p className="muted small" style={{ margin: 0 }}>Kaaditte viikon monsterin etuajassa, joten {week + 1 === BOSS_WEEK ? 'loppupomo' : 'seuraava'} näyttäytyi jo nyt. Se herää maanantaina klo 00, ja siihen asti iskut säästyvät ensi-iskuun.</p>
         </EarlyReveal>
@@ -235,6 +236,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
             <div className="row" style={{ flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
               {early.hp ? <span className="pill">Voima: {fmt(early.hp)} HP</span> : null}
               {earlyWeak.length ? <span className="pill">{earlyWeak.length > 1 ? 'Heikkoudet' : 'Heikkous'}: {earlyWeak.join(', ')}</span> : null}
+            {choosesTarget(early) ? <span className="pill">🎯 Valitset itse, ketä lyöt</span> : null}
             </div>
             <p className="muted small" style={{ margin: '6px 0 0' }}>Lyöminen alkaa maanantaina. Siihen asti iskut säästyvät ensi-iskuun.</p>
           </div>
