@@ -177,7 +177,8 @@ export default function MonsterStage(p: Props) {
       return () => clearTimeout(t);
     }
     if (offscreen || revealing || !pageVisible || modalOpen) return;
-    const t = window.setTimeout(() => setTaunt('fading'), Math.max(TAUNT_MS, taunts.reduce((a, l) => a + readMs(l.text), 0)));
+    const line = shownTaunt;
+    const t = window.setTimeout(() => setTaunt('fading'), Math.max(TAUNT_MS, line ? readMs(line.text) : 0));
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taunt, offscreen, revealing, pageVisible, modalOpen, tauntKey]);
@@ -335,9 +336,10 @@ export default function MonsterStage(p: Props) {
   const groupImages = p.dead && parts ? parts.map((x) => x.image).filter((x): x is string => Boolean(x)) : [];
   const title = front && !p.dead ? front.name : p.title;
   const weakness = choose ? (front?.weakness ? `${front.weakness}` : null) : p.weakness;
-  // Kohteen valinnassa valittu osa puhuu (muuten kaikki kuplat).
-  const ownTaunts = choose && front ? taunts.filter((l) => l.who === front.name) : [];
-  const shownTaunts = ownTaunts.length ? ownTaunts : taunts;
+  const ownTaunts = front && !p.dead ? taunts.filter((l) => l.who === front.name) : [];
+  // Moniosaisella puhuu vain näytetty osa (valittu tai etummainen), ei vuoropuhelua.
+  // Muiden osien repliikit eivät näy; yhteinen repliikki (ilman puhujaa) käy kenelle tahansa.
+  const shownTaunt = (ownTaunts.length ? ownTaunts : parts ? taunts.filter((l) => !l.who) : taunts)[0];
 
   const content = (
     <>
@@ -397,9 +399,9 @@ export default function MonsterStage(p: Props) {
       <div className="stage-info">
         {/* Puhekupla nimen yläpuolella, jotta se ei peitä kuvan kasvoja (ne ovat yleensä kuvan yläosassa). */}
         {reply && hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status"><Speech line={hitLine} /></div>
-          : shownTaunts.length && !p.dead && taunt !== 'gone' ? shownTaunts.map((l, i) => (
-            <div key={`taunt-${i}`} className={`stage-taunt${taunt === 'fading' ? ' fading' : ''}`} role="note" style={i && taunt !== 'fading' ? { animationDelay: `${i * 0.6}s` } : undefined}><Speech line={l} /></div>
-          )) : null}
+          : shownTaunt && !p.dead && taunt !== 'gone' ? (
+            <div key={`taunt-${sel}`} className={`stage-taunt${taunt === 'fading' ? ' fading' : ''}`} role="note"><Speech line={shownTaunt} /></div>
+          ) : null}
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
         {choose && parts ? null : parts ? (
           <div className="stage-parts" aria-label={`${groupName(parts.length)}: ${deadParts}/${parts.length} kaatunut`}>

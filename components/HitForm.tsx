@@ -91,7 +91,7 @@ export default function HitForm({ days, sports, companions, weakness: weekWeakne
     setBusy(false);
     if (!res.ok) return setError(res.error);
     // Etusivulla isku näkyy lentävänä lukuna ja HP-palkki laskee.
-    router.push(`/?isku=${res.damage}${(res.pct ?? 0) >= 150 ? '&krit=2' : (res.pct ?? 0) >= 100 ? '&krit=1' : ''}`);
+    router.push(`/?isku=${res.damage}${(res.pct ?? 0) >= 150 ? '&krit=2' : (res.pct ?? 0) >= 100 ? '&krit=1' : ''}${res.target != null ? `&kohde=${res.target}` : ''}`);
     router.refresh();
   }
 

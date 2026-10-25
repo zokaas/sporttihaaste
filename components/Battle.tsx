@@ -37,9 +37,9 @@ function ago(iso: string) {
   return `${Math.round(h / 24)} pv sitten`;
 }
 
-type Props = { data: BattleData; userId: string; ownHit?: number | null; crit?: boolean; triple?: boolean; offsetMs?: number; isAdmin?: boolean };
+type Props = { data: BattleData; userId: string; ownHit?: number | null; crit?: boolean; triple?: boolean; offsetMs?: number; isAdmin?: boolean; /** Oman iskun kohde (kohteen valinta). */ aim?: number | null };
 
-export default function Battle({ data, userId, ownHit = null, crit = false, triple = false, offsetMs = 0, isAdmin = false }: Props) {
+export default function Battle({ data, userId, ownHit = null, crit = false, triple = false, offsetMs = 0, isAdmin = false, aim = null }: Props) {
   const { week, ledger, monsters, heroes, participants, required } = data;
 
   if (!ledger) {
@@ -204,7 +204,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
           endMs={endMs}
           currentWeek={week}
           taunt={taunt}
-          hitLine={ownHit != null ? stageHitLine(targetMonster, view!.hp, crit, ownHit, deadParts) : null}
+          hitLine={ownHit != null ? stageHitLine(targetMonster, view!.hp, crit, ownHit, deadParts, choose && Number.isInteger(aim) ? aim : null) : null}
           offsetMs={offsetMs}
           boss={target.week === BOSS_WEEK}
           potStrike={potBeforeBoss}

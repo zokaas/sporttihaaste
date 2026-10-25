@@ -70,10 +70,10 @@ export function stageTaunt(m: Speaker | undefined, hpLeft: number, backlog = fal
 }
 
 /**
- * Reaktio omaan iskuun. Moniosaisella arvotaan elossa oleva osa ja sen oma rivi (tai yhteinen, jos omaa ei ole).
+ * Reaktio omaan iskuun. Moniosaisella vastaa lyöty osa omalla rivillään (tai yhteinen, jos omaa ei ole).
  * Jos isku kaatoi osan, seuraava osa sanoo kaatumisrepliikin. `dead`: kohteen valinnassa osien todellinen tila.
  */
-export function stageHitLine(m: Speaker | undefined, hpLeft: number, crit: boolean, damage = 0, dead?: boolean[] | null): Line {
+export function stageHitLine(m: Speaker | undefined, hpLeft: number, crit: boolean, damage = 0, dead?: boolean[] | null, speaker?: number | null): Line {
   const common = (): Line => ({ who: null, text: hitReaction(m?.hit_lines, m?.hit_crit, crit) });
   const parts = m ? partsAt(m, hpLeft, dead) : null;
   if (!m || !parts) return common();
@@ -85,7 +85,9 @@ export function stageHitLine(m: Speaker | undefined, hpLeft: number, crit: boole
     const fell = parts.filter((p, i) => p.dead && !before[i].dead).pop();
     if (fell?.fall_line?.trim()) return { who: alive[0].name, text: fell.fall_line.trim() };
   }
-  const speakers = alive.filter((p) => (crit ? p.hit_crit?.trim() : rows(p.hit_lines).length));
+  // Vain lyöty osa vastaa: kohteen valinnassa valittu (`speaker`), muuten etummainen elossa oleva.
+  const target = speaker != null ? parts[speaker] : alive[0];
+  const speakers = target && !target.dead ? [target].filter((p) => (crit ? p.hit_crit?.trim() : rows(p.hit_lines).length)) : [];
   if (!speakers.length) return common();
   const p = pick(speakers);
   return { who: p.name, text: crit ? p.hit_crit!.trim() : pick(rows(p.hit_lines)) };

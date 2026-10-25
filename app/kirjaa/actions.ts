@@ -15,7 +15,7 @@ const PHOTO_BUCKET = 'hit-photos';
 /** Treenikuvan polku kelpaa vain kirjaajan omasta kansiosta (käyttäjän id / satunnainen nimi). */
 const ownPhoto = (path: string | null | undefined, userId: string) =>
   path && path.startsWith(`${userId}/`) && /^[0-9a-f-]+\/[0-9a-f-]+\.jpg$/.test(path) ? path : null;
-type Result = { ok: true; damage: number; pct?: number } | { ok: false; error: string };
+type Result = { ok: true; damage: number; pct?: number; target?: number | null } | { ok: false; error: string };
 
 /** Laskee iskun samoilla säännöillä kuin esikatselu. Käytetään sekä esikatselussa että tallennuksessa. */
 async function computeHit(input: HitInput, userId: string, anyDay = false) {
@@ -108,7 +108,7 @@ export async function logHit(input: HitInput): Promise<Result> {
   await afterHit(supabase).catch(() => {});
   revalidatePath('/', 'layout');
   revalidatePath('/kirjaa');
-  return { ok: true, damage: hit.result.damage, pct: hit.result.pct };
+  return { ok: true, damage: hit.result.damage, pct: hit.result.pct, target: hit.target };
 }
 
 /** Iskun treenikuvan polku (ennen migraatiota 028 aina null). */
