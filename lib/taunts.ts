@@ -39,25 +39,25 @@ export function fallLine(parts: MonsterPart[] | null | undefined, i: number): Li
 export const lineText = (l: Line) => (l.who ? `${l.who}: ${l.text}` : l.text);
 
 /** Osat tilanteessa, jossa monsterilla on `hpLeft` HP:ta jäljellä (kaatunut-tieto mukana). */
-function partsAt(m: Speaker, hpLeft: number) {
+function partsAt(m: Speaker, hpLeft: number, dead?: boolean[] | null) {
   if (!m.parts?.length || !m.hp) return null;
   const states = partStates(m.hp, hpLeft, m.parts.length, false);
-  return m.parts.map((p, i) => ({ ...p, dead: states[i].dead }));
+  return m.parts.map((p, i) => ({ ...p, dead: dead ? Boolean(dead[i]) : states[i].dead }));
 }
 
 /**
  * Näyttämön repliikit HP:n mukaan: täysi (≥ 90 %), alle 50 % ja alle 20 %. Rästiin jäänyt monsteri sanoo
  * rästirepliikin (paitsi alle 50 %:ssa). Moniosaisella elossa olevat osat puhuvat omat repliikkinsä; jos osalla
  * ei ole omaa, käytetään yhteistä (tai oletusta). Jos elossa olevilla ei ole omaa repliikkiä, viimeksi kaatuneen
- * osan kaatumisrepliikki näkyy seuraavan osan suusta.
+ * osan kaatumisrepliikki näkyy seuraavan osan suusta. `dead`: kohteen valinnassa osien todellinen kaatunut-tila.
  */
-export function stageTaunt(m: Speaker | undefined, hpLeft: number, backlog = false): Line[] | null {
+export function stageTaunt(m: Speaker | undefined, hpLeft: number, backlog = false, dead?: boolean[] | null): Line[] | null {
   if (!m) return null;
   const share = m.hp ? hpLeft / m.hp : 1;
   let band: keyof Lines | null = share < 0.2 ? 'taunt_low' : share < 0.5 ? 'taunt_half' : share >= 0.9 ? 'taunt_full' : null;
   if (backlog && band !== 'taunt_low' && band !== 'taunt_half') band = 'taunt_backlog';
   const fallback = band === 'taunt_low' ? LOW : band === 'taunt_half' ? HALF : band === 'taunt_backlog' ? BACKLOG : FULL;
-  const parts = partsAt(m, hpLeft);
+  const parts = partsAt(m, hpLeft, dead);
   const own = parts && parts.some((p) => p.taunt_full || p.taunt_half || p.taunt_low || p.taunt_backlog || p.fall_line);
   if (!parts || !own) return band ? [{ who: null, text: m[band]?.trim() || fallback }] : null;
 
@@ -71,15 +71,16 @@ export function stageTaunt(m: Speaker | undefined, hpLeft: number, backlog = fal
 
 /**
  * Reaktio omaan iskuun. Moniosaisella arvotaan elossa oleva osa ja sen oma rivi (tai yhteinen, jos omaa ei ole).
- * Jos isku kaatoi osan, seuraava osa sanoo kaatumisrepliikin.
+ * Jos isku kaatoi osan, seuraava osa sanoo kaatumisrepliikin. `dead`: kohteen valinnassa osien todellinen tila.
  */
-export function stageHitLine(m: Speaker | undefined, hpLeft: number, crit: boolean, damage = 0): Line {
+export function stageHitLine(m: Speaker | undefined, hpLeft: number, crit: boolean, damage = 0, dead?: boolean[] | null): Line {
   const common = (): Line => ({ who: null, text: hitReaction(m?.hit_lines, m?.hit_crit, crit) });
-  const parts = m ? partsAt(m, hpLeft) : null;
+  const parts = m ? partsAt(m, hpLeft, dead) : null;
   if (!m || !parts) return common();
   const alive = parts.filter((p) => !p.dead);
   if (!alive.length) return common();
-  if (damage > 0) {
+  // Kohteen valinnassa (`dead` annettu) kaatumista ei voi päätellä HP:sta; kaatumisrepliikki näkyy näyttämön kuplassa.
+  if (damage > 0 && !dead) {
     const before = partsAt(m, hpLeft + damage)!;
     const fell = parts.filter((p, i) => p.dead && !before[i].dead).pop();
     if (fell?.fall_line?.trim()) return { who: alive[0].name, text: fell.fall_line.trim() };

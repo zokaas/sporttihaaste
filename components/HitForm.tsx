@@ -7,6 +7,10 @@ import { logHit } from '@/app/kirjaa/actions';
 import Hint from '@/components/Hint';
 import { createClient } from '@/lib/supabase/client';
 import { shrinkJpeg } from '@/lib/image';
+import { writeTarget } from '@/lib/target';
+import TargetChoice, { type TargetPart } from '@/components/TargetChoice';
+
+export type { TargetPart };
 
 type Props = {
   days: string[];
@@ -16,6 +20,8 @@ type Props = {
   healthyByDay: Record<string, number>;
   weakness: Weakness[];
   celebrations: Record<string, string[]>;
+  /** Kohteen valinta päällä: elossa olevat ja kaatuneet osat. */
+  targets?: TargetPart[] | null;
 };
 
 
@@ -25,7 +31,13 @@ function duration(min: number) {
   return [h ? `${h} h` : '', m ? `${m} min` : ''].filter(Boolean).join(' ');
 }
 
-export default function HitForm({ days, sports, companions, weakness, celebrations, healthyByDay }: Props) {
+export default function HitForm({ days, sports, companions, weakness: weekWeakness, celebrations, healthyByDay, targets }: Props) {
+  // Kohteen valinta: sankari valitsee osan itse jokaisella iskulla (ei oletusta).
+  const [target, setTarget] = useState<number | null>(null);
+  const mustPick = Boolean(targets?.some((t) => !t.dead)) && target == null;
+  const chosen = targets?.find((t) => t.index === target) ?? null;
+  // Vain lyötävän osan heikkous tehoaa.
+  const weakness: Weakness[] = targets ? (chosen?.weakness ? [chosen.weakness] : []) : weekWeakness;
   const router = useRouter();
   const [day, setDay] = useState(days[days.length - 1]);
   const [sportName, setSportName] = useState('');
@@ -57,6 +69,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
   const toggle = (id: string) => setWithIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
 
   async function submit() {
+    if (mustPick) return setError('Valitse, ketä lyöt.');
     if (!sport) return setError('Valitse laji.');
     setBusy(true);
     setError('');
@@ -74,7 +87,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
         return setError('Kuvan tallennus epäonnistui. Poista kuva tai yritä uudelleen.');
       }
     }
-    const res = await logHit({ day, sport: sport.name, minutes, companions: withIds, special: claim, photo: photoPath });
+    const res = await logHit({ day, sport: sport.name, minutes, companions: withIds, special: claim, photo: photoPath, target: targets ? target : null });
     setBusy(false);
     if (!res.ok) return setError(res.error);
     // Etusivulla isku näkyy lentävänä lukuna ja HP-palkki laskee.
@@ -84,6 +97,12 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
 
   return (
     <section className="card">
+      {targets ? (
+        <fieldset className="field-group">
+          <legend>Ketä lyöt?</legend>
+          <TargetChoice targets={targets} selected={target} onPick={(i) => { setTarget(i); writeTarget(i); }} />
+        </fieldset>
+      ) : null}
       <fieldset className="field-group">
         <legend>Päivä</legend>
         <div className="chips">
@@ -166,7 +185,7 @@ export default function HitForm({ days, sports, companions, weakness, celebratio
         </div>
       ) : null}
 
-      <button className="btn" type="button" disabled={busy || !sport} onClick={submit}>{busy ? 'Tallennetaan…' : preview ? `Lyö ${preview.damage}` : 'Valitse laji'}</button>
+      <button className="btn" type="button" disabled={busy || !sport || mustPick} onClick={submit}>{busy ? 'Tallennetaan…' : mustPick ? 'Valitse ensin, ketä lyöt' : preview ? `Lyö ${preview.damage}${chosen ? ` → ${chosen.name}` : ''}` : 'Valitse laji'}</button>
       {error ? <p className="error" role="alert" style={{ margin: 0 }}>{error}</p> : null}
     </section>
   );

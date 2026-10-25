@@ -172,6 +172,7 @@ export interface LedgerEvent {
   damage: number;
   isTraining: boolean; // askeleet ja megamarssit eivät täytä sinettiä
   allTogether?: boolean; // koko porukka yhdessä (vain tilastoihin)
+  part?: number | null; // valittu osa moniosaisessa monsterissa (kohteen valinta); tyhjä = etummainen elossa oleva
 }
 
 export interface LedgerInput {
@@ -181,9 +182,14 @@ export interface LedgerInput {
   requiredByWeek: Record<number, string[]>; // terveet osallistujat viikolla
   pledgeBonusesByWeek: Record<number, number>; // pidettyjen lupausten määrä
   startPot?: number; // portinvartijan ylijäämä, joka on jo potissa kauden alkaessa
+  /** Kohteen valinta: viikon moniosaisen monsterin osien HP:t (summa = viikon HP). Muilla viikoilla osat kaatuvat järjestyksessä. */
+  partsByWeek?: Record<number, number[]>;
 }
 
-interface Fighter { week: number; hp: number; hitters: Set<string>; killedAt?: number; boss?: boolean; sealed?: boolean }
+interface Fighter { week: number; hp: number; hitters: Set<string>; killedAt?: number; boss?: boolean; sealed?: boolean; parts?: number[]; partDead?: boolean[] }
+
+/** Osan kaatuminen kohteen valinnassa (ilmoituksia ja näkymiä varten). */
+export type PartFall = { week: number; part: number; at: number };
 
 /**
  * Laskee kauden tilanteen viikon uptoWeek loppuun. Jos weekOpen on tosi, viimeinen viikko on vielä
@@ -194,6 +200,28 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
   const done: Fighter[] = [];
   let pot = input.startPot ?? 0; // portinvartijan ylijäämä
   let lostToSeal = 0;
+  const partFalls: PartFall[] = [];
+
+  /**
+   * Vahinko taistelijaan. Kohteen valinnassa isku osuu valittuun elossa olevaan osaan (muuten etummaiseen).
+   * Osan kaatava isku: ylijäämä palautetaan (ensi-iskuun), seuraavaan osaan se ei mene. Viimeinen elossa oleva osa
+   * toimii kuten tavallinen monsteri (kaatuu vasta sinetin täytyttyä). Palauttaa osan kaatumisen ylijäämän.
+   */
+  const hitFighter = (f: Fighter, dmg: number, part: number | null | undefined, at: number) => {
+    if (!f.parts || !f.partDead) { f.hp -= dmg; return 0; }
+    const alive = f.parts.map((_, j) => j).filter((j) => !f.partDead![j]);
+    const t = part != null && alive.includes(part) ? part : alive[0];
+    f.parts[t] -= dmg;
+    let over = 0;
+    if (alive.length > 1 && f.parts[t] <= 0) {
+      over = -f.parts[t];
+      f.parts[t] = 0;
+      f.partDead[t] = true;
+      partFalls.push({ week: f.week, part: t, at });
+    }
+    f.hp = f.parts.reduce((a, h, j) => a + (f.partDead![j] ? 0 : h), 0);
+    return over;
+  };
 
   const sealFull = (f: Fighter, week: number) =>
     (input.requiredByWeek[week] ?? []).every((u) => f.hitters.has(u));
@@ -208,7 +236,10 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
   };
 
   for (let w = 1; w <= Math.min(uptoWeek, BOSS_WEEK); w++) {
-    if (w <= MONSTER_WEEKS) queue.push({ week: w, hp: input.monsterHp[w - 1], hitters: new Set() });
+    if (w <= MONSTER_WEEKS) {
+      const parts = input.partsByWeek?.[w];
+      queue.push({ week: w, hp: input.monsterHp[w - 1], hitters: new Set(), ...(parts?.length ? { parts: [...parts], partDead: parts.map(() => false) } : {}) });
+    }
     else {
       // Koko potti iskee loppupomoon sen herätessä; kattoa ei ole. Jos potti ylittää HP:n, loput odottaa sinettiä.
       const boss: Fighter = { week: BOSS_WEEK, hp: input.bossHp - pot, hitters: new Set(), boss: true };
@@ -223,8 +254,15 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
       while (dmg > 0 && i < queue.length) {
         const f = queue[i];
         if (e.isTraining) f.hitters.add(e.userId);
-        f.hp -= dmg;
+        const over = hitFighter(f, dmg, e.part, e.at);
         dmg = 0;
+        if (over > 0) {
+          // Osa kaatui: ylijäämä ensi-iskuun (loppupomon viikolla potti on jo käytetty, joten seuraavaan taistelijaan).
+          if (w <= MONSTER_WEEKS) pot += over;
+          else dmg = over;
+          i++;
+          continue;
+        }
         if (tryKill(f, w, e.at)) {
           dmg = -f.hp; // ylijäämä jatkaa seuraavaan
           f.hp = 0;
@@ -245,8 +283,10 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
           queue.splice(j, 1);
           j--;
           if (overflow > 0) {
-            if (queue.length) queue[0].hp -= overflow;
-            else if (w <= MONSTER_WEEKS) pot += overflow;
+            if (queue.length) {
+              const over = hitFighter(queue[0], overflow, e.part, e.at);
+              if (over > 0 && w <= MONSTER_WEEKS) pot += over;
+            } else if (w <= MONSTER_WEEKS) pot += overflow;
           }
         }
       }
@@ -260,6 +300,8 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
       if (f.hp <= 0) {
         lostToSeal += -f.hp;
         f.hp = 1;
+        // Kohteen valinnassa viimeinen elossa oleva osa jatkaa 1 HP:lla.
+        if (f.parts && f.partDead) f.parts[f.partDead.findIndex((d) => !d)] = 1;
       }
     }
     if (w <= MONSTER_WEEKS) pot += (input.pledgeBonusesByWeek[w] ?? 0) * PLEDGE_BONUS;
@@ -275,8 +317,11 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
       padded: f.hp <= 0 ? -f.hp : 0,
       hitters: f.sealed ? [...new Set([...f.hitters, ...(input.requiredByWeek[Math.min(uptoWeek, BOSS_WEEK)] ?? [])])] : [...f.hitters],
       sealed: Boolean(f.sealed),
+      // Kohteen valinta: osien jäljellä oleva HP (kaatunut 0; viimeinen elossa oleva vähintään 1, pato näkyy padded-kentässä).
+      ...(f.parts && f.partDead ? { parts: f.parts.map((h, j) => ({ hp: f.partDead![j] ? 0 : Math.max(1, h), dead: f.partDead![j] })) } : {}),
     })),
     killed: done.map((f) => ({ week: f.week, killedAt: f.killedAt })),
+    partFalls,
   };
 }
 

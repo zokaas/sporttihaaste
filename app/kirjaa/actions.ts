@@ -5,11 +5,11 @@ import { FAMILY_WEAKNESS, hitDamage, specialOf, type Category } from '@/lib/rule
 import { loadSports } from '@/lib/sports';
 import { loggableDays, monthDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { PREVIEW_ERROR, previewOnly, today } from '@/lib/today';
-import { currentWeaknesses, loadBattle } from '@/lib/battle';
+import { currentWeaknesses, loadBattle, resolveTarget } from '@/lib/battle';
 import { afterHit } from '@/lib/events';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
 
-export type HitInput = { day: string; sport: string; minutes: number; companions: string[]; special?: string | null; photo?: string | null };
+export type HitInput = { day: string; sport: string; minutes: number; companions: string[]; special?: string | null; photo?: string | null; target?: number | null };
 
 const PHOTO_BUCKET = 'hit-photos';
 /** Treenikuvan polku kelpaa vain kirjaajan omasta kansiosta (käyttäjän id / satunnainen nimi). */
@@ -40,7 +40,9 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
   const md = monthDay(input.day);
   const celebration = (heroes ?? []).some((h) => h.pledge_locked_at && (h.birthday === md || h.name_day === md));
   const groupSize = 1 + companions.length;
-  const weaknesses = currentWeaknesses(battle, seasonWeek(input.day));
+  // Kohteen valinnassa vain lyötävän osan heikkous tehoaa.
+  const target = resolveTarget(battle, seasonWeek(input.day), input.target);
+  const weaknesses = target ? target.weaknesses : currentWeaknesses(battle, seasonWeek(input.day));
   // Erikoisheikkouden merkintä hyväksytään vain, kun se on viikon heikkous.
   const special = input.special && input.special === specialOf(weaknesses) ? input.special : null;
   const result = hitDamage({
@@ -54,7 +56,7 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
     special,
     participants: healthy,
   });
-  return { result, companions, special, weaknessHit: result.bonuses.some((b) => b.label.startsWith('Heikkous')), allTogether: healthy >= 2 && groupSize >= healthy } as const;
+  return { result, companions, special, target: target?.index ?? null, weaknessHit: result.bonuses.some((b) => b.label.startsWith('Heikkous')), allTogether: healthy >= 2 && groupSize >= healthy } as const;
 }
 
 type Computed = Exclude<Awaited<ReturnType<typeof computeHit>>, { error: string }>;
@@ -80,6 +82,7 @@ async function insertHit(supabase: ReturnType<typeof createClient>, userId: stri
     ...(hit.special ? { special: hit.special } : {}),
     ...(hit.weaknessHit ? { weakness_hit: true } : {}),
     ...(ownPhoto(input.photo, userId) ? { photo_path: input.photo } : {}),
+    ...(hit.target != null ? { target_part: hit.target } : {}),
   };
   for (;;) {
     const { error } = await supabase.from('hits').insert({ ...row, ...optional });

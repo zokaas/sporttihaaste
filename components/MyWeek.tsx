@@ -1,5 +1,7 @@
 'use client';
 import { useState } from 'react';
+import { writeTarget } from '@/lib/target';
+import TargetChoice, { type TargetPart } from '@/components/TargetChoice';
 import { useRouter } from 'next/navigation';
 import { toggleSickDay, toggleStep } from '@/app/actions';
 import { showStrike } from '@/components/StrikeToastHost';
@@ -24,6 +26,8 @@ type Props = {
   stepDamage: number;
   togetherCount: number;
   pledge: number;
+  /** Kohteen valinta: askelkuittaus kysyy, ketä lyödään. */
+  targets?: TargetPart[] | null;
 };
 
 const h = (n: number) => `${String(Math.round(n * 10) / 10).replace('.', ',')} h`;
@@ -33,6 +37,9 @@ export default function MyWeek(p: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [askContinue, setAskContinue] = useState(false);
+  // Askelpäivä, jolle kysytään kohdetta (kohteen valinta).
+  const [aimDay, setAimDay] = useState<string | null>(null);
+  const choose = Boolean(p.targets?.some((t) => !t.dead));
 
   async function run(fn: () => Promise<{ ok: boolean; error?: string }>) {
     setBusy(true);
@@ -44,9 +51,9 @@ export default function MyWeek(p: Props) {
   }
 
   // Tämän päivän kuittaus näyttää iskuikkunan kuten Lyö-valikko; menneiden päivien jälkikuittaus on hiljainen.
-  async function stepDay(day: string, on: boolean) {
+  async function stepDay(day: string, on: boolean, target: number | null = null) {
     const live = on && day === today;
-    const res = await toggleStep(day, on, live);
+    const res = await toggleStep(day, on, live, target);
     if (res.ok && live && res.strike) showStrike({ strike: res.strike, damage: STEP_DAY_DAMAGE, label: '👣 Askeleet!' });
     return res;
   }
@@ -113,7 +120,7 @@ export default function MyWeek(p: Props) {
                 aria-pressed={d.stepped}
                 aria-label={`${formatDay(d.day)}: ${d.sick ? 'sairaspäivä' : d.stepped ? 'askeleet kuitattu' : d.future ? 'tulossa' : 'ei kuitattu'}${d.patrol ? ', megamarssi' : ''}`}
                 disabled={d.future || d.sick || busy}
-                onClick={() => run(() => stepDay(d.day, !d.stepped))}
+                onClick={() => (!d.stepped && choose ? setAimDay(d.day) : run(() => stepDay(d.day, !d.stepped)))}
               >
                 <span>{wd}</span>
                 <b>{d.sick ? '🤒' : d.patrol ? '⭐' : d.stepped ? '✓' : date.replace(/\.$/, '').split('.')[0]}</b>
@@ -121,6 +128,13 @@ export default function MyWeek(p: Props) {
             );
           })}
         </div>
+        {aimDay && p.targets ? (
+          <div className="sick-box">
+            <strong>Ketä lyöt askeleilla ({formatDay(aimDay)})?</strong>
+            <TargetChoice targets={p.targets} selected={null} disabled={busy} onPick={(i) => { const d = aimDay; setAimDay(null); writeTarget(i); run(() => stepDay(d, true, i)); }} />
+            <button type="button" className="linklike small" onClick={() => setAimDay(null)}>Peru</button>
+          </div>
+        ) : null}
       </div>
 
       <details className="myweek-block sick-details" open={sickCount > 0 || askContinue}>
