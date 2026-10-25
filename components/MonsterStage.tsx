@@ -432,11 +432,13 @@ export default function MonsterStage(p: Props) {
             {parts.map((x, i) => (
               <button key={x.name} type="button" className={`stage-target${i === sel ? ' sel' : ''}${x.dead ? ' dead' : ''}`} disabled={x.dead} aria-pressed={i === sel}
                 onClick={(e) => { stop(e); pick(i); }}>
-                <span className="stage-target-img">{x.image ? <img src={resizedImage(x.image, 128)} alt="" /> : <b>{x.dead ? '✝' : x.name.slice(0, 1)}</b>}</span>
-                <span className="stage-target-body">
+                <span className="stage-target-head">
+                  <span className="stage-target-img">{x.image ? <img src={resizedImage(x.image, 128)} alt="" /> : <b>{x.dead ? '✝' : x.name.slice(0, 1)}</b>}</span>
                   <span className="stage-target-name">{x.name}</span>
-                  <span className="stage-target-hp" title={x.dead ? 'Kaatunut' : `${fmt(x.left)} HP`}><i style={{ width: `${x.dead ? 0 : Math.max(2, Math.min(100, (x.left / Math.max(1, x.hp)) * 100))}%` }} /></span>
                 </span>
+                <span className="stage-target-hp"><i style={{ width: `${x.dead ? 0 : Math.max(2, Math.min(100, (x.left / Math.max(1, x.hp)) * 100))}%` }} /></span>
+                <span className="stage-target-num">{x.dead ? '✝ Kaatunut' : `${fmt(x.left)} / ${fmt(x.hp)} HP`}</span>
+                {x.weakness && !x.dead ? <span className="stage-target-weak">🎯 {x.weakness}</span> : null}
               </button>
             ))}
           </div>
