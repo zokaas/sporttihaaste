@@ -17,7 +17,7 @@ import AwaySummary, { type AwayEvent } from '@/components/AwaySummary';
 import RecapPrompt from '@/components/RecapPrompt';
 import EarlyReveal from '@/components/EarlyReveal';
 import RecapCard from '@/components/RecapCard';
-import { activeWeaknesses, stageParts, weaknessesOf } from '@/lib/trio';
+import { activeWeaknesses, partHps, stageParts, weaknessesOf } from '@/lib/trio';
 import { parseFx } from '@/lib/fx';
 import Hint from '@/components/Hint';
 import TodayCard from '@/components/TodayCard';
@@ -97,6 +97,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
   const early = data.nextEarly ? monsters.get(week + 1) : undefined;
   const earlyImg = monsterImageUrl(early?.image_path ?? early?.parts?.find((x) => x.image_path)?.image_path);
   const earlyWeak = weaknessesOf(early);
+  // Kaksikko ja kolmikko esitellään osittain: kuva, nimi, HP ja oma heikkous.
+  const earlyParts = early?.parts?.length && early.hp ? early.parts.map((x, i) => ({ name: x.name, image: monsterImageUrl(x.image_path), hp: partHps(early.hp!, early.parts!.length)[i], weakness: x.weakness ?? null })) : null;
   const teaser = !early && week < BOSS_WEEK && data.today >= addDays(weekRange(week).end, -2)
     ? monsters.get(week + 1)?.teaser || (week + 1 === BOSS_WEEK ? 'Maa tärisee. Jokin valtava heräilee unestaan…' : 'Jotain liikkuu varjoissa. Se tietää jo nimesi…')
     : null;
@@ -171,7 +173,18 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
       {early?.name ? (
         <EarlyReveal week={week + 1} boss={week + 1 === BOSS_WEEK}>
           <span className="stage-week">{week + 1 === BOSS_WEEK ? '🔥 Loppupomo paljastui' : '👁️ Seuraava monsteri paljastui'}</span>
-          {earlyImg ? <img className="early-reveal-img" src={earlyImg} alt="" /> : null}
+          {earlyParts ? (
+            <div className="early-parts">
+              {earlyParts.map((x) => (
+                <div key={x.name} className="early-part">
+                  {x.image ? <img src={resizedImage(x.image, 256)} alt="" /> : <b>{x.name.slice(0, 1)}</b>}
+                  <strong>{x.name}</strong>
+                  <span className="muted small">{fmt(x.hp)} HP</span>
+                  {x.weakness ? <span className="small ok">{x.weakness}</span> : null}
+                </div>
+              ))}
+            </div>
+          ) : earlyImg ? <img className="early-reveal-img" src={earlyImg} alt="" /> : null}
           <h2 className="display" style={{ margin: 0 }}>{early.name}</h2>
           {early.taunt_full || early.teaser ? <p className="teaser-text" style={{ margin: 0 }}>“{early.taunt_full || early.teaser}”</p> : null}
           <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
@@ -228,7 +241,9 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
 
       {early?.name ? (
         <section className="card teaser early">
-          {earlyImg ? <img className="early-img" src={resizedImage(earlyImg, 256)} alt="" width={84} height={84} /> : null}
+          {earlyParts && earlyParts.some((x) => x.image) ? (
+            <span className="avatar-stack early-stack">{earlyParts.filter((x) => x.image).map((x) => <img key={x.name} className="avatar" src={resizedImage(x.image!, 128)} alt="" width={48} height={48} />)}</span>
+          ) : earlyImg ? <img className="early-img" src={resizedImage(earlyImg, 256)} alt="" width={84} height={84} /> : null}
           <div style={{ minWidth: 0 }}>
             <span className="stage-week">{week + 1 === BOSS_WEEK ? 'Loppupomo' : 'Seuraava monsteri'} · herää ma klo 00</span>
             <h3 className="display" style={{ margin: '2px 0 0' }}><Link className="tap" href={`/monsteri/${week + 1}`}>{early.name}</Link></h3>
