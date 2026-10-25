@@ -9,7 +9,8 @@ import { requireHero } from '@/lib/page';
 import { monsterImageUrl } from '@/lib/supabase/client';
 import { finalBlows } from '@/lib/stats';
 import { formatDay, weekRange, BOSS_WEEK, MONSTER_WEEKS } from '@/lib/season';
-import { weaknessesOf } from '@/lib/trio';
+import { stageParts, weaknessesOf } from '@/lib/trio';
+import { choosesTarget } from '@/lib/battle';
 import { computeLedger, sealView, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE } from '@/lib/rules';
 import SeasonChart from '@/components/SeasonChart';
 import { seasonWeek } from '@/lib/season';
@@ -94,6 +95,10 @@ export default async function Bestiaario() {
                       : f ? <span style={{ color: 'var(--blood-text)' }}>{w < b.week ? 'Rästissä' : 'Taistelussa'}: {(() => { const v = sealView(f, b.required); return v.dam ? `${fmt(v.hp)} HP, sinetti kesken` : `${fmt(v.hp)} / ${fmt(m?.hp ?? 0)} HP`; })()}</span>
                         : sleeping ? 'Paljastui etuajassa, herää maanantaina' : future ? 'Paljastuu viikon alkaessa' : ''}
                   </div>
+                  {/* Kaksikko ja kolmikko: jokaisen osan oma tila (kohteen valinnassa osat kaatuvat missä järjestyksessä tahansa). */}
+                  {!k && f && m?.parts?.length ? (
+                    <div className="facts">{choosesTarget(m) ? '🎯 ' : ''}{(stageParts(m, sealView(f, b.required).hp, false, () => null, choosesTarget(m) ? f.parts : null) ?? []).map((x) => `${x.name} ${x.dead ? '✝' : `${fmt(x.left)} HP`}${x.weakness && !x.dead ? ` (${x.weakness})` : ''}`).join(' · ')}</div>
+                  ) : null}
                 </div>
               </li>
             );

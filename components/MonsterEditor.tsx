@@ -404,14 +404,14 @@ function LinePreview({ m }: { m: Monster }) {
     <details>
       <summary className="btn btn-ghost" style={{ minHeight: 44, listStyle: 'none' }}>👁️ Esikatsele repliikit ▾</summary>
       <div style={{ display: 'grid', gap: 14, marginTop: 10, padding: 14, borderRadius: 14, background: 'var(--deep)' }}>
-        <Bubbles title="Täysi HP" lines={stageTaunt(speaker, hp) ?? []} />
-        <Bubbles title="Iskureaktiot (yksi arvotaan)" lines={hits} />
+        <Bubbles title={parts ? "Täysi HP (kunkin osan oma kupla)" : "Täysi HP"} lines={stageTaunt(speaker, hp) ?? []} />
+        <Bubbles title={parts ? 'Iskureaktiot (lyöty osa vastaa yhdellä omistaan)' : 'Iskureaktiot (yksi arvotaan)'} lines={hits} />
         <Bubbles title="Tuplavoimaisku" lines={crits} />
         {parts?.slice(0, -1).map((p, i) => <Bubbles key={i} title={`Kun ${p.name || `osa ${i + 1}`} kaatuu (myös ilmoituksena)`} lines={[fallLine(parts, i)].filter((l): l is Line => Boolean(l))} />)}
         <Bubbles title="HP alle 50 %" lines={stageTaunt(speaker, hp * 0.45) ?? []} />
         <Bubbles title="HP alle 20 %" lines={stageTaunt(speaker, hp * 0.1) ?? []} />
         {m.week < BOSS_WEEK ? <Bubbles title="Rästissä" lines={stageTaunt(speaker, hp * 0.7, true) ?? []} /> : null}
-        <span className="small" style={{ color: '#c9c1b4' }}>Tyhjät kentät näkyvät oletusrepliikkeinä. Moniosaisella kaatunut osa vaikenee.</span>
+        <span className="small" style={{ color: '#c9c1b4' }}>Tyhjät kentät näkyvät oletusrepliikkeinä. Moniosaisella puhuu kerrallaan vain esillä oleva osa ({m.choose_target ? 'sankarin valitsema' : 'etummainen elossa oleva'}); muiden osien kuplat odottavat vuoroaan. Kaatunut osa vaikenee.</span>
       </div>
     </details>
   );
