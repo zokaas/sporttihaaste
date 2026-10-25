@@ -182,6 +182,10 @@ table.plain th, table.plain td { text-align: left; padding: 6px 4px; border-bott
 .stage-part.dead::after { content: '✝'; position: absolute; inset: 0; display: grid; place-items: center; color: var(--light); font-size: 16px; }
 .stage-parts-label { font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-left: 4px; }
 /* Kohteen valinta: nuolet nimen vieressä ja osakortit HP-palkkeineen. */
+/* Kohteen valinta: kuva omalla alueellaan, tiedot (kupla, nimi, HP, osat) sen alla, jotta kuva ei peity. */
+.stage.is-choose { height: auto; max-height: none; min-height: 0; display: flex; flex-direction: column; }
+.stage.is-choose .stage-art { position: relative; inset: auto; height: 46vh; min-height: 280px; max-height: 420px; flex: none; }
+.stage.is-choose .stage-info { position: relative; padding-top: 12px; background: var(--deep); }
 .stage-choose { width: 100%; display: flex; align-items: center; gap: 8px; }
 .stage-choose .stage-title { flex: 1; min-width: 0; }
 .stage-arrow { flex: none; width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(0, 0, 0, 0.35); color: var(--light); font-size: 18px; line-height: 1; display: grid; place-items: center; cursor: pointer; }

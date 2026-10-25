@@ -327,7 +327,7 @@ export default function MonsterStage(p: Props) {
   const damPct = Math.min(100, (p.padded / Math.max(1, p.maxHp / 3)) * 100);
   const label = `${p.title}, ${fmt(p.hp)} / ${fmt(p.maxHp)} HP.`;
   const nearDeath = state === 'dying' && p.hp / p.maxHp < 0.1;
-  const className = `stage state-${state}${p.fx && hit && (p.fx.style === 'shake' || state === 'dying') ? ' fx-roar' : ''}${offscreen ? ' is-offscreen' : ''}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}`;
+  const className = `stage state-${state}${p.fx && hit && (p.fx.style === 'shake' || state === 'dying') ? ' fx-roar' : ''}${offscreen ? ' is-offscreen' : ''}${nearDeath ? ' near-death' : ''}${hit ? ' is-hit' : ''}${revealing ? ' is-revealing' : ''}${p.boss ? ' is-boss' : ''}${choose ? ' is-choose' : ''}`;
   const sealDone = p.seal ? p.seal.filter((s) => !s.excused).every((s) => s.hit) : false;
 
   const image = front ? front.image ?? p.image : p.image;

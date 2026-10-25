@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import { addDays, loggableDays, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { PREVIEW_ERROR, previewOnly, today } from '@/lib/today';
 import { afterStep, checkKills } from '@/lib/events';
-import { loadBattle } from '@/lib/battle';
+import { loadBattle, targetParts } from '@/lib/battle';
+import { monsterImageUrl, resizedImage } from '@/lib/supabase/client';
 import { sendOrQueue, sendPush } from '@/lib/push';
 import { isQuietHour } from '@/lib/quiet';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
@@ -46,6 +47,15 @@ export async function toggleStep(day: string, on: boolean, withStrike = false, t
   // Lyö-valikko näyttää iskuikkunan: monsterin tilanne askelten jälkeen.
   if (res.ok && on && withStrike) return { ...res, strike: await strikeSummary(supabase, today()).catch(() => null) };
   return res;
+}
+
+/** Kohteen valinta askelkuittaukseen: kuluvan viikon monsterin osat (null = ei valintaa). */
+export async function stepTargets() {
+  const { supabase, user } = await me();
+  if (!user) return null;
+  const now = today();
+  const b = await loadBattle(supabase, now);
+  return targetParts(b, seasonWeek(now), (p) => { const u = monsterImageUrl(p); return u ? resizedImage(u, 256) : null; });
 }
 
 /**

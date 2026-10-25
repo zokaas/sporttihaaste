@@ -7,10 +7,10 @@ import { logHit } from '@/app/kirjaa/actions';
 import Hint from '@/components/Hint';
 import { createClient } from '@/lib/supabase/client';
 import { shrinkJpeg } from '@/lib/image';
-import { readTarget, writeTarget } from '@/lib/target';
+import { writeTarget } from '@/lib/target';
+import TargetChoice, { type TargetPart } from '@/components/TargetChoice';
 
-/** Kohteen valinta: moniosaisen monsterin osa. */
-export type TargetPart = { index: number; name: string; image: string | null; hp: number; weakness: Weakness | null; dead: boolean };
+export type { TargetPart };
 
 type Props = {
   days: string[];
@@ -32,13 +32,9 @@ function duration(min: number) {
 }
 
 export default function HitForm({ days, sports, companions, weakness: weekWeakness, celebrations, healthyByDay, targets }: Props) {
-  // Kohteen valinta: oletuksena etusivulla viimeksi valittu osa (tai etummainen elossa oleva).
-  const firstAlive = targets?.find((t) => !t.dead)?.index ?? null;
-  const [target, setTarget] = useState<number | null>(firstAlive);
-  useEffect(() => {
-    const saved = readTarget();
-    if (saved != null && targets?.some((t) => t.index === saved && !t.dead)) setTarget(saved);
-  }, [targets]);
+  // Kohteen valinta: sankari valitsee osan itse jokaisella iskulla (ei oletusta).
+  const [target, setTarget] = useState<number | null>(null);
+  const mustPick = Boolean(targets?.some((t) => !t.dead)) && target == null;
   const chosen = targets?.find((t) => t.index === target) ?? null;
   // Vain lyötävän osan heikkous tehoaa.
   const weakness: Weakness[] = targets ? (chosen?.weakness ? [chosen.weakness] : []) : weekWeakness;
@@ -73,6 +69,7 @@ export default function HitForm({ days, sports, companions, weakness: weekWeakne
   const toggle = (id: string) => setWithIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
 
   async function submit() {
+    if (mustPick) return setError('Valitse, ketä lyöt.');
     if (!sport) return setError('Valitse laji.');
     setBusy(true);
     setError('');
@@ -103,17 +100,7 @@ export default function HitForm({ days, sports, companions, weakness: weekWeakne
       {targets ? (
         <fieldset className="field-group">
           <legend>Ketä lyöt?</legend>
-          <div className="target-pick">
-            {targets.map((t) => (
-              <button key={t.index} type="button" className={`target-card${t.index === target ? ' sel' : ''}${t.dead ? ' dead' : ''}`} disabled={t.dead} aria-pressed={t.index === target}
-                onClick={() => { setTarget(t.index); writeTarget(t.index); }}>
-                {t.image ? <img src={t.image} alt="" /> : <b>{t.dead ? '✝' : t.name.slice(0, 1)}</b>}
-                <span className="target-name">{t.name}</span>
-                <span className="muted small">{t.dead ? 'Kaatunut' : `${t.hp.toLocaleString('fi-FI')} HP`}</span>
-                {t.weakness && !t.dead ? <span className="small ok">{t.weakness}</span> : null}
-              </button>
-            ))}
-          </div>
+          <TargetChoice targets={targets} selected={target} onPick={(i) => { setTarget(i); writeTarget(i); }} />
         </fieldset>
       ) : null}
       <fieldset className="field-group">
@@ -198,7 +185,7 @@ export default function HitForm({ days, sports, companions, weakness: weekWeakne
         </div>
       ) : null}
 
-      <button className="btn" type="button" disabled={busy || !sport} onClick={submit}>{busy ? 'Tallennetaan…' : preview ? `Lyö ${preview.damage}` : 'Valitse laji'}</button>
+      <button className="btn" type="button" disabled={busy || !sport || mustPick} onClick={submit}>{busy ? 'Tallennetaan…' : mustPick ? 'Valitse ensin, ketä lyöt' : preview ? `Lyö ${preview.damage}${chosen ? ` → ${chosen.name}` : ''}` : 'Valitse laji'}</button>
       {error ? <p className="error" role="alert" style={{ margin: 0 }}>{error}</p> : null}
     </section>
   );
