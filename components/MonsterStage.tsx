@@ -166,18 +166,24 @@ export default function MonsterStage(p: Props) {
   const taunts: Line[] = typeof p.taunt === 'string' ? [{ who: null, text: p.taunt }] : p.taunt ?? [];
   const hitLine: Line | null = typeof p.hitLine === 'string' ? { who: null, text: p.hitLine } : p.hitLine ?? null;
   const tauntKey = taunts.map((l) => `${l.who}:${l.text}`).join('|');
-  useEffect(() => { setTaunt('on'); }, [tauntKey]);
+  // Kaksikolla ja kolmikolla repliikit näytetään yksi kerrallaan, kukin lukuajan verran.
+  const [tauntIdx, setTauntIdx] = useState(0);
+  useEffect(() => { setTaunt('on'); setTauntIdx(0); }, [tauntKey]);
   useEffect(() => {
     if (taunt === 'gone') return;
     if (taunt === 'fading') {
-      const t = window.setTimeout(() => setTaunt('gone'), 600);
+      const t = window.setTimeout(() => {
+        // Seuraava osa puhuu, tai kaikki ovat puhuneet.
+        if (tauntIdx + 1 < taunts.length) { setTauntIdx(tauntIdx + 1); setTaunt('on'); } else setTaunt('gone');
+      }, 600);
       return () => clearTimeout(t);
     }
     if (offscreen || revealing || !pageVisible || modalOpen) return;
-    const t = window.setTimeout(() => setTaunt('fading'), Math.max(TAUNT_MS, taunts.reduce((a, l) => a + readMs(l.text), 0)));
+    const line = taunts[tauntIdx];
+    const t = window.setTimeout(() => setTaunt('fading'), Math.max(TAUNT_MS, line ? readMs(line.text) : 0));
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taunt, offscreen, revealing, pageVisible, modalOpen, tauntKey]);
+  }, [taunt, tauntIdx, offscreen, revealing, pageVisible, modalOpen, tauntKey]);
   const parts = p.parts?.length ? p.parts : null;
   const front = parts ? parts.find((x) => !x.dead) ?? parts[parts.length - 1] : null;
   const deadParts = parts ? parts.filter((x) => x.dead).length : 0;
@@ -346,9 +352,9 @@ export default function MonsterStage(p: Props) {
       <div className="stage-info">
         {/* Puhekupla nimen yläpuolella, jotta se ei peitä kuvan kasvoja (ne ovat yleensä kuvan yläosassa). */}
         {reply && hitLine && !p.dead ? <div key="reply" className="stage-taunt is-reply" role="status"><Speech line={hitLine} /></div>
-          : taunts.length && !p.dead && taunt !== 'gone' ? taunts.map((l, i) => (
-            <div key={`taunt-${i}`} className={`stage-taunt${taunt === 'fading' ? ' fading' : ''}`} role="note" style={i && taunt !== 'fading' ? { animationDelay: `${i * 0.6}s` } : undefined}><Speech line={l} /></div>
-          )) : null}
+          : taunts[tauntIdx] && !p.dead && taunt !== 'gone' ? (
+            <div key={`taunt-${tauntIdx}`} className={`stage-taunt${taunt === 'fading' ? ' fading' : ''}`} role="note"><Speech line={taunts[tauntIdx]} /></div>
+          ) : null}
         {p.backlog ? <span className="pill" style={{ background: 'var(--blood)' }}>Rästi viikolta {p.week}</span> : null}
         {parts ? (
           <div className="stage-parts" aria-label={`${groupName(parts.length)}: ${deadParts}/${parts.length} kaatunut`}>
