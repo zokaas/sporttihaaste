@@ -186,19 +186,20 @@ export default function MonsterStage(p: Props) {
   const choose = Boolean(p.choose && parts && !p.dead);
   // Kohteen valinta: valittu osa muistetaan (sama valinta kirjauslomakkeella ja askelkuittauksessa).
   const [picked, setPicked] = useState<number | null>(null);
+  // Valinta muistetaan vain etusivun taistelussa (effects); monsterin sivulla osia vain selataan.
   useEffect(() => {
-    if (!choose) return;
+    if (!choose || !p.effects) return;
     setPicked(readTarget());
     const sync = (e: Event) => setPicked((e as CustomEvent<number>).detail);
     window.addEventListener(TARGET_EVENT, sync);
     return () => window.removeEventListener(TARGET_EVENT, sync);
-  }, [choose]);
+  }, [choose, p.effects]);
   const firstAlive = parts ? parts.findIndex((x) => !x.dead) : -1;
   const sel = choose && picked != null && parts?.[picked] && !parts[picked].dead ? picked : firstAlive;
   const front = parts ? parts[sel] ?? parts[parts.length - 1] : null;
   const deadParts = parts ? parts.filter((x) => x.dead).length : 0;
   const deadKey = parts ? parts.map((x, i) => (x.dead ? i : -1)).filter((i) => i >= 0).join(',') : '';
-  const pick = (i: number) => { if (parts?.[i] && !parts[i].dead) { setPicked(i); writeTarget(i); } };
+  const pick = (i: number) => { if (parts?.[i] && !parts[i].dead) { setPicked(i); if (p.effects) writeTarget(i); } };
   const step = (dir: 1 | -1) => {
     if (!parts) return;
     for (let k = 1; k <= parts.length; k++) {
