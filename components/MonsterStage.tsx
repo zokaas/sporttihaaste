@@ -70,7 +70,7 @@ type Props = {
 };
 
 /**
- * Efektin partikkelit vain iskun hetkellä: pölähdys osumakohdasta ja tyylin mukainen suihku (~2,5 s).
+ * Efektin partikkelit vain iskun hetkellä: pölähdys osumakohdasta ja tyylin mukainen suihku (~6 s).
  * Voimistuu monsterin heiketessä: haavoittunut ×1,5, horjuva ×2 isommilla emojeilla; finale = koko ruudun loppupurkaus.
  */
 export function StageFx({ fx, burst, level = 'healthy' }: { fx: MonsterFx; burst: boolean; level?: 'healthy' | 'hurt' | 'dying' | 'finale' }) {
@@ -79,7 +79,7 @@ export function StageFx({ fx, burst, level = 'healthy' }: { fx: MonsterFx; burst
     if (!burst) return;
     const at = Date.now();
     setShot(at);
-    const t = setTimeout(() => setShot((x) => (x === at ? 0 : x)), 2600);
+    const t = setTimeout(() => setShot((x) => (x === at ? 0 : x)), 6200);
     return () => clearTimeout(t);
   }, [burst]);
   const emojis = fxEmojis(fx.emoji);
@@ -93,7 +93,7 @@ export function StageFx({ fx, burst, level = 'healthy' }: { fx: MonsterFx; burst
   return (
     <div key={shot} className={`stage-fx fx-${fx.style} fx-level-${level}`}>
       {Array.from({ length: shower }, (_, i) => (
-        <i key={i} style={{ left: `${4 + ((i * 37) % 92)}%`, animationDelay: `${((i * 0.23) % 0.9).toFixed(2)}s`, fontSize: `${Math.round((18 + (i % 3) * 6) * size)}px` }}>{pick(i)}</i>
+        <i key={i} style={{ left: `${4 + ((i * 37) % 92)}%`, animationDelay: `${((i * 0.37) % 1.8).toFixed(2)}s`, fontSize: `${Math.round((18 + (i % 3) * 6) * size)}px` }}>{pick(i)}</i>
       ))}
       {Array.from({ length: bursts }, (_, i) => {
         const a = (i / bursts) * Math.PI * 2;
@@ -124,6 +124,8 @@ function write(key: string, value: string) {
 }
 
 const TAUNT_MS = 4000;
+/** Puhekuplan lukuaika tekstin pituuden mukaan: vähintään 6 s, pitkä repliikki enintään 14 s. */
+const readMs = (text: string) => Math.min(14000, Math.max(6000, 2500 + text.length * 70));
 /** Osan kaatumisbannerin kesto (sama kuin .part-fall-animaatio). */
 const PART_FALL_MS = 2800;
 
@@ -172,9 +174,10 @@ export default function MonsterStage(p: Props) {
       return () => clearTimeout(t);
     }
     if (offscreen || revealing || !pageVisible || modalOpen) return;
-    const t = window.setTimeout(() => setTaunt('fading'), TAUNT_MS + Math.max(0, taunts.length - 1) * 2500);
+    const t = window.setTimeout(() => setTaunt('fading'), Math.max(TAUNT_MS, taunts.reduce((a, l) => a + readMs(l.text), 0)));
     return () => clearTimeout(t);
-  }, [taunt, offscreen, revealing, pageVisible, modalOpen, taunts.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taunt, offscreen, revealing, pageVisible, modalOpen, tauntKey]);
   const parts = p.parts?.length ? p.parts : null;
   const front = parts ? parts.find((x) => !x.dead) ?? parts[parts.length - 1] : null;
   const deadParts = parts ? parts.filter((x) => x.dead).length : 0;
@@ -226,7 +229,7 @@ export default function MonsterStage(p: Props) {
         const at = partFellRef.current ? PART_FALL_MS + 200 : 500;
         partFellRef.current = false;
         later(() => setReply(true), at);
-        later(() => setReply(false), at + 5000);
+        later(() => setReply(false), at + readMs(typeof p.hitLine === 'string' ? p.hitLine : p.hitLine.text));
       }
       later(() => setShownHp(p.hp), 450);
       later(() => setHit(false), 900);
