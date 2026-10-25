@@ -70,7 +70,7 @@ type Props = {
 };
 
 /**
- * Efektin partikkelit vain iskun hetkellä: pölähdys osumakohdasta ja tyylin mukainen suihku (~2,5 s).
+ * Efektin partikkelit vain iskun hetkellä: pölähdys osumakohdasta ja tyylin mukainen suihku (~6 s).
  * Voimistuu monsterin heiketessä: haavoittunut ×1,5, horjuva ×2 isommilla emojeilla; finale = koko ruudun loppupurkaus.
  */
 export function StageFx({ fx, burst, level = 'healthy' }: { fx: MonsterFx; burst: boolean; level?: 'healthy' | 'hurt' | 'dying' | 'finale' }) {
@@ -79,7 +79,7 @@ export function StageFx({ fx, burst, level = 'healthy' }: { fx: MonsterFx; burst
     if (!burst) return;
     const at = Date.now();
     setShot(at);
-    const t = setTimeout(() => setShot((x) => (x === at ? 0 : x)), 2600);
+    const t = setTimeout(() => setShot((x) => (x === at ? 0 : x)), 6200);
     return () => clearTimeout(t);
   }, [burst]);
   const emojis = fxEmojis(fx.emoji);
@@ -93,7 +93,7 @@ export function StageFx({ fx, burst, level = 'healthy' }: { fx: MonsterFx; burst
   return (
     <div key={shot} className={`stage-fx fx-${fx.style} fx-level-${level}`}>
       {Array.from({ length: shower }, (_, i) => (
-        <i key={i} style={{ left: `${4 + ((i * 37) % 92)}%`, animationDelay: `${((i * 0.23) % 0.9).toFixed(2)}s`, fontSize: `${Math.round((18 + (i % 3) * 6) * size)}px` }}>{pick(i)}</i>
+        <i key={i} style={{ left: `${4 + ((i * 37) % 92)}%`, animationDelay: `${((i * 0.37) % 1.8).toFixed(2)}s`, fontSize: `${Math.round((18 + (i % 3) * 6) * size)}px` }}>{pick(i)}</i>
       ))}
       {Array.from({ length: bursts }, (_, i) => {
         const a = (i / bursts) * Math.PI * 2;
