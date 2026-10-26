@@ -16,10 +16,13 @@ import { currentUser } from '@/lib/auth';
 import { navVisibility } from '@/lib/nav';
 import Nav from '@/components/Nav';
 import Hint from '@/components/Hint';
+import PerfBadge from '@/components/PerfBadge';
+import { requestStart } from '@/lib/timing';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string; krit?: string; finaali?: string; kohde?: string } }) {
+  const req = requestStart();
   const supabase = createClient();
   navVisibility().catch(() => {});
   const user = await currentUser();
@@ -63,6 +66,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
       <>
         <Nav current="/" />
         <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1' || searchParams.krit === '2'} triple={searchParams.krit === '2'} aim={searchParams.kohde ? Number(searchParams.kohde) : null} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
+        {me.is_admin ? <PerfBadge server={{ cold: req.cold, uptimeS: req.uptimeS, ...battle.timing, totalMs: Date.now() - req.t0 }} /> : null}
       </>
     );
   }

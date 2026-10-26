@@ -93,6 +93,7 @@ export const choosesTarget = (m: { parts?: unknown[] | null; choose_target?: boo
 
 /** Lataa kauden tilanteen ja laskee sen kirjauksista. Kuluva viikko on vielä auki. */
 export async function loadBattle(supabase: SupabaseClient, today: string) {
+  const t0 = Date.now();
   const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }, sports, { data: gateRow }] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at'),
     // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot. Haetaan rinnakkain.
@@ -106,6 +107,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     // Portinvartija (migraatio 027). Ilman taulua käytetään oletuksia.
     supabase.from('gate').select('name, description, image_path, hp, taunt').eq('id', 1).maybeSingle(),
   ]);
+  const t1 = Date.now();
   const heroList = (heroes ?? []) as Hero[];
   let monsterList = (monsters ?? []) as unknown as PublicMonster[];
   if (monsterList.length === 0) monsterList = (publicMonsters ?? []) as PublicMonster[];
@@ -171,7 +173,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const grace = graceWeek(today);
   const base = { gate, week, today, grace, nextEarly, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, kela, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
 
-  if (!hpLocked && !hpPreview) return { ...base, hpLocked, hpPreview, required: participants, ledger: null, events: [] as LedgerEvent[], ledgerInput: null };
+  if (!hpLocked && !hpPreview) return { ...base, hpLocked, hpPreview, required: participants, ledger: null, events: [] as LedgerEvent[], ledgerInput: null, timing: { queriesMs: t1 - t0, computeMs: Date.now() - t1 } };
 
   const events: LedgerEvent[] = [
     ...hitList.map((h) => ({ week: seasonWeek(h.trained_on), at: Date.parse(h.created_at), userId: h.user_id, damage: h.damage, isTraining: true, allTogether: h.all_together, part: h.target_part ?? null })),
@@ -200,7 +202,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   for (const m of monsterList) if (m.week <= MONSTER_WEEKS && choosesTarget(m)) partsByWeek[m.week] = partHps(monsterHp[m.week - 1], m.parts!.length);
   const ledgerInput = { monsterHp, bossHp: byWeek.get(BOSS_WEEK)!.hp!, events: [...testKills, ...events], requiredByWeek, pledgeBonusesByWeek, startPot: gateCarry ? gate.surplus : 0, partsByWeek };
   const ledger = computeLedger(ledgerInput, week, true);
-  return { ...base, hpLocked, hpPreview, required: requiredByWeek[week], ledger, events, ledgerInput };
+  return { ...base, hpLocked, hpPreview, required: requiredByWeek[week], ledger, events, ledgerInput, timing: { queriesMs: t1 - t0, computeMs: Date.now() - t1 } };
 }
 
 /** Viikon heikkoudet iskuhetkellä: moniosaisella kaikkien osien heikkoudet koko viikon. */
