@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { writeTarget } from '@/lib/target';
 import TargetChoice, { type TargetPart } from '@/components/TargetChoice';
 import { useRouter } from 'next/navigation';
@@ -57,11 +57,17 @@ export default function MyWeek(p: Props) {
 
   // Tämän päivän kuittaus vie etusivun alkuun, jossa monsteri ottaa askeleet vastaan (kuten Lyö-valikko);
   // menneiden päivien jälkikuittaus on hiljainen.
+  // Päivä, jonka tallennus on kesken, ei ota uutta napautusta (tuplapainallus ei peru juuri kuitattua).
+  const pending = useRef(new Set<string>());
   async function stepDay(day: string, on: boolean, target: number | null = null) {
+    if (pending.current.has(day)) return;
+    pending.current.add(day);
     const live = on && day === today;
     setOptimistic((o) => ({ ...o, [day]: on }));
     setError('');
-    const res = await toggleStep(day, on, false, target);
+    const res = await toggleStep(day, on, false, target).catch(() => ({ ok: false as const, error: 'Yhteys katkesi. Yritä uudelleen.' }));
+    // Tämän päivän kuittauksen jälkeen siirrytään etusivulle: päivä pysyy lukittuna siihen asti.
+    if (!(res.ok && live)) pending.current.delete(day);
     if (!res.ok) {
       setOptimistic((o) => { const { [day]: _, ...rest } = o; return rest; });
       return setError(res.error ?? 'Jokin meni pieleen.');
