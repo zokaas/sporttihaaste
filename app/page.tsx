@@ -21,7 +21,7 @@ import { requestStart } from '@/lib/timing';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string; krit?: string; finaali?: string; kohde?: string } }) {
+export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string; krit?: string; finaali?: string; kohde?: string; askel?: string } }) {
   const req = requestStart();
   const supabase = createClient();
   navVisibility().catch(() => {});
@@ -65,7 +65,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
     return (
       <>
         <Nav current="/" />
-        <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1' || searchParams.krit === '2'} triple={searchParams.krit === '2'} aim={searchParams.kohde ? Number(searchParams.kohde) : null} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
+        <Battle data={battle} userId={user.id} ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null} crit={searchParams.krit === '1' || searchParams.krit === '2'} triple={searchParams.krit === '2'} aim={searchParams.kohde ? Number(searchParams.kohde) : null} ownLabel={searchParams.askel ? '👣 Askeleet!' : undefined} offsetMs={testOffsetMs()} isAdmin={Boolean(me.is_admin)} />
         {me.is_admin ? <PerfBadge server={{ cold: req.cold, uptimeS: req.uptimeS, ...battle.timing, totalMs: Date.now() - req.t0 }} /> : null}
       </>
     );
@@ -83,6 +83,7 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
           names={new Map(gateBattle.heroes.map((h) => [h.id, h.hero_name ?? '']))}
           stepped={gateBattle.steps.filter((x) => x.day === today()).length}
           ownHit={Number(searchParams.isku) > 0 ? Number(searchParams.isku) : null}
+          ownLabel={searchParams.askel ? '👣 Askeleet!' : undefined}
           crit={searchParams.krit === '1' || searchParams.krit === '2'}
           offsetMs={testOffsetMs()}
         />

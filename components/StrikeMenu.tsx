@@ -7,8 +7,8 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { stepTargets, toggleStep } from '@/app/actions';
-import { STEP_DAY_DAMAGE, STEP_GOAL } from '@/lib/rules';
-import { showStrike } from '@/components/StrikeToastHost';
+import { STEP_GOAL } from '@/lib/rules';
+import { goStrike, stepStrikeQuery } from '@/lib/goStrike';
 
 /** Alapalkin Lyö: kysyy, kirjataanko treeni vai kuitataanko tämän päivän askeleet. */
 export default function StrikeMenu({ day, stepped }: { day: string | null; stepped: boolean }) {
@@ -26,6 +26,10 @@ export default function StrikeMenu({ day, stepped }: { day: string | null; stepp
     return () => { live = false; };
   }, [open, day, stepped]);
   const choose = Boolean(targets?.some((t) => !t.dead));
+  // Nappia voi painaa heti: jos osat ovat vielä tulossa, odotetaan ne ja kuitataan sitten (tai kysytään kohde).
+  useEffect(() => {
+    if (aim && targets !== undefined && !choose && !busy) void step();
+  }, [aim, targets]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!open) return;
@@ -38,14 +42,13 @@ export default function StrikeMenu({ day, stepped }: { day: string | null; stepp
     if (!day) return;
     setBusy(true);
     setMsg(null);
-    const res = await toggleStep(day, true, true, target);
+    const res = await toggleStep(day, true, false, target);
     setBusy(false);
-    if (!res.ok) return setMsg({ ok: false, text: res.error });
-    // Sivu pysyy paikallaan: monsteri ottaa askeleet vastaan pienessä iskuikkunassa ruudun yläreunassa.
+    if (!res.ok) { setAim(false); return setMsg({ ok: false, text: res.error }); }
+    // Etusivun alkuun: monsteri ottaa askeleet vastaan näyttämöllä.
     setOpen(false);
     setAim(false);
-    if (res.strike) showStrike({ strike: res.strike, damage: STEP_DAY_DAMAGE, label: '👣 Askeleet!' });
-    router.refresh();
+    goStrike(router, stepStrikeQuery(target));
   }
 
   return (
@@ -60,11 +63,12 @@ export default function StrikeMenu({ day, stepped }: { day: string | null; stepp
             <strong className="display">Mitä kirjataan?</strong>
             <Link href="/kirjaa" className="btn" onClick={() => setOpen(false)}>⚔️ Treeni</Link>
             {day ? (
-              <button type="button" className={`btn ${stepped ? 'btn-ghost' : 'btn-moss'}`} disabled={busy || stepped || targets === undefined} onClick={() => (choose ? setAim(true) : step())}>
-                {stepped ? '✓ Tämän päivän askeleet on kuitattu' : `👣 Tänään ${STEP_GOAL.toLocaleString('fi-FI')} askelta`}
+              <button type="button" className={`btn ${stepped ? 'btn-ghost' : 'btn-moss'}`} disabled={busy || stepped || aim} onClick={() => (targets === undefined || choose ? setAim(true) : step())}>
+                {stepped ? '✓ Tämän päivän askeleet on kuitattu' : busy ? 'Kuitataan…' : `👣 Tänään ${STEP_GOAL.toLocaleString('fi-FI')} askelta`}
               </button>
             ) : null}
-            {aim && targets ? (
+            {aim && targets === undefined ? <span className="muted small" role="status">Haetaan monsteria…</span> : null}
+            {aim && targets && choose ? (
               <>
                 <strong>Ketä lyöt askeleilla?</strong>
                 <TargetChoice targets={targets} selected={null} disabled={busy} onPick={(i) => { writeTarget(i); step(i); }} />

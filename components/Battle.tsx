@@ -37,9 +37,9 @@ function ago(iso: string) {
   return `${Math.round(h / 24)} pv sitten`;
 }
 
-type Props = { data: BattleData; userId: string; ownHit?: number | null; crit?: boolean; triple?: boolean; offsetMs?: number; isAdmin?: boolean; /** Oman iskun kohde (kohteen valinta). */ aim?: number | null };
+type Props = { data: BattleData; userId: string; ownHit?: number | null; crit?: boolean; triple?: boolean; offsetMs?: number; isAdmin?: boolean; /** Oman iskun kohde (kohteen valinta). */ aim?: number | null; /** Oman iskun otsikko (askelkuittauksella "👣 Askeleet!"). */ ownLabel?: string };
 
-export default function Battle({ data, userId, ownHit = null, crit = false, triple = false, offsetMs = 0, isAdmin = false, aim = null }: Props) {
+export default function Battle({ data, userId, ownHit = null, crit = false, triple = false, offsetMs = 0, isAdmin = false, aim = null, ownLabel }: Props) {
   const { week, ledger, monsters, heroes, participants, required } = data;
 
   if (!ledger) {
@@ -210,6 +210,7 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
           revealed={Boolean(monsters.get(target.week)?.name)}
           href={`/monsteri/${target.week}`}
           ownHit={ownHit}
+          ownLabel={ownLabel}
           crit={crit}
           triple={triple}
           effects

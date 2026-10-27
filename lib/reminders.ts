@@ -3,14 +3,14 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadBattle } from './battle';
 import { sendPush } from './push';
 import { STEP_GOAL } from './rules';
-import { addDays, formatDay, weekRange } from './season';
+import { weekRange } from './season';
 import { isSickOn } from './weekly';
 
 const h = (n: number) => `${String(Math.round(n * 10) / 10).replace('.', ',')} h`;
 
 /**
  * Viikkomuistutus: jokaiselle terveelle sankarille oma viesti siitä, mitä viikolta vielä puuttuu
- * (lupauksen tunnit, isku sinettiin, askelkuittaukset). Perjantaiaamuna ja sunnuntai-iltana.
+ * (lupauksen tunnit, isku sinettiin, tämän päivän askelkuittaus). Perjantaiaamuna ja sunnuntai-iltana.
  * Sunnuntaina viestiä ei lähetetä sille, jolla kaikki on kunnossa; perjantaina hänelle tulee kehu.
  * onlyUser: lähetä vain tälle sankarille (ylläpitäjän testi).
  */
@@ -31,13 +31,10 @@ export async function fridayReminders(supabase: SupabaseClient, day: string, onl
     if (target && b.required.includes(id) && !target.hitters.includes(id)) {
       lines.push(target.padded ? `${monster} on sinettirajalla ja kaatuu heti, kun sinä lyöt!` : `Et ole vielä lyönyt viikon monsteria (${monster}), ja sinetti tarvitsee sinut.`);
     }
-    // Sairaspäiviä ei lasketa puuttuviksi askelkuittauksiksi.
-    // Puuttuvat päivät nimeltä, jotta viestin voi tarkistaa (tämä päivä erikseen: sen ehtii vielä kuitata).
-    const stepped = new Set(b.steps.filter((s) => s.user_id === id).map((s) => s.day));
-    const missing: string[] = [];
-    for (let d = start; d <= day && d <= end; d = addDays(d, 1)) if (!isSickOn(b.periods, id, d) && !stepped.has(d)) missing.push(d);
-    if (missing.length === 1 && missing[0] === day) lines.push(`Tämän päivän askeleet kuittaamatta (${STEP_GOAL.toLocaleString('fi-FI')} askelta = +50).`);
-    else if (missing.length) lines.push(`Askeleet kuittaamatta: ${missing.map((d) => (d === day ? 'tänään' : formatDay(d))).join(', ')} (${STEP_GOAL.toLocaleString('fi-FI')} askelta = +50).`);
+    // Askeleet kuitataan yleensä heti, joten menneistä päivistä ei muistuteta. Sunnuntai-iltana muistutetaan
+    // vain tämän päivän kuittauksesta (perjantaiaamuna päivä on vasta alussa). Sairaspäivää ei lasketa puuttuvaksi.
+    const steppedToday = b.steps.some((s) => s.user_id === id && s.day === day);
+    if (kind === 'sunday' && day >= start && day <= end && !steppedToday && !isSickOn(b.periods, id, day)) lines.push(`Tämän päivän askeleet kuittaamatta (${STEP_GOAL.toLocaleString('fi-FI')} askelta = +50).`);
     // Sunnuntaina vain puuttuvista; perjantaina kaikki kunnossa oleville kehu.
     if (!lines.length && kind === 'sunday') continue;
     sent += await sendPush(

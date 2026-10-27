@@ -17,12 +17,13 @@ type Props = {
   names: Map<string, string>;
   stepped: number;
   ownHit: number | null;
+  ownLabel?: string;
   crit: boolean;
   offsetMs: number;
 };
 
 /** Portinvartija ti 29.9.–ke 30.9.: taistelu ennen kauden alkua. Ei sinettiä, kaatuu kun HP loppuu. */
-export default function GateBattle({ gate, hits, steps, names, stepped, ownHit, crit, offsetMs }: Props) {
+export default function GateBattle({ gate, hits, steps, names, stepped, ownHit, ownLabel, crit, offsetMs }: Props) {
   // Iskut ja askelkuittaukset samassa listassa (jokainen omana rivinään); uusimmat 6, loput näkyvät yhteismäärässä.
   const all = [
     ...hits.map((h) => ({ at: h.created_at, who: names.get(h.user_id) || 'Sankari', dmg: h.damage, facts: `${h.sport} ${h.minutes} min · ${formatDay(h.trained_on)}`, bonus: hitBonusText(h) })),
@@ -57,6 +58,7 @@ export default function GateBattle({ gate, hits, steps, names, stepped, ownHit, 
         revealed={!gate.killed}
         dead={gate.killed}
         ownHit={ownHit}
+        ownLabel={ownLabel}
         crit={crit}
         effects
         endMs={helsinkiMs(GATE_DAY, '23:59:59')}

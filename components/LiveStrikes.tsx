@@ -3,13 +3,14 @@ import { useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { currentStrike } from '@/app/actions';
 import { showStrike } from '@/components/StrikeToastHost';
+import { addSeenDamage } from '@/lib/seenDamage';
 import { STEP_DAY_DAMAGE, hitBonusText } from '@/lib/rules';
 
 export const SEEN_KEY = 'mj_seen_until';
 export const markSeen = () => { try { localStorage.setItem(SEEN_KEY, new Date().toISOString()); } catch { /* ei tallennusta */ } };
 
-type HitRow = { user_id: string; sport: string; minutes: number; damage: number; bonus_pct: number; all_together: boolean; companions: string[]; weakness_hit?: boolean };
-type StepRow = { user_id: string };
+type HitRow = { user_id: string; sport: string; minutes: number; damage: number; bonus_pct: number; all_together: boolean; companions: string[]; weakness_hit?: boolean; target_part?: number | null };
+type StepRow = { user_id: string; target_part?: number | null };
 
 /**
  * Kun joku muu kirjaa iskun tai askeleet sovelluksen ollessa auki, ylös liukuu iskuikkuna
@@ -22,11 +23,12 @@ export default function LiveStrikes() {
     const names = new Map<string, string>();
     let cancelled = false;
 
-    const announce = async (userId: string, damage: number, label: string, detail: string) => {
+    const announce = async (userId: string, damage: number, label: string, detail: string, aim: number | null = null) => {
       if (userId === me || document.visibilityState !== 'visible') return;
-      const strike = await currentStrike().catch(() => null);
+      const strike = await currentStrike(aim).catch(() => null);
       if (!strike || cancelled) return;
       markSeen();
+      addSeenDamage(damage);
       showStrike({ strike, damage, label: `${label} ${names.get(userId) ?? 'Sankari'}`, detail });
     };
 
@@ -41,11 +43,11 @@ export default function LiveStrikes() {
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'hits' }, (p) => {
           const h = p.new as HitRow;
           const bonus = h.bonus_pct ? hitBonusText({ ...h, companions: h.companions ?? [] }) : '';
-          void announce(h.user_id, h.damage, '⚔️', `${h.sport} ${h.minutes} min${bonus ? ` · ${bonus}` : ''}`);
+          void announce(h.user_id, h.damage, '⚔️', `${h.sport} ${h.minutes} min${bonus ? ` · ${bonus}` : ''}`, h.target_part ?? null);
         })
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'step_days' }, (p) => {
           const s = p.new as StepRow;
-          void announce(s.user_id, STEP_DAY_DAMAGE, '👣', '10 000 askelta');
+          void announce(s.user_id, STEP_DAY_DAMAGE, '👣', '10 000 askelta', s.target_part ?? null);
         })
         .subscribe();
     })();
