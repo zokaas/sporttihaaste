@@ -46,12 +46,27 @@ type Hit = { id: number; user_id: string; trained_on: string; sport: string; min
 
 const HIT_COLS = 'id, user_id, trained_on, sport, minutes, damage, bonus_pct, all_together, companions, created_at';
 /** Iskut; weakness_hit (migraatio 025) ja photo_path (028) mukaan, jos sarakkeet ovat jo olemassa. */
-async function loadHits(supabase: SupabaseClient) {
-  for (const extra of [', weakness_hit, photo_path, target_part', ', weakness_hit, photo_path', ', weakness_hit', '']) {
-    const res = await supabase.from('hits').select(HIT_COLS + extra);
-    if (!res.error || !extra) return res;
+/**
+ * Valinnaiset sarakkeet (ajamattomat migraatiot): kokeillaan laajimmasta suppeimpaan. Toimiva vaihtoehto
+ * muistetaan palvelimen instanssissa, jottei jokainen sivulataus tee turhia uusintakyselyjä.
+ */
+const working: Record<string, { i: number; at: number }> = {};
+async function withFallback<T extends { error: unknown }>(key: string, extras: string[], run: (extra: string) => PromiseLike<T>): Promise<T> {
+  // Muistettu vaihtoehto vanhenee 5 minuutissa, jotta juuri ajettu migraatio otetaan käyttöön.
+  const known = working[key];
+  const from = known && Date.now() - known.at < 5 * 60_000 ? known.i : 0;
+  for (let i = from; i < extras.length; i++) {
+    const res = await run(extras[i]);
+    if (!res.error || i === extras.length - 1) {
+      if (!res.error) working[key] = { i, at: known?.i === i && from === i ? known.at : Date.now() };
+      return res;
+    }
   }
   throw new Error('unreachable');
+}
+
+function loadHits(supabase: SupabaseClient) {
+  return withFallback('hits', [', weakness_hit, photo_path, target_part', ', weakness_hit, photo_path', ', weakness_hit', ''], (extra) => supabase.from('hits').select(HIT_COLS + extra));
 }
 type Step = { user_id: string; day: string; created_at: string; target_part?: number | null };
 type PledgeChange = { user_id: string; from_week: number; hours: number };
@@ -64,18 +79,13 @@ export function hoursInWeek(hits: Hit[], userId: string, week: number, sports: S
 
 const MONSTER_COLS = 'week, hp, name, description, weakness, image_path, parts, taunt_half, taunt_low, teaser, boss_whisper, hit_lines, hit_crit, taunt_full, taunt_backlog';
 /** Monsterit taulusta; efektit (035) ja kohteen valinta (036) mukaan, jos sarakkeet ovat jo olemassa. */
-async function loadMonsters(supabase: SupabaseClient) {
-  for (const extra of [', fx, choose_target', ', fx', '']) {
-    const res = await supabase.from('monsters').select(MONSTER_COLS + extra).order('week');
-    if (!res.error || !extra) return res;
-  }
-  throw new Error('unreachable');
+function loadMonsters(supabase: SupabaseClient) {
+  return withFallback('monsters', [', fx, choose_target', ', fx', ''], (extra) => supabase.from('monsters').select(MONSTER_COLS + extra).order('week'));
 }
 
 /** Askelkuittaukset; kohde (migraatio 036) mukaan, jos sarake on jo olemassa. */
-async function loadSteps(supabase: SupabaseClient) {
-  const res = await supabase.from('step_days').select('user_id, day, created_at, target_part');
-  return res.error ? supabase.from('step_days').select('user_id, day, created_at') : res;
+function loadSteps(supabase: SupabaseClient) {
+  return withFallback('steps', [', target_part', ''], (extra) => supabase.from('step_days').select('user_id, day, created_at' + extra));
 }
 
 /** Kohteen valinta päällä: moniosainen monsteri, jolle ylläpito on sallinut valinnan (migraatio 036). */
@@ -83,6 +93,7 @@ export const choosesTarget = (m: { parts?: unknown[] | null; choose_target?: boo
 
 /** Lataa kauden tilanteen ja laskee sen kirjauksista. Kuluva viikko on vielä auki. */
 export async function loadBattle(supabase: SupabaseClient, today: string) {
+  const t0 = Date.now();
   const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }, sports, { data: gateRow }] = await Promise.all([
     supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at'),
     // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot. Haetaan rinnakkain.
@@ -96,13 +107,14 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
     // Portinvartija (migraatio 027). Ilman taulua käytetään oletuksia.
     supabase.from('gate').select('name, description, image_path, hp, taunt').eq('id', 1).maybeSingle(),
   ]);
+  const t1 = Date.now();
   const heroList = (heroes ?? []) as Hero[];
   let monsterList = (monsters ?? []) as unknown as PublicMonster[];
   if (monsterList.length === 0) monsterList = (publicMonsters ?? []) as PublicMonster[];
   const hitList = (hits ?? []) as unknown as Hit[];
   const periods = (sick ?? []) as SickPeriod[];
   // Sairaspäivänä ei tule askelvoimaa (Kela korvaa), vaikka vanha merkintä olisi jäänyt tietokantaan.
-  const stepList = ((steps ?? []) as Step[]).filter((s) => !isSickOn(periods, s.user_id, s.day));
+  const stepList = ((steps ?? []) as unknown as Step[]).filter((s) => !isSickOn(periods, s.user_id, s.day));
   const changeList = (changes ?? []) as PledgeChange[];
   const participants = heroList.filter((h) => h.pledge_locked_at).map((h) => h.id);
   const week = Math.min(BOSS_WEEK, Math.max(1, seasonWeek(today)));
@@ -161,7 +173,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const grace = graceWeek(today);
   const base = { gate, week, today, grace, nextEarly, heroes: heroList, participants, monsters: byWeek, hits: hitList, steps: stepList, patrols, kela, sickNow, periods, pledgeOf, pledgeStatus, changes: changeList, sports };
 
-  if (!hpLocked && !hpPreview) return { ...base, hpLocked, hpPreview, required: participants, ledger: null, events: [] as LedgerEvent[], ledgerInput: null };
+  if (!hpLocked && !hpPreview) return { ...base, hpLocked, hpPreview, required: participants, ledger: null, events: [] as LedgerEvent[], ledgerInput: null, timing: { queriesMs: t1 - t0, computeMs: Date.now() - t1 } };
 
   const events: LedgerEvent[] = [
     ...hitList.map((h) => ({ week: seasonWeek(h.trained_on), at: Date.parse(h.created_at), userId: h.user_id, damage: h.damage, isTraining: true, allTogether: h.all_together, part: h.target_part ?? null })),
@@ -190,7 +202,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   for (const m of monsterList) if (m.week <= MONSTER_WEEKS && choosesTarget(m)) partsByWeek[m.week] = partHps(monsterHp[m.week - 1], m.parts!.length);
   const ledgerInput = { monsterHp, bossHp: byWeek.get(BOSS_WEEK)!.hp!, events: [...testKills, ...events], requiredByWeek, pledgeBonusesByWeek, startPot: gateCarry ? gate.surplus : 0, partsByWeek };
   const ledger = computeLedger(ledgerInput, week, true);
-  return { ...base, hpLocked, hpPreview, required: requiredByWeek[week], ledger, events, ledgerInput };
+  return { ...base, hpLocked, hpPreview, required: requiredByWeek[week], ledger, events, ledgerInput, timing: { queriesMs: t1 - t0, computeMs: Date.now() - t1 } };
 }
 
 /** Viikon heikkoudet iskuhetkellä: moniosaisella kaikkien osien heikkoudet koko viikon. */
