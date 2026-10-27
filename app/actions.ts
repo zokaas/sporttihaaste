@@ -182,8 +182,9 @@ export async function deleteMessage(id: number): Promise<Result> {
 }
 
 /** Nykyisen vastustajan tilanne iskuikkunaa varten (esim. kun kaveri lyö ja sovellus on auki). */
-export async function currentStrike(): Promise<StrikeSummary> {
+export async function currentStrike(aim: number | null = null): Promise<StrikeSummary> {
   const { supabase, user } = await me();
   if (!user) return null;
-  return strikeSummary(supabase, today()).catch(() => null);
+  // Kohteen valinnassa iskuikkuna näyttää osan, johon toisen sankarin isku osui.
+  return strikeSummary(supabase, today(), Number.isInteger(aim) ? aim : null).catch(() => null);
 }

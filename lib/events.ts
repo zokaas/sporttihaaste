@@ -1,7 +1,7 @@
 import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { choosesTarget, loadBattle } from './battle';
-import { sendOnce } from './push';
+import { claim, sendOnce, sendOrQueue } from './push';
 import { testDay, today } from './today';
 import { addDays, weekRange, BOSS_WEEK, isGateDay, earlyRevealMs } from './season';
 import { sealView } from './rules';
@@ -13,26 +13,41 @@ type Battle = Awaited<ReturnType<typeof loadBattle>>;
 
 const nameOf = (b: Battle, week: number) => b.monsters.get(week)?.name ?? (week === BOSS_WEEK ? 'Loppupomo' : `Viikon ${week} monsteri`);
 
-/** Iskun jälkeen: kaatuiko monsteri, ja puuttuuko sinetistä enää yksi. Testitilassa ei lähetetä mitään. */
-/** Portinvartijan kaatuminen (29.–30.9.): ilmoitus kaikille kerran. */
-async function gateKill(supabase: SupabaseClient, b: Awaited<ReturnType<typeof loadBattle>>) {
-  if (!isGateDay(today()) || !b.gate.killed) return;
-  await sendOnce(supabase, 'gate-kill', { title: `🗝️ ${b.gate.name} kaatui!`, body: 'Portti on auki. Torstaina klo 00.00 ensimmäinen monsteri astuu esiin.' });
+/** Kaikille lähtevä tapahtuma. Saman kirjauksen tapahtumat kootaan yhdeksi ilmoitukseksi. */
+type Note = { key: string; title: string; body: string };
+
+/**
+ * Lähettää kirjauksen tapahtumat (kaatumiset, osien kaatumiset, ennakkopaljastus, megamarssi) yhtenä
+ * ilmoituksena: tärkein otsikoksi, muut tekstiin. Jokainen avain varataan ensin, joten mikään ei tule kahdesti.
+ */
+async function sendNotes(supabase: SupabaseClient, notes: Note[]) {
+  const fresh: Note[] = [];
+  for (const n of notes) if (await claim(supabase, n.key)) fresh.push(n);
+  if (!fresh.length) return;
+  const [first, ...rest] = fresh;
+  const body = [first.body, ...rest.map((n) => `${n.title} ${n.body}`)].join(' ');
+  await sendOrQueue(supabase, { title: first.title, body: body.length > 230 ? `${body.slice(0, 229)}…` : body });
+}
+
+/** Portinvartijan kaatuminen (29.–30.9.). */
+function gateKill(b: Battle): Note[] {
+  if (!isGateDay(today()) || !b.gate.killed) return [];
+  return [{ key: 'gate-kill', title: `🗝️ ${b.gate.name} kaatui!`, body: 'Portti on auki. Torstaina klo 00.00 ensimmäinen monsteri astuu esiin.' }];
 }
 
 /**
- * Kaatumisilmoitus kaikille kerran per monsteri. Kaatumisen voi aiheuttaa treeni, askelkuittaus, sairausmerkintä
+ * Kaatumiset kerran per monsteri. Kaatumisen voi aiheuttaa treeni, askelkuittaus, sairausmerkintä
  * tai aamun Kela-isku (klo 9), joten tarkistus ajetaan niiden kaikkien jälkeen. Viikon raja estää vanhojen
- * kaatumisten ilmoittamisen, ja sendOnce estää tuplat.
+ * kaatumisten ilmoittamisen, ja avaimet estävät tuplat.
  */
-async function notifyKills(supabase: SupabaseClient, b: Battle) {
-  if (!b.ledger || !b.hpLocked) return;
+async function killNotes(b: Battle): Promise<Note[]> {
+  if (!b.ledger || !b.hpLocked) return [];
+  const notes: Note[] = [];
   for (const k of b.ledger.killed) {
     if (!k.killedAt || k.killedAt < Date.now() - 7 * 24 * 3600_000 || k.killedAt > Date.now()) continue;
-    await sendOnce(supabase, `kill-${k.week}`, { title: `💀 ${nameOf(b, k.week)} kaatui!`, body: 'Sinetti täyttyi ja voima riitti. Katso, kuka löi viimeisen iskun.' });
+    notes.push({ key: `kill-${k.week}`, title: `💀 ${nameOf(b, k.week)} kaatui!`, body: 'Sinetti täyttyi ja voima riitti. Katso, kuka löi viimeisen iskun.' });
   }
-  await notifyPartFalls(supabase, b);
-  await earlyReveal(supabase, b);
+  return [...notes, ...partFallNotes(b), ...(await earlyReveal(b))];
 }
 
 /**
@@ -41,35 +56,37 @@ async function notifyKills(supabase: SupabaseClient, b: Battle) {
  * monsters_public avaa tiedot itse oikealla hetkellä. Lyöminen alkaa silti vasta maanantaina.
  * Ilmoitus lähtee heti, jos hetki on jo ohi; muuten sunnuntai-illan ajo lähettää sen.
  */
-async function earlyReveal(supabase: SupabaseClient, b: Battle) {
+async function earlyReveal(b: Battle): Promise<Note[]> {
   const w = b.week;
-  if (!b.ledger || w < 1 || w >= BOSS_WEEK) return;
-  if (!b.ledger.killed.some((k) => k.week === w) || b.ledger.alive.some((f) => f.week <= w)) return;
+  if (!b.ledger || w < 1 || w >= BOSS_WEEK) return [];
+  if (!b.ledger.killed.some((k) => k.week === w) || b.ledger.alive.some((f) => f.week <= w)) return [];
   const admin = createAdminClient();
-  if (!admin) return;
+  if (!admin) return [];
   const next = w + 1;
   const now = Date.now();
   const at = Math.max(now, earlyRevealMs(w));
   const { data: m } = await admin.from('monsters').select('name, weakness, parts, revealed_at').eq('week', next).maybeSingle();
-  if (!m?.name) return;
+  if (!m?.name) return [];
   const current = m.revealed_at ? Date.parse(m.revealed_at) : Infinity;
   if (current > at) {
     const { error } = await admin.from('monsters').update({ revealed_at: new Date(at).toISOString() }).eq('week', next);
     if (error) throw error;
   }
-  if (Math.min(current, at) > now) return;
+  if (Math.min(current, at) > now) return [];
   const weak = weaknessesOf(m as Parameters<typeof weaknessesOf>[0]);
-  await sendOnce(supabase, `early-${next}`, {
+  return [{
+    key: `early-${next}`,
     title: next === BOSS_WEEK ? `🔥 Loppupomo paljastui: ${m.name}` : `👁️ Seuraava monsteri paljastui: ${m.name}`,
     body: `Herää ma klo 00.00.${weak.length ? ` ${weak.length > 1 ? 'Heikkoudet' : 'Heikkous'}: ${weak.join(', ')}.` : ''} Siihen asti iskut säästyvät ensi-iskuun.`,
-  });
+  }];
 }
 
 /**
- * Kaksikon tai kolmikon osan kaatuminen: ilmoitus kaikille kerran per osa, mukana kaatumisrepliikki.
+ * Kaksikon tai kolmikon osan kaatuminen: kerran per osa, mukana kaatumisrepliikki.
  * Vain elossa olevat monsterit (koko monsterin kaatumisesta tulee oma ilmoitus).
  */
-async function notifyPartFalls(supabase: SupabaseClient, b: Battle) {
+function partFallNotes(b: Battle): Note[] {
+  const notes: Note[] = [];
   for (const f of b.ledger?.alive ?? []) {
     const m = b.monsters.get(f.week);
     if (!m?.parts?.length || !m.hp) continue;
@@ -79,28 +96,29 @@ async function notifyPartFalls(supabase: SupabaseClient, b: Battle) {
     for (let i = 0; i < m.parts.length; i++) {
       if (!dead[i] || (!choose && i === m.parts.length - 1)) continue;
       const line = !choose || !dead[i + 1] ? fallLine(m.parts, i) : null;
-      const rest = m.parts.filter((_, j) => !dead[j]).map((p) => p.name).join(' ja ');
-      if (!rest) continue;
-      await sendOnce(supabase, `part-${f.week}-${i}`, {
+      const alive = m.parts.filter((_, j) => !dead[j]);
+      if (!alive.length) continue;
+      notes.push({
+        key: `part-${f.week}-${i}`,
         title: `💥 ${m.parts[i].name} kaatui!`,
-        body: line ? `${line.who}: ”${line.text}”` : `${rest} ${m.parts.filter((_, j) => !dead[j]).length > 1 ? 'jatkavat' : 'jatkaa'} vielä taistelua.`,
+        body: line ? `${line.who}: ”${line.text}”` : `${alive.map((p) => p.name).join(' ja ')} ${alive.length > 1 ? 'jatkavat' : 'jatkaa'} vielä taistelua.`,
       });
     }
   }
+  return notes;
 }
 
 /** Kaatumisten tarkistus ilman iskua (sairausmerkintä, aamuajastus). */
 export async function checkKills(supabase: SupabaseClient, day = today()) {
   if (testDay()) return;
-  await notifyKills(supabase, await loadBattle(supabase, day));
+  await sendNotes(supabase, await killNotes(await loadBattle(supabase, day)));
 }
 
 export async function afterHit(supabase: SupabaseClient) {
   if (testDay()) return;
   const b = await loadBattle(supabase, today());
-  await gateKill(supabase, b);
+  await sendNotes(supabase, [...gateKill(b), ...(await killNotes(b))]);
   if (!b.ledger || !b.hpLocked) return;
-  await notifyKills(supabase, b);
   const target = b.ledger.alive[0];
   if (!target) return;
   const missing = b.required.filter((id) => !target.hitters.includes(id));
@@ -119,8 +137,9 @@ export async function afterHit(supabase: SupabaseClient) {
 export async function afterStep(supabase: SupabaseClient, day: string) {
   if (testDay()) return;
   const b = await loadBattle(supabase, today());
-  await gateKill(supabase, b);
-  await notifyKills(supabase, b);
-  if (!b.hpLocked || !b.patrols.some((p) => p.day === day)) return;
-  await sendOnce(supabase, `patrol-${day}`, { title: '⭐ Megamarssi!', body: 'Kaikki terveet kuittasivat askeleensa. +250 voimaa monsterille.' });
+  // Megamarssi ja sen mahdollisesti aiheuttama kaatuminen samassa ilmoituksessa (kaatuminen otsikkona).
+  const patrol: Note[] = b.hpLocked && b.patrols.some((p) => p.day === day)
+    ? [{ key: `patrol-${day}`, title: '⭐ Megamarssi!', body: 'Kaikki terveet kuittasivat askeleensa. +250 voimaa monsterille.' }]
+    : [];
+  await sendNotes(supabase, [...gateKill(b), ...(await killNotes(b)), ...patrol]);
 }

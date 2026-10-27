@@ -36,9 +36,14 @@ export async function sendOrQueue(supabase: SupabaseClient, payload: PushPayload
   return sendPush(supabase, payload, userIds);
 }
 
+/** Varaa ilmoitusavaimen: true vain ensimmäisellä kerralla (tuplat estyvät myös rinnakkaisissa ajoissa). */
+export async function claim(supabase: SupabaseClient, key: string) {
+  const { data: claimed } = await supabase.rpc('claim_notification', { k: key });
+  return Boolean(claimed);
+}
+
 /** Lähettää ilmoituksen vain, jos samaa avainta ei ole jo lähetetty (hiljaisina tunteina jonoon). */
 export async function sendOnce(supabase: SupabaseClient, key: string, payload: PushPayload, userIds: string[] | null = null) {
-  const { data: claimed } = await supabase.rpc('claim_notification', { k: key });
-  if (!claimed) return 0;
+  if (!(await claim(supabase, key))) return 0;
   return sendOrQueue(supabase, payload, userIds);
 }
