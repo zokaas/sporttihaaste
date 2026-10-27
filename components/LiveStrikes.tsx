@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { currentStrike } from '@/app/actions';
 import { showStrike } from '@/components/StrikeToastHost';
+import { addSeenDamage } from '@/lib/seenDamage';
 import { STEP_DAY_DAMAGE, hitBonusText } from '@/lib/rules';
 
 export const SEEN_KEY = 'mj_seen_until';
@@ -27,6 +28,7 @@ export default function LiveStrikes() {
       const strike = await currentStrike(aim).catch(() => null);
       if (!strike || cancelled) return;
       markSeen();
+      addSeenDamage(damage);
       showStrike({ strike, damage, label: `${label} ${names.get(userId) ?? 'Sankari'}`, detail });
     };
 

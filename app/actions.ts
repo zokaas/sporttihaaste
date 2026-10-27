@@ -42,7 +42,7 @@ export async function toggleStep(day: string, on: boolean, withStrike = false, t
     ? await supabase.from('step_days').upsert(stepRow)
     : await supabase.from('step_days').delete().eq('user_id', user.id).eq('day', day);
   if (on && error && 'target_part' in stepRow && error.message.includes('target_part')) ({ error } = await supabase.from('step_days').upsert({ user_id: user.id, day }));
-  if (!error && on) await afterStep(supabase, day).catch(() => {});
+  if (!error && on) await afterStep(supabase, day, user.id).catch(() => {});
   const res = done(error);
   // Lyö-valikko näyttää iskuikkunan: monsterin tilanne askelten jälkeen.
   if (res.ok && on && withStrike) return { ...res, strike: await strikeSummary(supabase, today(), target).catch(() => null) };

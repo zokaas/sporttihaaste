@@ -20,13 +20,17 @@ type Note = { key: string; title: string; body: string };
  * Lähettää kirjauksen tapahtumat (kaatumiset, osien kaatumiset, ennakkopaljastus, megamarssi) yhtenä
  * ilmoituksena: tärkein otsikoksi, muut tekstiin. Jokainen avain varataan ensin, joten mikään ei tule kahdesti.
  */
-async function sendNotes(supabase: SupabaseClient, notes: Note[]) {
+async function sendNotes(supabase: SupabaseClient, notes: Note[], b?: Battle, actor?: string | null) {
   const fresh: Note[] = [];
   for (const n of notes) if (await claim(supabase, n.key)) fresh.push(n);
   if (!fresh.length) return;
   const [first, ...rest] = fresh;
   const body = [first.body, ...rest.map((n) => `${n.title} ${n.body}`)].join(' ');
-  await sendOrQueue(supabase, { title: first.title, body: body.length > 230 ? `${body.slice(0, 229)}…` : body });
+  // Kirjauksen tekijä näkee kaatumisen jo sovelluksessa (kaatumisruutu, osan kaatumisbanneri), joten hänelle ei
+  // lähetetä samaa pushina. Megamarssista hän ei saa muuta ilmoitusta, joten silloin push menee myös hänelle.
+  const skipActor = actor && b && !fresh.some((n) => n.key.startsWith('patrol-'));
+  const to = skipActor ? b!.participants.filter((id) => id !== actor) : null;
+  await sendOrQueue(supabase, { title: first.title, body: body.length > 230 ? `${body.slice(0, 229)}…` : body }, to);
 }
 
 /** Portinvartijan kaatuminen (29.–30.9.). */
@@ -114,10 +118,10 @@ export async function checkKills(supabase: SupabaseClient, day = today()) {
   await sendNotes(supabase, await killNotes(await loadBattle(supabase, day)));
 }
 
-export async function afterHit(supabase: SupabaseClient) {
+export async function afterHit(supabase: SupabaseClient, actor: string | null = null) {
   if (testDay()) return;
   const b = await loadBattle(supabase, today());
-  await sendNotes(supabase, [...gateKill(b), ...(await killNotes(b))]);
+  await sendNotes(supabase, [...gateKill(b), ...(await killNotes(b))], b, actor);
   if (!b.ledger || !b.hpLocked) return;
   const target = b.ledger.alive[0];
   if (!target) return;
@@ -134,12 +138,12 @@ export async function afterHit(supabase: SupabaseClient) {
 }
 
 /** Askelkuittauksen jälkeen: tuliko päivästä megamarssi. */
-export async function afterStep(supabase: SupabaseClient, day: string) {
+export async function afterStep(supabase: SupabaseClient, day: string, actor: string | null = null) {
   if (testDay()) return;
   const b = await loadBattle(supabase, today());
   // Megamarssi ja sen mahdollisesti aiheuttama kaatuminen samassa ilmoituksessa (kaatuminen otsikkona).
   const patrol: Note[] = b.hpLocked && b.patrols.some((p) => p.day === day)
     ? [{ key: `patrol-${day}`, title: '⭐ Megamarssi!', body: 'Kaikki terveet kuittasivat askeleensa. +250 voimaa monsterille.' }]
     : [];
-  await sendNotes(supabase, [...gateKill(b), ...(await killNotes(b)), ...patrol]);
+  await sendNotes(supabase, [...gateKill(b), ...(await killNotes(b)), ...patrol], b, actor);
 }

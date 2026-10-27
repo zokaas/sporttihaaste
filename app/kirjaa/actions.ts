@@ -105,7 +105,7 @@ export async function logHit(input: HitInput): Promise<Result> {
     if (photo) await supabase.storage.from(PHOTO_BUCKET).remove([photo]).catch(() => {});
     return { ok: false, error: error.message };
   }
-  await afterHit(supabase).catch(() => {});
+  await afterHit(supabase, user.id).catch(() => {});
   revalidatePath('/', 'layout');
   revalidatePath('/kirjaa');
   return { ok: true, damage: hit.result.damage, pct: hit.result.pct, target: hit.target };

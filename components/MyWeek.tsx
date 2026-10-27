@@ -5,6 +5,7 @@ import TargetChoice, { type TargetPart } from '@/components/TargetChoice';
 import { useRouter } from 'next/navigation';
 import { toggleSickDay, toggleStep } from '@/app/actions';
 import { showStrike } from '@/components/StrikeToastHost';
+import { addSeenDamage } from '@/lib/seenDamage';
 import { STEP_DAY_DAMAGE } from '@/lib/rules';
 import { formatDay } from '@/lib/season';
 import Hint from '@/components/Hint';
@@ -54,7 +55,7 @@ export default function MyWeek(p: Props) {
   async function stepDay(day: string, on: boolean, target: number | null = null) {
     const live = on && day === today;
     const res = await toggleStep(day, on, live, target);
-    if (res.ok && live && res.strike) showStrike({ strike: res.strike, damage: STEP_DAY_DAMAGE, label: '👣 Askeleet!' });
+    if (res.ok && live && res.strike) { addSeenDamage(STEP_DAY_DAMAGE); showStrike({ strike: res.strike, damage: STEP_DAY_DAMAGE, label: '👣 Askeleet!' }); }
     return res;
   }
 

@@ -9,6 +9,7 @@ import { localKey } from '@/lib/localKey';
 import type { Line } from '@/lib/taunts';
 import { fxEmojis, type MonsterFx } from '@/lib/fx';
 import { readTarget, writeTarget, TARGET_EVENT } from '@/lib/target';
+import { takeSeenDamage } from '@/lib/seenDamage';
 
 /** Puhekuplan sisältö: puhujan nimi (moniosaisella) ja repliikki. */
 function Speech({ line }: { line: Line }) {
@@ -285,6 +286,8 @@ export default function MonsterStage(p: Props) {
     const hpKey = `mj_hp_${p.week}`;
     const last = Number(read(hpKey));
     write(hpKey, String(p.hp));
+    // Iskuikkunassa jo näytetty vahinko (omat askeleet, muiden live-iskut, poissaolon kooste) ei lennä toista kertaa.
+    const seen = takeSeenDamage();
 
     // G: uuden monsterin paljastus ensimmäisellä näkemällä (loppupomolla potti iskee perään)
     const seenKey = `mj_seen_${p.week}`;
@@ -309,7 +312,7 @@ export default function MonsterStage(p: Props) {
     }
 
     // E: HP-palkki laskee edellisestä käynnistä nykyiseen, ja vahinko lentää kuvan päälle
-    const drop = last > p.hp ? last - p.hp : 0;
+    const drop = last > p.hp ? Math.max(0, last - p.hp - seen) : 0;
     const damage = p.ownHit ?? drop;
     // Ilman animaatiota palkki hyppää suoraan uuteen HP:hen (muuten se jäisi edelliseen arvoon).
     if (damage <= 0 || reduced) setShownHp(p.hp);

@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { stepTargets, toggleStep } from '@/app/actions';
 import { STEP_DAY_DAMAGE, STEP_GOAL } from '@/lib/rules';
 import { showStrike } from '@/components/StrikeToastHost';
+import { addSeenDamage } from '@/lib/seenDamage';
 
 /** Alapalkin Lyö: kysyy, kirjataanko treeni vai kuitataanko tämän päivän askeleet. */
 export default function StrikeMenu({ day, stepped }: { day: string | null; stepped: boolean }) {
@@ -44,7 +45,7 @@ export default function StrikeMenu({ day, stepped }: { day: string | null; stepp
     // Sivu pysyy paikallaan: monsteri ottaa askeleet vastaan pienessä iskuikkunassa ruudun yläreunassa.
     setOpen(false);
     setAim(false);
-    if (res.strike) showStrike({ strike: res.strike, damage: STEP_DAY_DAMAGE, label: '👣 Askeleet!' });
+    if (res.strike) { addSeenDamage(STEP_DAY_DAMAGE); showStrike({ strike: res.strike, damage: STEP_DAY_DAMAGE, label: '👣 Askeleet!' }); }
     router.refresh();
   }
 
