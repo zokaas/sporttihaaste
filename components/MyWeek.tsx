@@ -4,9 +4,7 @@ import { writeTarget } from '@/lib/target';
 import TargetChoice, { type TargetPart } from '@/components/TargetChoice';
 import { useRouter } from 'next/navigation';
 import { toggleSickDay, toggleStep } from '@/app/actions';
-import { showStrike } from '@/components/StrikeToastHost';
-import { addSeenDamage } from '@/lib/seenDamage';
-import { STEP_DAY_DAMAGE } from '@/lib/rules';
+import { goStrike, stepStrikeQuery } from '@/lib/goStrike';
 import { formatDay } from '@/lib/season';
 import Hint from '@/components/Hint';
 
@@ -51,11 +49,12 @@ export default function MyWeek(p: Props) {
     router.refresh();
   }
 
-  // Tämän päivän kuittaus näyttää iskuikkunan kuten Lyö-valikko; menneiden päivien jälkikuittaus on hiljainen.
+  // Tämän päivän kuittaus vie etusivun alkuun, jossa monsteri ottaa askeleet vastaan (kuten Lyö-valikko);
+  // menneiden päivien jälkikuittaus on hiljainen.
   async function stepDay(day: string, on: boolean, target: number | null = null) {
     const live = on && day === today;
-    const res = await toggleStep(day, on, live, target);
-    if (res.ok && live && res.strike) { addSeenDamage(STEP_DAY_DAMAGE); showStrike({ strike: res.strike, damage: STEP_DAY_DAMAGE, label: '👣 Askeleet!' }); }
+    const res = await toggleStep(day, on, false, target);
+    if (res.ok && live) goStrike(router, stepStrikeQuery(target));
     return res;
   }
 

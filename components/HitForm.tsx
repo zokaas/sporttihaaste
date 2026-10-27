@@ -8,6 +8,7 @@ import Hint from '@/components/Hint';
 import { createClient } from '@/lib/supabase/client';
 import { shrinkJpeg } from '@/lib/image';
 import { writeTarget } from '@/lib/target';
+import { goStrike } from '@/lib/goStrike';
 import TargetChoice, { type TargetPart } from '@/components/TargetChoice';
 
 export type { TargetPart };
@@ -91,8 +92,7 @@ export default function HitForm({ days, sports, companions, weakness: weekWeakne
     setBusy(false);
     if (!res.ok) return setError(res.error);
     // Etusivulla isku näkyy lentävänä lukuna ja HP-palkki laskee.
-    router.push(`/?isku=${res.damage}${(res.pct ?? 0) >= 150 ? '&krit=2' : (res.pct ?? 0) >= 100 ? '&krit=1' : ''}${res.target != null ? `&kohde=${res.target}` : ''}`);
-    router.refresh();
+    goStrike(router, `isku=${res.damage}${(res.pct ?? 0) >= 150 ? '&krit=2' : (res.pct ?? 0) >= 100 ? '&krit=1' : ''}${res.target != null ? `&kohde=${res.target}` : ''}`);
   }
 
   return (
