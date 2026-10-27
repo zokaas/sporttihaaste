@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { writeTarget } from '@/lib/target';
 import TargetChoice, { type TargetPart } from '@/components/TargetChoice';
 import { useRouter } from 'next/navigation';
@@ -49,20 +49,32 @@ export default function MyWeek(p: Props) {
     router.refresh();
   }
 
+  // Askelpäivä näyttää ✓:n heti napautuksesta (palvelin vahvistaa taustalla); muut päivät pysyvät napautettavina.
+  const [optimistic, setOptimistic] = useState<Record<string, boolean>>({});
+  const daysKey = p.days.map((d) => `${d.day}:${d.stepped}`).join();
+  useEffect(() => setOptimistic({}), [daysKey]);
+  const steppedOf = (d: Day) => optimistic[d.day] ?? d.stepped;
+
   // Tämän päivän kuittaus vie etusivun alkuun, jossa monsteri ottaa askeleet vastaan (kuten Lyö-valikko);
   // menneiden päivien jälkikuittaus on hiljainen.
   async function stepDay(day: string, on: boolean, target: number | null = null) {
     const live = on && day === today;
+    setOptimistic((o) => ({ ...o, [day]: on }));
+    setError('');
     const res = await toggleStep(day, on, false, target);
-    if (res.ok && live) goStrike(router, stepStrikeQuery(target));
-    return res;
+    if (!res.ok) {
+      setOptimistic((o) => { const { [day]: _, ...rest } = o; return rest; });
+      return setError(res.error ?? 'Jokin meni pieleen.');
+    }
+    if (live) goStrike(router, stepStrikeQuery(target));
+    else router.refresh();
   }
 
   const pct = p.target > 0 ? Math.min(100, (p.hours / p.target) * 100) : 100;
   const kept = p.target > 0 && p.hours >= p.target;
   // Armonaikakortissa (edellinen viikko) mikään päivä ei ole "tänään".
   const today = p.grace ? undefined : p.days.filter((d) => !d.future).at(-1)?.day;
-  const stepCount = p.days.filter((d) => d.stepped && !d.sick).length;
+  const stepCount = p.days.filter((d) => steppedOf(d) && !d.sick).length;
   const sickCount = p.days.filter((d) => d.sick).length;
   const healthyDays = p.days.length - sickCount;
   // Askeltavoite: 5 päivää viikossa (sama arvio kuin HP:ssa), suhteessa terveisiin päiviin. Loput päivät ovat bonusta.
@@ -111,19 +123,20 @@ export default function MyWeek(p: Props) {
         <div className="weekstrip" style={{ gridTemplateColumns: `repeat(${p.days.length}, 1fr)` }}>
           {p.days.map((d) => {
             const [wd, date] = formatDay(d.day).split(' ');
-            const state = d.sick ? 'sickday' : d.stepped ? 'done' : d.future ? 'future' : d.day === today ? 'today' : 'missed';
+            const stepped = steppedOf(d);
+            const state = d.sick ? 'sickday' : stepped ? 'done' : d.future ? 'future' : d.day === today ? 'today' : 'missed';
             return (
               <button
                 key={d.day}
                 type="button"
                 className={`daycell ${state}`}
-                aria-pressed={d.stepped}
-                aria-label={`${formatDay(d.day)}: ${d.sick ? 'sairaspäivä' : d.stepped ? 'askeleet kuitattu' : d.future ? 'tulossa' : 'ei kuitattu'}${d.patrol ? ', megamarssi' : ''}`}
+                aria-pressed={stepped}
+                aria-label={`${formatDay(d.day)}: ${d.sick ? 'sairaspäivä' : stepped ? 'askeleet kuitattu' : d.future ? 'tulossa' : 'ei kuitattu'}${d.patrol ? ', megamarssi' : ''}`}
                 disabled={d.future || d.sick || busy}
-                onClick={() => (!d.stepped && choose ? setAimDay(d.day) : run(() => stepDay(d.day, !d.stepped)))}
+                onClick={() => (!stepped && choose ? setAimDay(d.day) : void stepDay(d.day, !stepped))}
               >
                 <span>{wd}</span>
-                <b>{d.sick ? '🤒' : d.patrol ? '⭐' : d.stepped ? '✓' : date.replace(/\.$/, '').split('.')[0]}</b>
+                <b>{d.sick ? '🤒' : d.patrol ? '⭐' : stepped ? '✓' : date.replace(/\.$/, '').split('.')[0]}</b>
               </button>
             );
           })}
@@ -131,7 +144,7 @@ export default function MyWeek(p: Props) {
         {aimDay && p.targets ? (
           <div className="sick-box">
             <strong>Ketä lyöt askeleilla ({formatDay(aimDay)})?</strong>
-            <TargetChoice targets={p.targets} selected={null} disabled={busy} onPick={(i) => { const d = aimDay; setAimDay(null); writeTarget(i); run(() => stepDay(d, true, i)); }} />
+            <TargetChoice targets={p.targets} selected={null} disabled={busy} onPick={(i) => { const d = aimDay; setAimDay(null); writeTarget(i); void stepDay(d, true, i); }} />
             <button type="button" className="linklike small" onClick={() => setAimDay(null)}>Peru</button>
           </div>
         ) : null}

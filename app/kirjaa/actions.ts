@@ -1,5 +1,6 @@
 'use server';
 import { revalidatePath } from 'next/cache';
+import { background } from '@/lib/background';
 import { createClient } from '@/lib/supabase/server';
 import { FAMILY_WEAKNESS, hitDamage, specialOf, type Category } from '@/lib/rules';
 import { loadSports } from '@/lib/sports';
@@ -105,7 +106,8 @@ export async function logHit(input: HitInput): Promise<Result> {
     if (photo) await supabase.storage.from(PHOTO_BUCKET).remove([photo]).catch(() => {});
     return { ok: false, error: error.message };
   }
-  await afterHit(supabase, user.id).catch(() => {});
+  // Ilmoitukset (kaatuminen, sinetti) lähtevät taustalla: kirjaaja pääsee heti katsomaan iskuaan.
+  background(afterHit(supabase, user.id));
   revalidatePath('/', 'layout');
   revalidatePath('/kirjaa');
   return { ok: true, damage: hit.result.damage, pct: hit.result.pct, target: hit.target };
