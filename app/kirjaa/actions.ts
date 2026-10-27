@@ -100,6 +100,10 @@ export async function logHit(input: HitInput): Promise<Result> {
   if (!user) return { ok: false, error: 'Kirjaudu ensin.' };
   const hit = await computeHit(input, user.id);
   if ('error' in hit) return { ok: false, error: hit.error! };
+  // Tuplapainallus (tai heikon verkon uusintayritys): sama treeni juuri tallennettu, ei toista iskua.
+  const since = new Date(Date.now() - 30_000).toISOString();
+  const { data: twin } = await supabase.from('hits').select('id').eq('user_id', user.id).eq('trained_on', input.day).eq('sport', input.sport).eq('minutes', input.minutes).gte('created_at', since).limit(1);
+  if (twin?.length) return { ok: false, error: 'Tämä treeni on jo tallennettu hetki sitten.' };
   const error = await insertHit(supabase, user.id, input, hit);
   if (error) {
     const photo = ownPhoto(input.photo, user.id);
