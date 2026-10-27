@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { addDays, loggableDays, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { PREVIEW_ERROR, previewOnly, today } from '@/lib/today';
 import { afterStep, checkKills } from '@/lib/events';
-import { background } from '@/lib/background';
+import { afterLog } from '@/lib/background';
 import { loadBattle, targetParts } from '@/lib/battle';
 import { monsterImageUrl, resizedImage } from '@/lib/supabase/client';
 import { sendOrQueue, sendPush } from '@/lib/push';
@@ -43,7 +43,7 @@ export async function toggleStep(day: string, on: boolean, withStrike = false, t
     ? await supabase.from('step_days').upsert(stepRow)
     : await supabase.from('step_days').delete().eq('user_id', user.id).eq('day', day);
   if (on && error && 'target_part' in stepRow && error.message.includes('target_part')) ({ error } = await supabase.from('step_days').upsert({ user_id: user.id, day }));
-  if (!error && on) background(afterStep(supabase, day, user.id));
+  if (!error && on) await afterLog(() => afterStep(supabase, day, user.id));
   const res = done(error);
   // Lyö-valikko näyttää iskuikkunan: monsterin tilanne askelten jälkeen.
   if (res.ok && on && withStrike) return { ...res, strike: await strikeSummary(supabase, today(), target).catch(() => null) };
@@ -89,7 +89,7 @@ export async function toggleSickDay(day: string, sick: boolean, continuing = fal
     const open = continuing && day === now;
     const res = done((await supabase.from('sick_periods').insert({ user_id: user.id, starts_on: day, ends_on: open ? null : day })).error);
     // Kela-isku voi kaataa monsterin heti merkinnän hetkellä.
-    if (res.ok) background(checkKills(supabase));
+    if (res.ok) await afterLog(() => checkKills(supabase));
     return res;
   }
 
