@@ -206,6 +206,8 @@ table.plain th, table.plain td { text-align: left; padding: 6px 4px; border-bott
 .stage-target-weak { align-self: flex-start; max-width: 100%; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 999px; background: #2f4a3f; color: #e8f2ea; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .part-fall { animation-duration: 2.8s; }
 .stage-hptext { width: 100%; display: flex; justify-content: space-between; font-size: 13px; color: #d8cfc4; }
+.stage-hptotal { padding-top: 6px; border-top: 1px solid rgba(255, 255, 255, 0.12); }
+.stage-hptotal strong { color: var(--light); font-variant-numeric: tabular-nums; }
 .stage-state { font-weight: 600; color: var(--blood-text); }
 
 /* D: tilat */
