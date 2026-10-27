@@ -427,7 +427,8 @@ export default function MonsterStage(p: Props) {
           {parts && !choose ? parts.slice(0, -1).reduce<{ at: number; marks: number[] }>((acc, x) => { acc.at += x.hp; acc.marks.push(acc.at); return acc; }, { at: 0, marks: [] }).marks.map((at) => <i key={at} style={{ left: `${100 - (at / p.maxHp) * 100}%` }} />) : null}
         </div>
         <div className="stage-hptext">
-          <span>{choose && front ? `${fmt(front.left)} / ${fmt(front.hp)} HP` : `${fmt(Math.max(0, p.hp))} / ${fmt(p.maxHp)} HP`}</span>
+          {/* Kohteen valinnassa valitun osan HP näkyy sen kortissa. */}
+          <span>{choose ? '' : `${fmt(Math.max(0, p.hp))} / ${fmt(p.maxHp)} HP`}</span>
           <span className="stage-state">{state === 'dead' ? 'Kaatunut' : state === 'shielded' ? 'Sinetti kesken' : state === 'dying' ? 'Horjuu!' : state === 'hurt' ? 'Haavoittunut' : ''}</span>
         </div>
         {/* Kohteen valinnassa palkki näyttää valitun osan: koko kaksikon tai kolmikon yhteis-HP erikseen. */}
