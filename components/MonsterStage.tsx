@@ -430,6 +430,13 @@ export default function MonsterStage(p: Props) {
           <span>{choose && front ? `${fmt(front.left)} / ${fmt(front.hp)} HP` : `${fmt(Math.max(0, p.hp))} / ${fmt(p.maxHp)} HP`}</span>
           <span className="stage-state">{state === 'dead' ? 'Kaatunut' : state === 'shielded' ? 'Sinetti kesken' : state === 'dying' ? 'Horjuu!' : state === 'hurt' ? 'Haavoittunut' : ''}</span>
         </div>
+        {/* Kohteen valinnassa palkki näyttää valitun osan: koko kaksikon tai kolmikon yhteis-HP erikseen. */}
+        {choose && parts ? (
+          <div className="stage-hptext stage-hptotal">
+            <span>{groupName(parts.length)} yhteensä</span>
+            <strong>{fmt(Math.max(0, p.hp))} / {fmt(p.maxHp)} HP</strong>
+          </div>
+        ) : null}
         {choose && parts ? (
           <div className="stage-targets" role="group" aria-label={`${groupName(parts.length)}: valitse kohde`}>
             {parts.map((x, i) => (
