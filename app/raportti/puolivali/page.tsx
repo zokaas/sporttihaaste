@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import Nav from '@/components/Nav';
 import BackButton from '@/components/BackButton';
 import ShareRecap from '@/components/ShareRecap';
+import MidseasonStory from '@/components/MidseasonStory';
+import { avatarUrl, monsterImageUrl, resizedImage } from '@/lib/supabase/client';
 import { requireHero } from '@/lib/page';
 import { MID_DAY, midseason, midseasonText } from '@/lib/midseason';
 
@@ -15,12 +17,32 @@ export default async function Puolivali() {
   const m = midseason(b, Boolean(me.is_admin), user.id);
   if (!m) notFound();
   const text = midseasonText(m);
+  const img = (path: string | null, size: number) => { const u = path ? monsterImageUrl(path) : null; return u ? resizedImage(u, size) : null; };
+  const story = {
+    untilLabel: `${Number(m.until.slice(8))}.${Number(m.until.slice(5, 7))}.`,
+    started: m.started,
+    damage: m.damage,
+    trainings: m.trainings,
+    stepDays: m.stepDays,
+    patrols: m.patrols,
+    pot: m.pot,
+    daysLeft: m.daysLeft,
+    ...m.story,
+    fallen: m.story.fallen.map((f) => ({ ...f, image: img(f.image, 256) })),
+    race: m.story.race.map((r) => ({ ...r, avatar: avatarUrl(r.avatar) })),
+    own: m.own ? {
+      damage: m.own.damage, rank: m.own.rank, of: m.own.of, trainings: m.own.trainings, kept: m.own.kept, closed: m.own.closed,
+      best: m.own.bestHit ? `${m.own.bestHit.sport} ${m.own.bestHit.minutes} min, ${fmt(m.own.bestHit.damage)} voimaa` : null,
+      badges: m.own.badges.map((a) => a.short ?? a.icon),
+    } : null,
+  };
   return (
     <>
       <Nav current="/" />
       <BackButton fallback="/" />
       <h1 className="display">Kausi puolivälissä</h1>
       {m.preview ? <p className="note threat" style={{ margin: 0 }}>Esikatselu ylläpitäjälle: muut näkevät raportin pe {Number(MID_DAY.slice(8))}.{Number(MID_DAY.slice(5, 7))}. alkaen. Luvut ovat tähänastiset.</p> : null}
+      <MidseasonStory d={story} />
       <p className="muted small" style={{ margin: 0 }}>Luvut kauden alusta {Number(m.until.slice(8))}.{Number(m.until.slice(5, 7))}. asti.</p>
       <section className="card">
         <h2 className="display">💀 {m.killed.length}/{m.started} monsteria kaatui</h2>
