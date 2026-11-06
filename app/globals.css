@@ -732,6 +732,17 @@ details.admin-past > summary { cursor: pointer; padding: 12px 0; color: var(--mu
 .ms-progress i.done { width: 100%; }
 .ms-progress i.now { animation: ms-fill linear forwards; }
 @keyframes ms-fill { to { width: 100%; } }
+.ms-sound { position: absolute; top: calc(env(safe-area-inset-top) + 24px); right: 62px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, 0.35); color: var(--light); font-size: 18px; z-index: 2; cursor: pointer; }
+.ms-race-row.me .ms-race-bar { background: linear-gradient(90deg, #8a5a12, var(--gold)); box-shadow: 0 0 10px rgba(232, 176, 74, 0.5); }
+.ms-race-row.me .ms-race-bar span { color: #1c1715; }
+.ms-race-num small { display: block; font-size: 10px; color: var(--gold); text-align: right; animation: ms-in 0.4s both; }
+.ms-pace-text { color: #e6ddd2; text-align: center; }
+.ms-weeks { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.ms-week { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); text-align: left; animation: ms-in 0.45s both; }
+.ms-week-no { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: rgba(232, 176, 74, 0.15); color: var(--gold); font-weight: 700; }
+.ms-week-main { min-width: 0; display: flex; flex-direction: column; }
+.ms-week-main strong { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-week-main span { font-size: 12px; color: #c9c1b4; }
 .ms-close { position: absolute; top: calc(env(safe-area-inset-top) + 24px); right: 14px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, 0.35); color: var(--light); font-size: 18px; z-index: 2; cursor: pointer; }
 .ms-stage { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
 .ms-slide { width: 100%; max-width: 520px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; animation: ms-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
@@ -788,6 +799,6 @@ details.admin-past > summary { cursor: pointer; padding: 12px 0; color: var(--mu
 @keyframes ms-loom { from { transform: scale(0.4) translateY(40px); opacity: 0; } 40% { opacity: 1; } to { transform: scale(1); opacity: 1; } }
 .ms-pot { color: #ffb08a; }
 @media (prefers-reduced-motion: reduce) {
-  .ms-slide, .ms-calendar, .ms-fallen-card, .ms-fallen-img i, .ms-pace-bar i, .ms-pace strong, .ms-highlights > div, .ms-own > div, .ms-boss-shadow { animation: none; opacity: 1; }
+  .ms-week, .ms-race-num small, .ms-slide, .ms-calendar, .ms-fallen-card, .ms-fallen-img i, .ms-pace-bar i, .ms-pace strong, .ms-highlights > div, .ms-own > div, .ms-boss-shadow { animation: none; opacity: 1; }
   .ms-race-row, .ms-race-bar { transition: none; }
 }

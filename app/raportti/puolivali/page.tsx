@@ -28,6 +28,7 @@ export default async function Puolivali() {
     pot: m.pot,
     daysLeft: m.daysLeft,
     ...m.story,
+    me: user.id,
     fallen: m.story.fallen.map((f) => ({ ...f, image: img(f.image, 256) })),
     race: m.story.race.map((r) => ({ ...r, avatar: avatarUrl(r.avatar) })),
     own: m.own ? {

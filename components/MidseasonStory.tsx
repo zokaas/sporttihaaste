@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { localKey } from '@/lib/localKey';
+import { heartbeat, riser, setDread, startSound, stopHeartbeat, stopSound, thud } from '@/lib/storySound';
 // @ts-expect-error react-dom-tyyppejä ei ole asennettu; createPortal on Nextin mukana.
 import { createPortal } from 'react-dom';
 
@@ -13,7 +14,9 @@ export type StoryData = {
   patrols: number;
   pot: number;
   daysLeft: number;
-  fallen: { week: number; name: string; image: string | null; day: string; blow: string | null }[];
+  /** Katsojan oma id: oma rivi korostetaan voimakisassa. */
+  me: string | null;
+  fallen: { week: number; name: string; image: string | null; day: string; took: number; blow: string | null }[];
   race: { id: string; name: string; avatar: string | null; cum: number[] }[];
   raceWeeks: number[];
   biggest: { name: string; sport: string; minutes: number; damage: number } | null;
@@ -21,12 +24,15 @@ export type StoryData = {
   bestDay: { day: string; damage: number } | null;
   seasonPct: number;
   powerPct: number | null;
+  pace: { now: number; need: number } | null;
+  weekRows: { week: number; monster: string; killed: boolean; power: number; hero: string | null }[];
   own: { damage: number; rank: number; of: number; trainings: number; kept: number; closed: number; best: string | null; badges: string[] } | null;
 };
 
 const fmt = (n: number) => n.toLocaleString('fi-FI');
 const dm = (iso: string) => `${Number(iso.slice(8, 10))}.${Number(iso.slice(5, 7))}.`;
 const SEEN = 'mj_mid_story_seen';
+const SOUND = 'mj_story_sound';
 const RACE_STEP_MS = 1300;
 
 /** Luku rullaa nollasta tavoitteeseen (liikettä vähentävillä heti valmis). */
@@ -48,7 +54,7 @@ function Counter({ to, ms = 1800 }: { to: number; ms?: number }) {
 }
 
 /** Voimakisa: sankarien palkit kasvavat viikko viikolta, ja järjestys vaihtuu liukuen. */
-function Race({ race, weeks, paused }: { race: StoryData['race']; weeks: number[]; paused: boolean }) {
+function Race({ race, weeks, paused, me }: { race: StoryData['race']; weeks: number[]; paused: boolean; me: string | null }) {
   const [i, setI] = useState(0);
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return setI(weeks.length - 1);
@@ -65,12 +71,14 @@ function Race({ race, weeks, paused }: { race: StoryData['race']; weeks: number[
         {race.map((r) => {
           const rank = order.indexOf(r.id);
           const v = r.cum[i] ?? 0;
+          // Viikon lisäys: ohitukset ja kirit näkyvät.
+          const gain = v - (i > 0 ? r.cum[i - 1] ?? 0 : 0);
           return (
-            <div key={r.id} className="ms-race-row" style={{ transform: `translateY(${rank * 34}px)` }}>
-              <span className="ms-race-rank">{rank + 1}.</span>
+            <div key={r.id} className={`ms-race-row${r.id === me ? ' me' : ''}`} style={{ transform: `translateY(${rank * 34}px)` }}>
+              <span className="ms-race-rank">{rank === 0 ? '👑' : `${rank + 1}.`}</span>
               {r.avatar ? <img src={r.avatar} alt="" /> : <b>{r.name.slice(0, 1)}</b>}
               <span className="ms-race-track"><span className="ms-race-bar" style={{ width: `${Math.max(2, (v / max) * 100)}%` }}><span>{r.name}</span></span></span>
-              <span className="ms-race-num">{fmt(v)}</span>
+              <span className="ms-race-num">{fmt(v)}{gain > 0 ? <small key={i}>+{fmt(gain)}</small> : null}</span>
             </div>
           );
         })}
@@ -94,11 +102,23 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
   }, []);
   const close = useCallback(() => {
     setOpen(false);
+    stopSound();
     try { localStorage.setItem(localKey(SEEN), '1'); } catch { /* ei tallennusta */ }
   }, []);
 
-  const slides: { ms: number; el: React.ReactNode }[] = [
+  // Ääni on oletuksena pois; valinta muistetaan. Selain sallii äänen vasta napautuksesta.
+  const [sound, setSound] = useState(false);
+  useEffect(() => { try { setSound(localStorage.getItem(localKey(SOUND)) === '1'); } catch { /* ei tallennusta */ } }, []);
+  const toggleSound = () => {
+    const on = !sound;
+    setSound(on);
+    try { localStorage.setItem(localKey(SOUND), on ? '1' : '0'); } catch { /* ei tallennusta */ }
+    if (on) startSound(); else stopSound();
+  };
+
+  const slides: { id: string; ms: number; el: React.ReactNode }[] = [
     {
+      id: 'intro',
       ms: 4500,
       el: (
         <div className="ms-slide ms-intro">
@@ -110,6 +130,7 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
       ),
     },
     {
+      id: 'fallen',
       ms: Math.max(5000, 1800 + d.fallen.length * 700),
       el: (
         <div className="ms-slide">
@@ -121,7 +142,7 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
                 <div key={f.week} className="ms-fallen-card" style={{ animationDelay: `${0.3 + n * 0.6}s` }}>
                   <div className="ms-fallen-img">{f.image ? <img src={f.image} alt="" /> : null}<i style={{ animationDelay: `${0.7 + n * 0.6}s` }}>✝</i></div>
                   <strong>{f.name}</strong>
-                  <span>{dm(f.day)}{f.blow ? ` · ${f.blow}` : ''}</span>
+                  <span>{dm(f.day)} · {f.took} pv{f.blow ? ` · ${f.blow}` : ''}</span>
                 </div>
               ))}
             </div>
@@ -130,6 +151,7 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
       ),
     },
     {
+      id: 'power',
       ms: 6000,
       el: (
         <div className="ms-slide">
@@ -141,22 +163,45 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
               <div><span>Kautta kulunut</span><div className="ms-pace-bar"><i style={{ width: `${d.seasonPct}%` }} /></div><b>{d.seasonPct} %</b></div>
               <div><span>Voimaa koko kauden tarpeesta</span><div className="ms-pace-bar power"><i style={{ width: `${d.powerPct}%` }} /></div><b>{d.powerPct} %</b></div>
               <strong>{d.powerPct >= d.seasonPct ? '✅ Aikataulussa' : '🔥 Kirittävää jäljellä'}</strong>
+              {d.pace ? <p className="ms-small ms-pace-text">Tahti nyt <b>{fmt(d.pace.now)}&nbsp;/&nbsp;vko</b> · tarvitaan <b>{fmt(d.pace.need)}&nbsp;/&nbsp;vko</b></p> : null}
             </div>
           ) : null}
         </div>
       ),
     },
     {
+      id: 'race',
       ms: Math.max(6000, d.raceWeeks.length * RACE_STEP_MS + 2500),
       el: (
         <div className="ms-slide">
           <span className="ms-kicker">Voimakisa</span>
           <h2 className="display">Kuka löi eniten?</h2>
-          <Race race={d.race} weeks={d.raceWeeks} paused={paused} />
+          <Race race={d.race} weeks={d.raceWeeks} paused={paused} me={d.me} />
         </div>
       ),
     },
     {
+      id: 'weeks',
+      ms: Math.max(6000, 1500 + d.weekRows.length * 500),
+      el: (
+        <div className="ms-slide">
+          <span className="ms-kicker">Viikko viikolta</span>
+          <div className="ms-weeks">
+            {d.weekRows.map((w, n) => (
+              <div key={w.week} className="ms-week" style={{ animationDelay: `${0.2 + n * 0.4}s` }}>
+                <span className="ms-week-no">{w.week}</span>
+                <div className="ms-week-main">
+                  <strong>{w.killed ? '✝' : '😈'} {w.monster}</strong>
+                  <span>{fmt(w.power)} voimaa{w.hero ? ` · 🏆 ${w.hero}` : ''}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'high',
       ms: 6500,
       el: (
         <div className="ms-slide">
@@ -171,6 +216,7 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
       ),
     },
     ...(d.own ? [{
+      id: 'own',
       ms: 6500,
       el: (
         <div className="ms-slide">
@@ -188,6 +234,7 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
       ),
     }] : []),
     {
+      id: 'boss',
       ms: 6500,
       el: (
         <div className="ms-slide ms-boss">
@@ -207,6 +254,19 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
   ];
 
   const last = slides.length - 1;
+  // Kortin äänet: humina voimistuu, ✝ tömähtää, laskurit nousevat, loppupomon sydän lyö.
+  const slideId = slides[i]?.id;
+  useEffect(() => {
+    if (!open || !sound) return;
+    startSound();
+    stopHeartbeat();
+    if (slideId === 'intro') setDread(1);
+    if (slideId === 'fallen') { setDread(1); d.fallen.forEach((_, n) => thud(0.7 + n * 0.6)); }
+    if (slideId === 'power' || slideId === 'own') { setDread(2); riser(1.8); }
+    if (slideId === 'race' || slideId === 'weeks' || slideId === 'high') setDread(2);
+    if (slideId === 'boss') { setDread(3); heartbeat(6); riser(1.8); }
+  }, [open, sound, slideId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => stopSound(), []);
   useEffect(() => {
     if (!open || paused || i >= last) return;
     const t = window.setTimeout(() => setI((x) => Math.min(last, x + 1)), slides[i].ms);
@@ -244,6 +304,7 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
           <span key={n}><i className={n < i ? 'done' : n === i ? 'now' : ''} style={n === i ? { animationDuration: `${s.ms}ms`, animationPlayState: paused || i === last ? 'paused' : 'running' } : undefined} /></span>
         ))}
       </div>
+      <button type="button" className="ms-sound" aria-label={sound ? 'Ääni pois' : 'Ääni päälle'} aria-pressed={sound} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} onClick={toggleSound}>{sound ? '🔊' : '🔇'}</button>
       <button type="button" className="ms-close" aria-label="Sulje" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()} onClick={close}>✕</button>
       <div key={i} className="ms-stage">{slides[i].el}</div>
     </div>,
