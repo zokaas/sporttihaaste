@@ -154,8 +154,8 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
         </p>
       ) : null}
       {midseasonReady(data) && data.today <= MID_CARD_UNTIL ? (
-        <Link href="/raportti/puolivali" className="note" style={{ margin: 0, display: 'block', textDecoration: 'none' }}>
-          📊 <strong>Kausi puolivälissä.</strong> Katso porukan välitilanne ja jaa se WhatsAppiin →
+        <Link href="/raportti/puolivali?tarina=1" className="note" style={{ margin: 0, display: 'block', textDecoration: 'none' }}>
+          📊 <strong>Kausi puolivälissä.</strong> ▶ Katso puolivälin tarina →
         </Link>
       ) : null}
       {data.today === SEASON_START && (data.gate.dealt > 0 || data.gate.left > 0) ? (

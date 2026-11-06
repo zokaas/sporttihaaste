@@ -1,8 +1,8 @@
 // Kauden puolivälin raportti pe 6.11.: tilanne kauden alusta torstaihin 5.11. asti (luvut eivät enää muutu).
 // Ylläpitäjä voi esikatsella sitä milloin tahansa; luvut ovat silloin tähänastiset.
 import { STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE } from './rules';
-import { addDays, helsinkiMs, seasonWeek, SEASON_END } from './season';
-import { heroStats, type Battle } from './stats';
+import { addDays, helsinkiMs, helsinkiToday, seasonWeek, weekRange, GATE_START, SEASON_END } from './season';
+import { finalBlows, heroStats, type Battle } from './stats';
 
 /** Raportin päivä (pe, viikko 6). Ilmoitus lähtee aamulla klo 9. */
 export const MID_DAY = '2026-11-06';
@@ -65,7 +65,74 @@ export function midseason(b: Battle, preview = false, userId?: string) {
       }
     : null;
 
+  // --- Tarina (animaatio) ---
+  // Kaatuneet kuvineen, kaatopäivineen ja viimeisen iskun lyöjineen.
+  const blows = finalBlows(b);
+  const fallen = b.ledger.killed
+    .filter((k) => k.killedAt != null && k.killedAt < untilMs)
+    .sort((a, c) => a.week - c.week)
+    .map((k) => {
+      const m = b.monsters.get(k.week);
+      return {
+        week: k.week,
+        name: nameOf(k.week),
+        image: m?.image_path ?? m?.parts?.find((x) => x.image_path)?.image_path ?? null,
+        day: helsinkiToday(new Date(k.killedAt!)),
+        // Montako päivää kaatamiseen meni viikon alusta (rästi: pidempi kuin viikko).
+        took: Math.round((Date.parse(helsinkiToday(new Date(k.killedAt!))) - Date.parse(weekRange(k.week).start)) / 86_400_000) + 1,
+        blow: blows[k.week] && b.participants.includes(blows[k.week]) ? heroName(blows[k.week]) : null,
+      };
+    });
+  // Voimakisa: jokaisen sankarin kertynyt voima viikoittain (portinvartijan päivät viikkoon 1).
+  const weekOf = (d: string) => Math.max(1, seasonWeek(d));
+  const raceWeeks = Array.from({ length: started }, (_, i) => i + 1);
+  const race = b.participants.map((id) => {
+    const perWeek = raceWeeks.map(() => 0);
+    for (const h of hits) if (h.user_id === id) perWeek[weekOf(h.trained_on) - 1] += h.damage;
+    for (const st of steps) if (st.user_id === id) perWeek[weekOf(st.day) - 1] += STEP_DAY_DAMAGE;
+    let sum = 0;
+    const hero = b.heroes.find((h) => h.id === id);
+    return { id, name: heroName(id), avatar: hero?.avatar_path ?? null, cum: perWeek.map((n) => (sum += n)) };
+  });
+  // Huippuhetket: isoin isku, isoin yhteistreeni ja kovin päivä koko porukalta.
+  const biggest = hits.reduce<(typeof hits)[number] | null>((a, h) => (!a || h.damage > a.damage ? h : a), null);
+  const together = hits.filter((h) => h.companions.length >= 2).reduce<(typeof hits)[number] | null>((a, h) => (!a || h.companions.length > a.companions.length || (h.companions.length === a.companions.length && h.damage > a.damage) ? h : a), null);
+  const byDay = new Map<string, number>();
+  for (const h of hits) byDay.set(h.trained_on, (byDay.get(h.trained_on) ?? 0) + h.damage);
+  for (const st of steps) byDay.set(st.day, (byDay.get(st.day) ?? 0) + STEP_DAY_DAMAGE);
+  const bestDay = [...byDay].sort((a, c) => c[1] - a[1])[0];
+  // Tahti näytetään vain porukan omina viikkolukuina: tulevien monsterien HP:ta ei paljasteta.
+  const daysIn = (w: number) => {
+    const { start, end } = weekRange(w);
+    const to = end < until ? end : until;
+    // Viikkoon 1 lasketaan myös portinvartijan päivät (29.–30.9.), koska niiden voima on viikon 1 luvuissa.
+    const from = w === 1 ? GATE_START : start;
+    return Math.max(0, Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1);
+  };
+  // Viikko viikolta: viikon monsteri, kaatuiko se, porukan voima ja viikon sankari.
+  const weekRows = raceWeeks.map((w) => {
+    const inWeek = (d: string) => weekOf(d) === w && inRange(d);
+    const totals = new Map<string, number>();
+    for (const h of hits) if (inWeek(h.trained_on)) totals.set(h.user_id, (totals.get(h.user_id) ?? 0) + h.damage);
+    for (const st of steps) if (inWeek(st.day)) totals.set(st.user_id, (totals.get(st.user_id) ?? 0) + STEP_DAY_DAMAGE);
+    const power = [...totals.values()].reduce((a, n) => a + n, 0)
+      + patrols.filter((x) => inWeek(x.day)).length * PATROL_DAY_DAMAGE
+      + b.kela.filter((k) => inWeek(k.day)).reduce((a, k) => a + k.damage, 0);
+    const top = [...totals].sort((a, c) => c[1] - a[1])[0];
+    // Lyhyt viikko (kauden alku) tai kesken oleva viikko merkitään, jotta pylväät ovat reiluja.
+    return { week: w, monster: nameOf(w), killed: killed.includes(w), power, hero: top ? heroName(top[0]) : null, days: daysIn(w), done: weekRange(w).end <= until };
+  });
+
   return {
+    story: {
+      fallen,
+      race,
+      raceWeeks,
+      biggest: biggest ? { name: heroName(biggest.user_id), sport: biggest.sport, minutes: biggest.minutes, damage: biggest.damage } : null,
+      together: together ? { name: heroName(together.user_id), people: together.companions.length + 1, sport: together.sport, damage: together.damage } : null,
+      bestDay: bestDay ? { day: bestDay[0], damage: bestDay[1] } : null,
+      weekRows,
+    },
     until,
     preview: !midseasonReady(b),
     killed: killed.sort((a, c) => a - c).map(nameOf),

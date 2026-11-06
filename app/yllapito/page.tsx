@@ -22,6 +22,7 @@ import GateEditor from '@/components/GateEditor';
 import type { GateRow } from '@/lib/gate';
 import Nav from '@/components/Nav';
 import Hint from '@/components/Hint';
+import ShareLink from '@/components/ShareLink';
 
 export const dynamic = 'force-dynamic';
 
@@ -490,6 +491,9 @@ export default async function Yllapito({ searchParams }: { searchParams: { osio?
         <h2 className="display">Ilmoitukset ja esikatselut</h2>
         <Link className="btn btn-ghost" href="/?finaali=1">🎉 Esikatsele loppugaala (kauden jälkeinen etusivu)</Link>
         <Link className="btn btn-ghost" href="/raportti/puolivali">📊 Esikatsele puolivälin raportti (kaikille pe 6.11.)</Link>
+        <Link className="btn btn-ghost" href="/jakso">🎬 Katso jakso: Puolivälin taisto</Link>
+        <ShareLink path="/jakso" text="🎬 Monsterijahti esittää: Puolivälin taisto ⚔️ Katso jakso:" />
+        <Hint id="admin-episode">Jakso ei näy etusivulla. Sen näkee vain tällä linkillä, ja vain kirjautuneet sankarit pääsevät katsomaan.</Hint>
         <Hint id="admin-finale">Loppugaala näkyy kaikille etusivulla, kun loppupomon viikko päättyy su 20.12. Esikatselussa luvut ovat tämänhetkiset.</Hint>
         <form action={sendTestPush}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Lähetä testi-ilmoitus kaikille</button></form>
         <form action={testFridayReminder}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Kokeile perjantain muistutusta (vain itsellesi)</button></form>
