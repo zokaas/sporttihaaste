@@ -101,16 +101,12 @@ export function midseason(b: Battle, preview = false, userId?: string) {
   for (const h of hits) byDay.set(h.trained_on, (byDay.get(h.trained_on) ?? 0) + h.damage);
   for (const st of steps) byDay.set(st.day, (byDay.get(st.day) ?? 0) + STEP_DAY_DAMAGE);
   const bestDay = [...byDay].sort((a, c) => c[1] - a[1])[0];
-  // Aikataulussa? Kaudesta kulunut osuus vs. tehty voima koko kauden HP:sta (monsterit + loppupomo).
-  const seasonDays = (Date.parse(SEASON_END) - Date.parse(SEASON_START)) / 86_400_000 + 1;
-  const elapsed = Math.min(seasonDays, (Date.parse(until) - Date.parse(SEASON_START)) / 86_400_000 + 1);
-  const totalHp = (b.ledgerInput?.monsterHp ?? []).reduce((a, n) => a + n, 0) + (b.ledgerInput?.bossHp ?? 0);
-  // Tahti viikossa: tähänastinen keskiarvo ja se, mitä loppukausi vaatii, jotta kaikki kaatuvat.
-  const weeksSoFar = elapsed / 7;
-  const weeksLeft = Math.max(1, (seasonDays - elapsed) / 7);
-  const pace = totalHp
-    ? { now: Math.round(damage / Math.max(1, weeksSoFar)), need: Math.max(0, Math.round((totalHp - damage - b.ledger.pot) / weeksLeft)) }
-    : null;
+  // Tahti näytetään vain porukan omina viikkolukuina: tulevien monsterien HP:ta ei paljasteta.
+  const daysIn = (w: number) => {
+    const { start, end } = weekRange(w);
+    const to = end < until ? end : until;
+    return Math.max(0, Math.round((Date.parse(to) - Date.parse(start < SEASON_START ? SEASON_START : start)) / 86_400_000) + 1);
+  };
   // Viikko viikolta: viikon monsteri, kaatuiko se, porukan voima ja viikon sankari.
   const weekRows = raceWeeks.map((w) => {
     const inWeek = (d: string) => weekOf(d) === w && inRange(d);
@@ -121,7 +117,8 @@ export function midseason(b: Battle, preview = false, userId?: string) {
       + patrols.filter((x) => inWeek(x.day)).length * PATROL_DAY_DAMAGE
       + b.kela.filter((k) => inWeek(k.day)).reduce((a, k) => a + k.damage, 0);
     const top = [...totals].sort((a, c) => c[1] - a[1])[0];
-    return { week: w, monster: nameOf(w), killed: killed.includes(w), power, hero: top ? heroName(top[0]) : null };
+    // Lyhyt viikko (kauden alku) tai kesken oleva viikko merkitään, jotta pylväät ovat reiluja.
+    return { week: w, monster: nameOf(w), killed: killed.includes(w), power, hero: top ? heroName(top[0]) : null, days: daysIn(w) };
   });
 
   return {
@@ -132,9 +129,6 @@ export function midseason(b: Battle, preview = false, userId?: string) {
       biggest: biggest ? { name: heroName(biggest.user_id), sport: biggest.sport, minutes: biggest.minutes, damage: biggest.damage } : null,
       together: together ? { name: heroName(together.user_id), people: together.companions.length + 1, sport: together.sport, damage: together.damage } : null,
       bestDay: bestDay ? { day: bestDay[0], damage: bestDay[1] } : null,
-      seasonPct: Math.round((elapsed / seasonDays) * 100),
-      powerPct: totalHp ? Math.min(100, Math.round((damage / totalHp) * 100)) : null,
-      pace,
       weekRows,
     },
     until,

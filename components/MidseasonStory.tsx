@@ -22,10 +22,9 @@ export type StoryData = {
   biggest: { name: string; sport: string; minutes: number; damage: number } | null;
   together: { name: string; people: number; sport: string; damage: number } | null;
   bestDay: { day: string; damage: number } | null;
-  seasonPct: number;
-  powerPct: number | null;
-  pace: { now: number; need: number } | null;
-  weekRows: { week: number; monster: string; killed: boolean; power: number; hero: string | null }[];
+  /** Pystyssä olevat: käynnissä oleva taistelu ja rästit. */
+  standing: { name: string; current: boolean }[];
+  weekRows: { week: number; monster: string; killed: boolean; power: number; hero: string | null; days: number }[];
   own: { damage: number; rank: number; of: number; trainings: number; kept: number; closed: number; best: string | null; badges: string[] } | null;
 };
 
@@ -147,6 +146,11 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
               ))}
             </div>
           ) : <p>Yksikään ei ole vielä kaatunut. Toinen puolisko ratkaisee.</p>}
+          {d.standing.map((x, n) => (
+            <p key={x.name} className={`ms-standing${x.current ? '' : ' backlog'}`} style={{ animationDelay: `${0.8 + d.fallen.length * 0.6 + n * 0.3}s` }}>
+              {x.current ? '⚔️ Taistelu käynnissä' : '😈 Rästissä'}: <b>{x.name}</b>
+            </p>
+          ))}
         </div>
       ),
     },
@@ -158,14 +162,31 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
           <span className="ms-kicker">Porukan voima</span>
           <div className="ms-huge display ms-counter"><Counter to={d.damage} /></div>
           <p>{fmt(d.trainings)} treeniä · {fmt(d.stepDays)} askelpäivää{d.patrols ? ` · ${d.patrols} megamarssia ⭐` : ''}</p>
-          {d.powerPct != null ? (
-            <div className="ms-pace">
-              <div><span>Kautta kulunut</span><div className="ms-pace-bar"><i style={{ width: `${d.seasonPct}%` }} /></div><b>{d.seasonPct} %</b></div>
-              <div><span>Voimaa koko kauden tarpeesta</span><div className="ms-pace-bar power"><i style={{ width: `${d.powerPct}%` }} /></div><b>{d.powerPct} %</b></div>
-              <strong>{d.powerPct >= d.seasonPct ? '✅ Aikataulussa' : '🔥 Kirittävää jäljellä'}</strong>
-              {d.pace ? <p className="ms-small ms-pace-text">Tahti nyt <b>{fmt(d.pace.now)}&nbsp;/&nbsp;vko</b> · tarvitaan <b>{fmt(d.pace.need)}&nbsp;/&nbsp;vko</b></p> : null}
-            </div>
-          ) : null}
+          {d.weekRows.length > 1 ? (() => {
+            // Porukan oma tahti viikoittain (päivää kohden, jotta lyhyt ja kesken oleva viikko ovat vertailukelpoisia).
+            const perDay = d.weekRows.map((w) => (w.days ? w.power / w.days : 0));
+            const top = Math.max(1, ...perDay);
+            const best = perDay.indexOf(top);
+            const first = perDay.find((v) => v > 0) ?? 0;
+            const last = perDay[perDay.length - 1];
+            const trend = first ? Math.round(((last - first) / first) * 100) : 0;
+            return (
+              <div className="ms-cols-wrap">
+                <div className="ms-cols">
+                  {d.weekRows.map((w, n) => (
+                    <div key={w.week} className={`ms-col${n === best ? ' best' : ''}`}>
+                      <b>{fmt(Math.round(perDay[n]))}</b>
+                      <i style={{ height: `${Math.max(4, (perDay[n] / top) * 80)}%`, animationDelay: `${0.3 + n * 0.15}s` }} />
+                      <span>{w.week}{w.days < 7 ? '*' : ''}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="ms-small">Voimaa päivässä viikoittain · kovin viikko {d.weekRows[best].week}</p>
+                <strong>{trend >= 0 ? `📈 Tahti kiihtynyt +${trend} % alusta` : `📉 Tahti hiipunut ${trend} % alusta – kiri!`}</strong>
+                {d.weekRows.some((w) => w.days < 7) ? <p className="ms-tiny">* lyhyt tai kesken oleva viikko</p> : null}
+              </div>
+            );
+          })() : null}
         </div>
       ),
     },
