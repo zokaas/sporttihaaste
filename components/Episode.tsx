@@ -343,7 +343,7 @@ export default function Episode({ d }: { d: EpisodeData }) {
       ),
     } : null,
     d.patrols || d.jointTrainings ? {
-      id: 'patrol', label: 'Ruutu 5 · Partio', ms: 6500,
+      id: 'patrol', label: 'Ruutu 5 · Yhdessä', ms: 6500,
       el: (
         <>
           <rect width={800} height={500} fill="url(#ep-dusk)" />
@@ -354,7 +354,7 @@ export default function Episode({ d }: { d: EpisodeData }) {
             <text x={676} y={266} fontSize={20}>⚔️</text>
             {heroes.slice(0, 6).map((h, n) => <Hero key={h.id} h={h} k={`pa${n}`} x={590 - n * 64} y={478 - (n % 2) * 10} s={0.5} pose="run" />)}
           </g>
-          <Narr x={20} y={18} w={500} lines={[`${fmt(d.patrols)} partiopäivää · ${fmt(d.jointTrainings)} yhteistreeniä.`, 'Yhdessä lyödään kovempaa.']} delay={0.4} />
+          <Narr x={20} y={18} w={500} lines={[d.patrols ? `${fmt(d.patrols)} megamarssia ⭐ · ${fmt(d.jointTrainings)} yhteistreeniä.` : `${fmt(d.jointTrainings)} yhteistreeniä porukalla.`, 'Yhdessä lyödään kovempaa.']} delay={0.4} />
         </>
       ),
     } : null,
@@ -437,7 +437,7 @@ export default function Episode({ d }: { d: EpisodeData }) {
     return () => clearTimeout(t);
   }, [i, paused, last]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Ruudun äänet: portin nousu, iskujen tömähdykset, partion askeleet, sinetti ja loppupomon sydän.
+  // Ruudun äänet: portin nousu, iskujen tömähdykset, yhteisen marssin askeleet, sinetti ja loppupomon sydän.
   const id = scenes[i].id;
   useEffect(() => {
     if (!sound) return;

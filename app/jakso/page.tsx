@@ -9,7 +9,7 @@ import { avatarUrl, monsterImageUrl, resizedImage } from '@/lib/supabase/client'
 
 export const dynamic = 'force-dynamic';
 
-/** Sarjakuvajakso puolivälistä: portti, iskut, kaatuneet, partiot, lupaukset, nykyinen taistelu ja loppupomon varjo. */
+/** Sarjakuvajakso puolivälistä: portti, iskut, kaatuneet, yhteistreenit ja megamarssit, lupaukset, nykyinen taistelu ja loppupomon varjo. */
 export default async function Jakso() {
   const { battle: b, me, user } = await requireHero();
   const m = midseason(b, Boolean(me.is_admin), user.id);
