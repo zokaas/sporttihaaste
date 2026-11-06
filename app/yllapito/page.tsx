@@ -137,6 +137,21 @@ async function shadowBroadcast(form: FormData) {
   redirect(`/yllapito?push=${encodeURIComponent(quiet ? 'Varjojen ääni jonossa: nyt on hiljaiset tunnit, joten se lähtee aamulla klo 9.' : `Varjojen ääni lähti ${sent} laitteeseen.`)}#varjot`);
 }
 
+/** Push, joka avaa puolivälin tarinan tai jakson suoraan sovelluksessa (WhatsApp-linkki aukeaisi selaimeen). */
+async function sendStoryPush(form: FormData) {
+  'use server';
+  const supabase = await requireAdmin();
+  const kind = form.get('kind') === 'jakso' ? 'jakso' : 'tarina';
+  const payload = kind === 'jakso'
+    ? { title: '🎬 Uusi jakso: Puolivälin taisto', body: 'Sankarit omilla kasvoillaan, kaatuneet monsterit ja loppupomon varjo. Katso jakso!', url: '/jakso' }
+    : { title: '📊 Puolivälin tarina', body: 'Kaatuneet, porukan voima, kiri ja sinun kautesi. Katso tarina!', url: '/raportti/puolivali?tarina=1' };
+  const { data: heroes } = await supabase.from('profiles').select('id').not('pledge_locked_at', 'is', null);
+  const quiet = isQuietHour();
+  const sent = await sendOrQueue(supabase, payload, (heroes ?? []).map((h) => h.id));
+  const what = kind === 'jakso' ? 'Jakson ilmoitus' : 'Tarinan ilmoitus';
+  redirect(`/yllapito?osio=testi&push=${encodeURIComponent(quiet ? `${what} on jonossa: nyt on hiljaiset tunnit, joten se lähtee aamulla klo 9.` : `${what} lähti ${sent} laitteeseen.`)}`);
+}
+
 /** Uusi laji kaikkien lajilistaan. Nimeä ja arvoa ei voi muuttaa jälkikäteen, jotta vanhat iskut pysyvät oikein. */
 async function addSport(form: FormData) {
   'use server';
@@ -491,9 +506,17 @@ export default async function Yllapito({ searchParams }: { searchParams: { osio?
         <h2 className="display">Ilmoitukset ja esikatselut</h2>
         <Link className="btn btn-ghost" href="/?finaali=1">🎉 Esikatsele loppugaala (kauden jälkeinen etusivu)</Link>
         <Link className="btn btn-ghost" href="/raportti/puolivali">📊 Esikatsele puolivälin raportti (kaikille pe 6.11.)</Link>
+        <form action={sendStoryPush}>
+          <input type="hidden" name="kind" value="tarina" />
+          <ConfirmButton message="Lähetetäänkö kaikille ilmoitus, joka avaa puolivälin tarinan?" className="btn btn-ghost" style={{ width: '100%' }}>📣 Lähetä push kaikille: Katso puolivälin tarina</ConfirmButton>
+        </form>
         <Link className="btn btn-ghost" href="/jakso">🎬 Katso jakso: Puolivälin taisto</Link>
+        <form action={sendStoryPush}>
+          <input type="hidden" name="kind" value="jakso" />
+          <ConfirmButton message="Lähetetäänkö kaikille ilmoitus, joka avaa jakson Puolivälin taisto?" className="btn btn-ghost" style={{ width: '100%' }}>📣 Lähetä push kaikille: Uusi jakso</ConfirmButton>
+        </form>
         <ShareLink path="/jakso" text="🎬 Monsterijahti esittää: Puolivälin taisto ⚔️ Katso jakso:" />
-        <Hint id="admin-episode">Jakso ei näy etusivulla. Sen näkee vain tällä linkillä, ja vain kirjautuneet sankarit pääsevät katsomaan.</Hint>
+        <Hint id="admin-episode-push">Jakso ei näy etusivulla. Push avaa tarinan tai jakson suoraan päänäytön sovelluksessa. WhatsApp-linkki aukeaa selaimeen (iPhonessa Safari vaatii erillisen kirjautumisen). Hiljaisina tunteina (klo 22–09) push lähtee aamulla klo 9.</Hint>
         <Hint id="admin-finale">Loppugaala näkyy kaikille etusivulla, kun loppupomon viikko päättyy su 20.12. Esikatselussa luvut ovat tämänhetkiset.</Hint>
         <form action={sendTestPush}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Lähetä testi-ilmoitus kaikille</button></form>
         <form action={testFridayReminder}><button className="btn btn-ghost" type="submit" style={{ width: '100%' }}>Kokeile perjantain muistutusta (vain itsellesi)</button></form>
