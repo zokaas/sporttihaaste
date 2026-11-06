@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { localKey } from '@/lib/localKey';
-import { heartbeat, riser, setDread, startSound, stopHeartbeat, stopSound, thud } from '@/lib/storySound';
+import { heartbeat, riser, setDread, startSound, stopHeartbeat, stopSound, thud, unlockSound } from '@/lib/storySound';
 
 export type EpisodeHero = { id: string; name: string; avatar: string | null };
 export type EpisodeData = {
@@ -472,7 +472,7 @@ export default function Episode({ d }: { d: EpisodeData }) {
 
   return (
     <div className="ep">
-      <div className="ep-screen" onPointerDown={() => { holdAt.current = Date.now(); setPaused(true); }} onPointerUp={tap} onPointerCancel={() => setPaused(false)}>
+      <div className="ep-screen" onPointerDown={() => { unlockSound(); holdAt.current = Date.now(); setPaused(true); }} onPointerUp={tap} onPointerCancel={() => setPaused(false)}>
         <svg key={i} viewBox="0 0 800 500" className={`ep-svg${paused ? ' paused' : ''}`} role="img" aria-label={scenes[i].label}>
           <defs>
             <linearGradient id="ep-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#3a1410" /><stop offset="1" stopColor="#120c0a" /></linearGradient>
@@ -485,7 +485,7 @@ export default function Episode({ d }: { d: EpisodeData }) {
         </svg>
         <div className="ep-bar"><span key={i} style={{ animationDuration: `${scenes[i].ms}ms`, animationPlayState: paused ? 'paused' : 'running' }} /></div>
       </div>
-      <div className="ep-controls">
+      <div className="ep-controls" onPointerDown={unlockSound}>
         <button type="button" className="btn btn-ghost btn-compact" aria-label="Edellinen ruutu" onClick={() => setI((x) => Math.max(0, x - 1))}>◀</button>
         <button type="button" className="btn btn-ghost btn-compact" onClick={() => setPaused((p) => !p)}>{paused ? '▶ Jatka' : '⏸ Tauko'}</button>
         <button type="button" className="btn btn-ghost btn-compact" aria-label="Seuraava ruutu" onClick={() => setI((x) => (x >= last ? 0 : x + 1))}>▶</button>
