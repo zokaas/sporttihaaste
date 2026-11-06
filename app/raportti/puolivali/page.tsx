@@ -35,7 +35,8 @@ export default async function Puolivali() {
     own: m.own ? {
       damage: m.own.damage, rank: m.own.rank, of: m.own.of, trainings: m.own.trainings, kept: m.own.kept, closed: m.own.closed,
       best: m.own.bestHit ? `${m.own.bestHit.sport} ${m.own.bestHit.minutes} min, ${fmt(m.own.bestHit.damage)} voimaa` : null,
-      badges: m.own.badges.map((a) => a.short ?? a.icon),
+      stepDays: m.own.stepDays,
+      badges: m.own.badges.map((a) => ({ icon: a.short ?? a.icon, title: a.title })),
     } : null,
   };
   return (

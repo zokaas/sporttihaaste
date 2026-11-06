@@ -1,7 +1,7 @@
 // Kauden puolivälin raportti pe 6.11.: tilanne kauden alusta torstaihin 5.11. asti (luvut eivät enää muutu).
 // Ylläpitäjä voi esikatsella sitä milloin tahansa; luvut ovat silloin tähänastiset.
 import { STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE } from './rules';
-import { addDays, helsinkiMs, helsinkiToday, seasonWeek, weekRange, SEASON_END, SEASON_START } from './season';
+import { addDays, helsinkiMs, helsinkiToday, seasonWeek, weekRange, GATE_START, SEASON_END } from './season';
 import { finalBlows, heroStats, type Battle } from './stats';
 
 /** Raportin päivä (pe, viikko 6). Ilmoitus lähtee aamulla klo 9. */
@@ -105,7 +105,9 @@ export function midseason(b: Battle, preview = false, userId?: string) {
   const daysIn = (w: number) => {
     const { start, end } = weekRange(w);
     const to = end < until ? end : until;
-    return Math.max(0, Math.round((Date.parse(to) - Date.parse(start < SEASON_START ? SEASON_START : start)) / 86_400_000) + 1);
+    // Viikkoon 1 lasketaan myös portinvartijan päivät (29.–30.9.), koska niiden voima on viikon 1 luvuissa.
+    const from = w === 1 ? GATE_START : start;
+    return Math.max(0, Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1);
   };
   // Viikko viikolta: viikon monsteri, kaatuiko se, porukan voima ja viikon sankari.
   const weekRows = raceWeeks.map((w) => {
@@ -118,7 +120,7 @@ export function midseason(b: Battle, preview = false, userId?: string) {
       + b.kela.filter((k) => inWeek(k.day)).reduce((a, k) => a + k.damage, 0);
     const top = [...totals].sort((a, c) => c[1] - a[1])[0];
     // Lyhyt viikko (kauden alku) tai kesken oleva viikko merkitään, jotta pylväät ovat reiluja.
-    return { week: w, monster: nameOf(w), killed: killed.includes(w), power, hero: top ? heroName(top[0]) : null, days: daysIn(w) };
+    return { week: w, monster: nameOf(w), killed: killed.includes(w), power, hero: top ? heroName(top[0]) : null, days: daysIn(w), done: weekRange(w).end <= until };
   });
 
   return {

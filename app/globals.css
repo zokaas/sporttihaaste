@@ -805,11 +805,69 @@ details.admin-past > summary { cursor: pointer; padding: 12px 0; color: var(--mu
 .ms-own strong { font-size: 24px; }
 .ms-own span { font-size: 12px; color: #c9c1b4; }
 .ms-badges { font-size: 26px; letter-spacing: 4px; }
+.ms-own-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.ms-own-badges span { padding: 6px 12px; border-radius: 999px; background: rgba(232, 176, 74, 0.14); border: 1px solid rgba(232, 176, 74, 0.4); font-size: 13px; animation: ms-pop 0.4s both; }
+.ms-fallen-hero { color: var(--gold) !important; }
 .ms-boss { position: relative; }
 .ms-boss-shadow { width: min(320px, 80vw); animation: ms-loom 5s ease-out both; filter: drop-shadow(0 0 30px rgba(255, 60, 30, 0.35)); }
 @keyframes ms-loom { from { transform: scale(0.4) translateY(40px); opacity: 0; } 40% { opacity: 1; } to { transform: scale(1); opacity: 1; } }
 .ms-pot { color: #ffb08a; }
 @media (prefers-reduced-motion: reduce) {
-  .ms-col i, .ms-standing, .ms-week, .ms-race-num small, .ms-slide, .ms-calendar, .ms-fallen-card, .ms-fallen-img i, .ms-pace-bar i, .ms-pace strong, .ms-highlights > div, .ms-own > div, .ms-boss-shadow { animation: none; opacity: 1; }
+  .ms-own-badges span, .ms-col i, .ms-standing, .ms-week, .ms-race-num small, .ms-slide, .ms-calendar, .ms-fallen-card, .ms-fallen-img i, .ms-pace-bar i, .ms-pace strong, .ms-highlights > div, .ms-own > div, .ms-boss-shadow { animation: none; opacity: 1; }
   .ms-race-row, .ms-race-bar { transition: none; }
+}
+
+/* Sarjakuvajakso (/jakso): ruudut SVG:nä, sankareiden kasvoina avatarit. */
+.ep { display: flex; flex-direction: column; gap: 10px; }
+.ep-screen { position: relative; border: 5px solid var(--gold); border-radius: 18px; overflow: hidden; background: #120c0a; box-shadow: 0 0 0 3px #1a0f0c, 0 14px 32px rgba(0, 0, 0, 0.5); user-select: none; -webkit-user-select: none; touch-action: manipulation; cursor: pointer; }
+.ep-svg { display: block; width: 100%; height: auto; aspect-ratio: 8 / 5; }
+.ep-svg.paused * { animation-play-state: paused !important; }
+.ep-bar { height: 5px; background: rgba(255, 255, 255, 0.1); }
+.ep-bar span { display: block; height: 100%; width: 0; background: var(--gold); animation: ms-fill linear forwards; }
+.ep-controls { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ep-hand { font-family: var(--font-body), sans-serif; font-weight: 600; }
+.ep-narr { font-family: var(--font-display), serif; font-style: italic; }
+.ep-title { font-family: var(--font-display), serif; }
+.ep-bang { font-family: var(--font-display), serif; font-weight: 700; letter-spacing: 0.04em; }
+.ep-label { font-family: var(--font-body), sans-serif; font-weight: 700; fill: #f2eae0; paint-order: stroke; stroke: #120c0a; stroke-width: 5px; }
+.ep-svg [class] { transform-box: fill-box; }
+.ep-pop { transform-origin: center; animation: ep-pop 0.55s cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+@keyframes ep-pop { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.06); opacity: 1; } 100% { transform: none; } }
+.ep-slideIn { animation: ep-slide 1.8s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+@keyframes ep-slide { from { transform: translateX(-420px); } to { transform: none; } }
+.ep-bob { animation: ep-bob 0.32s ease-in-out infinite alternate; }
+@keyframes ep-bob { to { transform: translateY(-6px); } }
+.ep-legA, .ep-legB { transform-origin: 50% 0; animation: ep-leg 0.32s ease-in-out infinite alternate; }
+.ep-legB { animation-direction: alternate-reverse; }
+@keyframes ep-leg { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
+.ep-wave { transform-origin: 0% 100%; animation: ep-wave 0.5s ease-in-out infinite alternate; }
+@keyframes ep-wave { from { transform: rotate(-12deg); } to { transform: rotate(12deg); } }
+.ep-flutter { transform-origin: 50% 0; animation: ep-flutter 0.28s ease-in-out infinite alternate; }
+@keyframes ep-flutter { from { transform: skewX(-7deg); } to { transform: skewX(7deg); } }
+.ep-drift { animation: ep-drift 3.6s ease-in-out infinite alternate; }
+@keyframes ep-drift { from { transform: translateX(-10px); } to { transform: translateX(10px); } }
+.ep-creep { transform-origin: center; animation: ep-creep 2.6s ease-out both; }
+@keyframes ep-creep { from { transform: translate(170px, -90px) scale(0.25); opacity: 0; } to { transform: none; opacity: 1; } }
+.ep-shrink { transform-origin: 50% 100%; animation: ep-shrink 2.2s ease-in-out 0.5s both; }
+@keyframes ep-shrink { from { transform: scale(1); } to { transform: scale(0.6); } }
+.ep-flash { animation: ep-flash 0.45s ease-in-out infinite alternate; }
+@keyframes ep-flash { from { opacity: 0.25; } to { opacity: 1; } }
+.ep-shake { transform-origin: center; animation: ep-shake 0.12s linear 8 alternate; }
+@keyframes ep-shake { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+.ep-speed { animation: ep-flash 0.3s linear infinite alternate; }
+.ep-rushIn { animation: ep-rush 1s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+@keyframes ep-rush { from { transform: translateX(-460px); } to { transform: none; } }
+.ep-recoil { transform-origin: center; animation: ep-recoil 0.3s ease-in-out infinite alternate; }
+@keyframes ep-recoil { from { transform: translateX(0) scaleX(1); } to { transform: translateX(22px) scaleX(0.9); } }
+.ep-evap { transform-origin: center; animation: ep-evap 2.6s ease-in 0.3s both; }
+@keyframes ep-evap { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-90px) scale(1.5); } }
+.ep-dawn { opacity: 0.5; animation: ep-dawn 3s ease-out both; }
+@keyframes ep-dawn { from { opacity: 0; } }
+.ep-loom { transform-origin: 50% 100%; animation: ep-loom 5s ease-out both; }
+@keyframes ep-loom { from { transform: scale(0.4) translateY(60px); opacity: 0; } 40% { opacity: 1; } to { transform: none; opacity: 1; } }
+.ep-glow { animation: ep-flash 1.2s ease-in-out infinite alternate; }
+.ep-fall { animation: ep-fall var(--d, 4s) linear infinite; }
+@keyframes ep-fall { from { transform: translateY(0) rotate(0); } to { transform: translateY(580px) rotate(600deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .ep-svg *, .ep-bar span { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0s !important; }
 }
