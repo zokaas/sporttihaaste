@@ -158,9 +158,6 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
           📊 <strong>Kausi puolivälissä.</strong> Katso porukan välitilanne ja jaa se WhatsAppiin →
         </Link>
       ) : null}
-      {midseasonReady(data) && data.today <= MID_CARD_UNTIL ? (
-        <Link href="/jakso" className="btn btn-ghost" style={{ margin: 0 }}>🎬 Uusi jakso: Puolivälin taisto</Link>
-      ) : null}
       {data.today === SEASON_START && (data.gate.dealt > 0 || data.gate.left > 0) ? (
         // Portinvartijan (29.–30.9.) tulos kauden ensimmäisenä päivänä: selittää viikon 1 monsterin lisä-HP:n tai potin ylijäämän.
         <section className={`card gate-result${data.gate.killed ? '' : ' threat'}`}>
