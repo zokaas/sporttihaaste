@@ -141,8 +141,9 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
                 <div key={f.week} className="ms-fallen-card" style={{ animationDelay: `${0.3 + n * 0.6}s` }}>
                   <div className="ms-fallen-img">{f.image ? <img src={f.image} alt="" /> : null}<i style={{ animationDelay: `${0.7 + n * 0.6}s` }}>✝</i></div>
                   <strong>{f.name}</strong>
-                  <span>{dm(f.day)} · {f.took} pv{f.blow ? ` · ⚔️ ${f.blow}` : ''}</span>
-                  {d.weekRows.find((w) => w.week === f.week)?.hero ? <span className="ms-fallen-hero">🏆 {d.weekRows.find((w) => w.week === f.week)!.hero}</span> : null}
+                  <span>Kaatui {dm(f.day)}</span>
+                  {f.blow ? <span className="ms-fallen-role"><small>Viimeinen isku</small>⚔️ {f.blow}</span> : null}
+                  {d.weekRows.find((w) => w.week === f.week)?.hero ? <span className="ms-fallen-role hero"><small>Viikon sankari</small>🏆 {d.weekRows.find((w) => w.week === f.week)!.hero}</span> : null}
                 </div>
               ))}
             </div>
