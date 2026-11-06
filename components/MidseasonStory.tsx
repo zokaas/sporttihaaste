@@ -90,15 +90,17 @@ function Race({ race, weeks, paused, me }: { race: StoryData['race']; weeks: num
  * Puolivälin tarina: koko ruudun kortit vaihtuvat itsestään (napautus oikealle = seuraava, vasemmalle = edellinen,
  * painallus pitää tauolla). Avautuu itsestään ensimmäisellä käynnillä; myöhemmin napista.
  */
-export default function MidseasonStory({ d }: { d: StoryData }) {
+/** autoOpen: avataan heti (etusivun kortista), muuten vain ensimmäisellä käynnillä. */
+export default function MidseasonStory({ d, autoOpen = false }: { d: StoryData; autoOpen?: boolean }) {
   const [open, setOpen] = useState(false);
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
   const holdAt = useRef(0);
 
   useEffect(() => {
+    if (autoOpen) return setOpen(true);
     try { if (!localStorage.getItem(localKey(SEEN))) setOpen(true); } catch { /* ei tallennusta */ }
-  }, []);
+  }, [autoOpen]);
   const close = useCallback(() => {
     setOpen(false);
     stopSound();

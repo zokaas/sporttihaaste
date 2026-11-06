@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 const fmt = (n: number) => n.toLocaleString('fi-FI');
 
-export default async function Puolivali() {
+export default async function Puolivali({ searchParams }: { searchParams: { tarina?: string } }) {
   const { battle: b, me, user } = await requireHero();
   // Ylläpitäjä näkee raportin etukäteen (tähänastisilla luvuilla), muut pe 6.11. alkaen.
   const m = midseason(b, Boolean(me.is_admin), user.id);
@@ -45,7 +45,7 @@ export default async function Puolivali() {
       <BackButton fallback="/" />
       <h1 className="display">Kausi puolivälissä</h1>
       {m.preview ? <p className="note threat" style={{ margin: 0 }}>Esikatselu ylläpitäjälle: muut näkevät raportin pe {Number(MID_DAY.slice(8))}.{Number(MID_DAY.slice(5, 7))}. alkaen. Luvut ovat tähänastiset.</p> : null}
-      <MidseasonStory d={story} />
+      <MidseasonStory d={story} autoOpen={searchParams.tarina === '1'} />
       <p className="muted small" style={{ margin: 0 }}>Luvut kauden alusta {Number(m.until.slice(8))}.{Number(m.until.slice(5, 7))}. asti.</p>
       <section className="card">
         <h2 className="display">💀 {m.killed.length}/{m.started} monsteria kaatui</h2>
