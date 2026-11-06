@@ -162,30 +162,29 @@ export default function MidseasonStory({ d }: { d: StoryData }) {
         <div className="ms-slide">
           <span className="ms-kicker">Porukan voima</span>
           <div className="ms-huge display ms-counter"><Counter to={d.damage} /></div>
-          <p>{fmt(d.trainings)} treeniä · {fmt(d.stepDays)} askelpäivää{d.patrols ? ` · ${d.patrols} megamarssia ⭐` : ''}</p>
+          <p>voimaa yhteensä · {fmt(d.trainings)} treeniä · {fmt(d.stepDays)} askelpäivää{d.patrols ? ` · ${d.patrols} megamarssia ⭐` : ''}</p>
           {(() => {
-            // Vain päättyneet viikot: kesken oleva viikko ei näytä hiipumiselta. Voima päivässä, jotta lyhyt viikko 1 on vertailukelpoinen.
+            // Vain päättyneet viikot (kesken oleva ei näytä hiipumiselta). Voima päivässä, jotta pidempi viikko 1 (portti) on reilusti vertailtavissa.
             const rows = d.weekRows.filter((w) => w.done && w.days > 0);
             if (rows.length < 2) return null;
-            const perDay = rows.map((w) => w.power / w.days);
+            const perDay = rows.map((w) => Math.round(w.power / w.days));
             const top = Math.max(1, ...perDay);
             const best = perDay.indexOf(top);
-            const trend = Math.round(((perDay[perDay.length - 1] - perDay[0]) / Math.max(1, perDay[0])) * 100);
+            const avg = Math.round(rows.reduce((a, w) => a + w.power, 0) / rows.reduce((a, w) => a + w.days, 0));
             const now = d.weekRows.find((w) => !w.done);
             return (
-              <div className="ms-cols-wrap">
-                <div className="ms-cols">
-                  {rows.map((w, n) => (
-                    <div key={w.week} className={`ms-col${n === best ? ' best' : ''}`}>
-                      <b>{fmt(Math.round(perDay[n]))}</b>
-                      <i style={{ height: `${Math.max(4, (perDay[n] / top) * 80)}%`, animationDelay: `${0.3 + n * 0.15}s` }} />
-                      <span>vk {w.week}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="ms-small">Porukan voima päivässä · paras viikko {rows[best].week}</p>
-                <strong>{trend > 0 ? `📈 Tahti noussut +${trend} % alusta` : `🔥 Ennätysviikko ${rows[best].week}: ${fmt(Math.round(top))} / päivä – lyödään se!`}</strong>
-                {now ? <p className="ms-small">⚔️ Viikko {now.week} käynnissä: {fmt(now.power)} voimaa jo kasassa</p> : null}
+              <div className="ms-pace">
+                <p className="ms-pace-lead">Joka päivä porukka lyö keskimäärin <strong>{fmt(avg)}</strong> voimaa.</p>
+                <p className="ms-small" style={{ margin: 0 }}>Voimaa päivässä, viikko kerrallaan</p>
+                {rows.map((w, n) => (
+                  <div key={w.week} className={`ms-pace-row${n === best ? ' best' : ''}`}>
+                    <span>vk {w.week}</span>
+                    <div className="ms-race-track"><i style={{ width: `${(perDay[n] / top) * 100}%`, animationDelay: `${0.3 + n * 0.15}s` }} /></div>
+                    <b>{fmt(perDay[n])}{n === best ? ' 🏆' : ''}</b>
+                  </div>
+                ))}
+                <strong>🏆 Paras viikko {rows[best].week}: {fmt(top)} voimaa päivässä</strong>
+                {now ? <p className="ms-small" style={{ margin: 0 }}>⚔️ Viikko {now.week} käynnissä: {fmt(now.power)} voimaa jo kasassa</p> : null}
               </div>
             );
           })()}
