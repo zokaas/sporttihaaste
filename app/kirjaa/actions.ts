@@ -6,7 +6,7 @@ import { FAMILY_WEAKNESS, hitDamage, specialOf, type Category } from '@/lib/rule
 import { loadSports } from '@/lib/sports';
 import { loggableDays, monthDay, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { PREVIEW_ERROR, previewOnly, today } from '@/lib/today';
-import { currentWeaknesses, loadBattle, resolveTarget } from '@/lib/battle';
+import { currentWeaknesses, loadBattle, resolveTarget, strikeWeek } from '@/lib/battle';
 import { afterHit } from '@/lib/events';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
 
@@ -41,9 +41,11 @@ async function computeHit(input: HitInput, userId: string, anyDay = false) {
   const md = monthDay(input.day);
   const celebration = (heroes ?? []).some((h) => h.pledge_locked_at && (h.birthday === md || h.name_day === md));
   const groupSize = 1 + companions.length;
-  // Kohteen valinnassa vain lyötävän osan heikkous tehoaa.
-  const target = resolveTarget(battle, seasonWeek(input.day), input.target);
-  const weaknesses = target ? target.weaknesses : currentWeaknesses(battle, seasonWeek(input.day));
+  // Isku osuu ensin vanhimpaan rästiin: sen osat ja heikkous (kuluvan viikon iskuilla). Kohteen valinnassa vain lyötävän osan heikkous tehoaa.
+  const dayWeek = seasonWeek(input.day);
+  const aimWeek = dayWeek === battle.week ? strikeWeek(battle, dayWeek) : dayWeek;
+  const target = resolveTarget(battle, aimWeek, input.target);
+  const weaknesses = target ? target.weaknesses : currentWeaknesses(battle, aimWeek);
   // Erikoisheikkouden merkintä hyväksytään vain, kun se on viikon heikkous.
   const special = input.special && input.special === specialOf(weaknesses) ? input.special : null;
   const result = hitDamage({

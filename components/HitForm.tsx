@@ -23,6 +23,8 @@ type Props = {
   celebrations: Record<string, string[]>;
   /** Kohteen valinta päällä: elossa olevat ja kaatuneet osat. */
   targets?: TargetPart[] | null;
+  /** Rästi edessä: isku osuu siihen ennen kuluvan viikon monsteria. */
+  backlog?: { name: string; hp: number; week: number } | null;
 };
 
 
@@ -32,7 +34,7 @@ function duration(min: number) {
   return [h ? `${h} h` : '', m ? `${m} min` : ''].filter(Boolean).join(' ');
 }
 
-export default function HitForm({ days, sports, companions, weakness: weekWeakness, celebrations, healthyByDay, targets }: Props) {
+export default function HitForm({ days, sports, companions, weakness: weekWeakness, celebrations, healthyByDay, targets, backlog }: Props) {
   // Kohteen valinta: sankari valitsee osan itse jokaisella iskulla (ei oletusta).
   const [target, setTarget] = useState<number | null>(null);
   const mustPick = Boolean(targets?.some((t) => !t.dead)) && target == null;
@@ -97,9 +99,14 @@ export default function HitForm({ days, sports, companions, weakness: weekWeakne
 
   return (
     <section className="card">
+      {backlog ? (
+        <p className="note threat" style={{ margin: 0 }}>
+          😈 <strong>Iskusi osuu ensin rästiin: {backlog.name}</strong> ({backlog.hp.toLocaleString('fi-FI')} HP). Kun se kaatuu, ylijäämä jatkaa viikon {backlog.week} monsteriin{targets ? '' : ', ja silloin pääset valitsemaan, ketä lyöt'}.
+        </p>
+      ) : null}
       {targets ? (
         <fieldset className="field-group">
-          <legend>Ketä lyöt?</legend>
+          <legend>{backlog ? 'Mihin rästin osaan lyöt?' : 'Ketä lyöt?'}</legend>
           <TargetChoice targets={targets} selected={target} onPick={(i) => { setTarget(i); writeTarget(i); }} />
         </fieldset>
       ) : null}

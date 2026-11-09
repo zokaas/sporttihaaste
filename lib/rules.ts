@@ -251,10 +251,13 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
     for (const e of events) {
       let dmg = e.damage;
       let i = 0;
+      // Valittu osa viittaa iskuhetken etummaiseen taistelijaan (rästi ensin). Ylijäämä seuraavaan osuu sen etummaiseen osaan.
+      const aimed = queue[0]?.week;
+      const partFor = (f: Fighter) => (f.week === aimed ? e.part : null);
       while (dmg > 0 && i < queue.length) {
         const f = queue[i];
         if (e.isTraining) f.hitters.add(e.userId);
-        const over = hitFighter(f, dmg, e.part, e.at);
+        const over = hitFighter(f, dmg, partFor(f), e.at);
         dmg = 0;
         if (over > 0) {
           // Osa kaatui: ylijäämä ensi-iskuun (loppupomon viikolla potti on jo käytetty, joten seuraavaan taistelijaan).
@@ -284,7 +287,7 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
           j--;
           if (overflow > 0) {
             if (queue.length) {
-              const over = hitFighter(queue[0], overflow, e.part, e.at);
+              const over = hitFighter(queue[0], overflow, partFor(queue[0]), e.at);
               if (over > 0 && w <= MONSTER_WEEKS) pot += over;
             } else if (w <= MONSTER_WEEKS) pot += overflow;
           }

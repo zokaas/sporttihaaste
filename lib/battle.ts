@@ -205,6 +205,15 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   return { ...base, hpLocked, hpPreview, required: requiredByWeek[week], ledger, events, ledgerInput, timing: { queriesMs: t1 - t0, computeMs: Date.now() - t1 } };
 }
 
+/**
+ * Iskun todellinen kohde: vanhin elossa oleva rästi ottaa iskut ensin, muuten kuluvan viikon monsteri.
+ * Kohteen valinta, heikkous ja näkymät käyttävät tätä viikkoa, jotta valittu osa on se, johon isku oikeasti osuu.
+ */
+export function strikeWeek(b: { ledger: { alive: { week: number }[] } | null }, week: number) {
+  const front = b.ledger?.alive[0];
+  return front && front.week < week ? front.week : week;
+}
+
 /** Viikon heikkoudet iskuhetkellä: moniosaisella kaikkien osien heikkoudet koko viikon. */
 export function currentWeaknesses(b: { monsters: Map<number, PublicMonster>; ledger: { alive: { week: number; hp: number }[] } | null }, week: number) {
   const m = b.monsters.get(week);

@@ -1,4 +1,4 @@
-import { targetParts, type loadBattle } from './battle';
+import { strikeWeek, targetParts, type loadBattle } from './battle';
 import { monsterImageUrl, resizedImage } from './supabase/client';
 import { addDays, seasonWeek, weekRange } from './season';
 import { isSickOn, weekPledgeTarget } from './weekly';
@@ -36,6 +36,7 @@ export function myWeekProps(b: NonNullable<Awaited<ReturnType<typeof loadBattle>
     togetherCount: b.hits.filter((h) => seasonWeek(h.trained_on) === week && h.companions.length >= 2 && (h.user_id === userId || h.companions.includes(userId))).length,
     pledge: b.pledgeOf(userId, week),
     // Kohteen valinta: askeleet osuvat sankarin valitsemaan osaan.
-    targets: targetParts(b, week, (p) => { const u = monsterImageUrl(p); return u ? resizedImage(u, 256) : null; }),
+    // Askeleet osuvat ensin vanhimpaan rästiin (kuluvalla viikolla): valinta sen osista.
+    targets: targetParts(b, week === b.week ? strikeWeek(b, week) : week, (p) => { const u = monsterImageUrl(p); return u ? resizedImage(u, 256) : null; }),
   };
 }
