@@ -117,6 +117,24 @@ assert.equal(r.pot, 200);
   assert.equal(q.lostToSeal, 200);
 }
 
+// 3c) Rästi edessä: viikon 2 iskun osavalinta viittaa rästiin, ei viikon 2 kaksikkoon; rästin kaaduttua ylijäämä etummaiseen osaan
+{
+  const pe = (week: number, at: number, userId: string, damage: number, part: number | null) => ({ week, at, userId, damage, isTraining: true, part });
+  // Viikko 1 jää rästiin (c ei lyönyt), viikolla 2 kaksikko [500, 500]
+  const pb = { ...base, partsByWeek: { 2: [500, 500] } };
+  let q = computeLedger({ ...pb, events: [pe(1, 1, 'a', 500, null), pe(1, 2, 'b', 100, null), pe(2, 1, 'a', 300, 1)] }, 2, true);
+  assert.equal(q.alive[0].week, 1, 'rästi edessä');
+  assert.equal(q.alive[0].hp, 1000 - 600 - 300, 'isku osui rästiin');
+  assert.deepEqual(q.alive[1].parts, [{ hp: 500, dead: false }, { hp: 500, dead: false }], 'kaksikko koskematon');
+  // Rästin kaatava isku (c täyttää sinetin): ylijäämä 200 kaksikon etummaiseen osaan, ei valittuun indeksiin 1
+  q = computeLedger({ ...pb, events: [pe(1, 1, 'a', 500, null), pe(1, 2, 'b', 100, null), pe(2, 1, 'c', 600, 1)] }, 2, true);
+  assert.deepEqual(q.killed.map((k) => k.week), [1]);
+  assert.deepEqual(q.alive[0].parts, [{ hp: 300, dead: false }, { hp: 500, dead: false }]);
+  // Kun rästi on kaatunut, valinta osuu kaksikon valittuun osaan
+  q = computeLedger({ ...pb, events: [pe(1, 1, 'a', 500, null), pe(1, 2, 'b', 100, null), pe(2, 1, 'c', 600, 1), pe(2, 2, 'a', 100, 1)] }, 2, true);
+  assert.deepEqual(q.alive[0].parts, [{ hp: 300, dead: false }, { hp: 400, dead: false }]);
+}
+
 // 4) Sinetti täyttyy pienellä iskulla, kun HP on jo nollassa
 r = computeLedger({ ...base, events: [ev(1, 1, 'a', 1200), ev(1, 2, 'b', 10), ev(1, 3, 'c', 10)] }, 1);
 assert.equal(r.killed.length, 1);

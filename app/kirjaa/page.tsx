@@ -2,11 +2,11 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl, monsterImageUrl, resizedImage } from '@/lib/supabase/client';
-import { SPECIAL_WEAKNESSES, pledgeNote, type Category } from '@/lib/rules';
+import { SPECIAL_WEAKNESSES, pledgeNote, sealView, type Category } from '@/lib/rules';
 import { activeSports, loadSports } from '@/lib/sports';
 import { addDays, formatDay, graceWeek, loggableDays, monthDay, seasonWeek, weekRange, SEASON_START } from '@/lib/season';
 import { today } from '@/lib/today';
-import { currentWeaknesses, loadBattle, targetParts } from '@/lib/battle';
+import { currentWeaknesses, loadBattle, strikeWeek, targetParts } from '@/lib/battle';
 import HitForm from '@/components/HitForm';
 import DeleteHitButton from '@/components/DeleteHitButton';
 import Hint from '@/components/Hint';
@@ -59,6 +59,9 @@ export default async function Kirjaa() {
   const healthyByDay: Record<string, number> = {};
   for (const d of days) healthyByDay[d] = participants.filter((h) => !isSickOn((sick ?? []) as SickPeriod[], h.id, d)).length;
 
+  // Vanhin rästi ottaa iskut ensin: valinta ja heikkous sen mukaan.
+  const aim = strikeWeek(battle, week);
+
   return (
     <>
       <Link href="/" className="muted tap">← Takaisin</Link>
@@ -67,8 +70,9 @@ export default async function Kirjaa() {
         days={days}
         sports={activeSports(sports)}
         companions={participants.filter((h) => h.id !== user.id).map((h) => ({ id: h.id, name: h.hero_name ?? '', avatar: avatarUrl(h.avatar_path) }))}
-        weakness={currentWeaknesses(battle, week)}
-        targets={targetParts(battle, week, (p) => { const u = monsterImageUrl(p); return u ? resizedImage(u, 256) : null; })}
+        weakness={currentWeaknesses(battle, aim)}
+        targets={targetParts(battle, aim, (p) => { const u = monsterImageUrl(p); return u ? resizedImage(u, 256) : null; })}
+        backlog={aim < week ? { name: battle.monsters.get(aim)?.name ?? `Viikon ${aim} monsteri`, hp: battle.ledger?.alive[0] ? sealView(battle.ledger.alive[0], battle.required).hp : 0, week } : null}
         celebrations={celebrations}
         healthyByDay={healthyByDay}
       />

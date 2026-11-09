@@ -5,7 +5,7 @@ import { addDays, loggableDays, seasonWeek, BOSS_WEEK } from '@/lib/season';
 import { PREVIEW_ERROR, previewOnly, today } from '@/lib/today';
 import { afterStep, checkKills } from '@/lib/events';
 import { afterLog } from '@/lib/background';
-import { loadBattle, targetParts } from '@/lib/battle';
+import { loadBattle, strikeWeek, targetParts } from '@/lib/battle';
 import { monsterImageUrl, resizedImage } from '@/lib/supabase/client';
 import { sendOrQueue, sendPush } from '@/lib/push';
 import { isQuietHour } from '@/lib/quiet';
@@ -56,7 +56,7 @@ export async function stepTargets() {
   if (!user) return null;
   const now = today();
   const b = await loadBattle(supabase, now);
-  return targetParts(b, seasonWeek(now), (p) => { const u = monsterImageUrl(p); return u ? resizedImage(u, 256) : null; });
+  return targetParts(b, strikeWeek(b, seasonWeek(now)), (p) => { const u = monsterImageUrl(p); return u ? resizedImage(u, 256) : null; });
 }
 
 /**
