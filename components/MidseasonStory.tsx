@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { localKey } from '@/lib/localKey';
-import { heartbeat, riser, setDread, startSound, stopHeartbeat, stopSound, thud } from '@/lib/storySound';
+import { heartbeat, riser, setDread, startSound, stopHeartbeat, stopSound, thud, unlockSound } from '@/lib/storySound';
 // @ts-expect-error react-dom-tyyppejä ei ole asennettu; createPortal on Nextin mukana.
 import { createPortal } from 'react-dom';
 
@@ -302,12 +302,12 @@ export default function MidseasonStory({ d, autoOpen = false }: { d: StoryData; 
   };
 
   if (!open) {
-    return <button type="button" className="btn" onClick={() => { setI(0); setOpen(true); }}>▶ Katso puolivälin tarina</button>;
+    return <button type="button" className="btn" onClick={() => { if (sound) startSound(); setI(0); setOpen(true); }}>▶ Katso puolivälin tarina</button>;
   }
   // Portaali bodyyn: koko ruudun kerros ei riipu sivun asettelusta (alapalkin yläpuolella).
   return createPortal(
     <div className="ms-story" role="dialog" aria-label="Puolivälin tarina"
-      onPointerDown={() => { holdAt.current = Date.now(); setPaused(true); }} onPointerUp={tap} onPointerCancel={() => setPaused(false)}>
+      onPointerDown={() => { unlockSound(); holdAt.current = Date.now(); setPaused(true); }} onPointerUp={tap} onPointerCancel={() => setPaused(false)}>
       <div className="ms-progress">
         {slides.map((s, n) => (
           <span key={n}><i className={n < i ? 'done' : n === i ? 'now' : ''} style={n === i ? { animationDuration: `${s.ms}ms`, animationPlayState: paused || i === last ? 'paused' : 'running' } : undefined} /></span>
