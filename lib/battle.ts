@@ -176,10 +176,10 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   if (!hpLocked && !hpPreview) return { ...base, hpLocked, hpPreview, required: participants, ledger: null, events: [] as LedgerEvent[], ledgerInput: null, timing: { queriesMs: t1 - t0, computeMs: Date.now() - t1 } };
 
   const events: LedgerEvent[] = [
-    ...hitList.map((h) => ({ week: seasonWeek(h.trained_on), at: Date.parse(h.created_at), userId: h.user_id, damage: h.damage, isTraining: true, allTogether: h.all_together, part: h.target_part ?? null })),
-    ...stepList.map((s) => ({ week: seasonWeek(s.day), at: Date.parse(s.created_at), userId: s.user_id, damage: STEP_DAY_DAMAGE, isTraining: false, part: s.target_part ?? null })),
-    ...patrols.map((p) => ({ week: seasonWeek(p.day), at: Date.parse(p.at) + 1, userId: 'partio', damage: PATROL_DAY_DAMAGE, isTraining: false })),
-    ...kela.map((k) => ({ week: seasonWeek(k.day), at: helsinkiMs(k.day, KELA_TIME), userId: k.userId, damage: k.damage, isTraining: false })),
+    ...hitList.map((h) => ({ week: seasonWeek(h.trained_on), at: Date.parse(h.created_at), userId: h.user_id, damage: h.damage, isTraining: true, allTogether: h.all_together, part: h.target_part ?? null, ref: hitRef(h) })),
+    ...stepList.map((s) => ({ week: seasonWeek(s.day), at: Date.parse(s.created_at), userId: s.user_id, damage: STEP_DAY_DAMAGE, isTraining: false, part: s.target_part ?? null, ref: stepRef(s) })),
+    ...patrols.map((p) => ({ week: seasonWeek(p.day), at: Date.parse(p.at) + 1, userId: 'partio', damage: PATROL_DAY_DAMAGE, isTraining: false, ref: patrolRef(p) })),
+    ...kela.map((k) => ({ week: seasonWeek(k.day), at: helsinkiMs(k.day, KELA_TIME), userId: k.userId, damage: k.damage, isTraining: false, ref: kelaRef(k) })),
   ];
   const requiredByWeek: Record<number, string[]> = {};
   const pledgeBonusesByWeek: Record<number, number> = {};
@@ -203,6 +203,17 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const ledgerInput = { monsterHp, bossHp: byWeek.get(BOSS_WEEK)!.hp!, events: [...testKills, ...events], requiredByWeek, pledgeBonusesByWeek, startPot: gateCarry ? gate.surplus : 0, partsByWeek };
   const ledger = computeLedger(ledgerInput, week, true);
   return { ...base, hpLocked, hpPreview, required: requiredByWeek[week], ledger, events, ledgerInput, timing: { queriesMs: t1 - t0, computeMs: Date.now() - t1 } };
+}
+
+// Iskujen tunnisteet taistelukirjanpitoon: mihin monsteriin kukin osui (rästi ensin).
+export const hitRef = (h: { id: number }) => `h${h.id}`;
+export const stepRef = (s: { user_id: string; day: string }) => `s${s.user_id}|${s.day}`;
+export const patrolRef = (p: { day: string }) => `p${p.day}`;
+export const kelaRef = (k: { userId: string; day: string }) => `k${k.userId}|${k.day}`;
+
+/** Monsteri (viikko), johon isku osui: rästiviikolla vanhin rästi. Ilman kirjanpitoa (tai kaatuneen viikon iskulla) iskun oma viikko. */
+export function landedWeek(b: { ledger: { landed?: Record<string, number> } | null }, ref: string, day: string) {
+  return b.ledger?.landed?.[ref] ?? seasonWeek(day);
 }
 
 /**

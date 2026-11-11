@@ -173,6 +173,7 @@ export interface LedgerEvent {
   isTraining: boolean; // askeleet ja megamarssit eivät täytä sinettiä
   allTogether?: boolean; // koko porukka yhdessä (vain tilastoihin)
   part?: number | null; // valittu osa moniosaisessa monsterissa (kohteen valinta); tyhjä = etummainen elossa oleva
+  ref?: string; // tunniste näkymiä varten: mihin monsteriin isku osui (ledger.landed)
 }
 
 export interface LedgerInput {
@@ -201,6 +202,8 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
   let pot = input.startPot ?? 0; // portinvartijan ylijäämä
   let lostToSeal = 0;
   const partFalls: PartFall[] = [];
+  // Mihin monsteriin (viikko) kukin isku osui ensimmäisenä: rästissä vanhimpaan. Kaatuneen viikon iskut menevät ensi-iskuun.
+  const landed: Record<string, number> = {};
 
   /**
    * Vahinko taistelijaan. Kohteen valinnassa isku osuu valittuun elossa olevaan osaan (muuten etummaiseen).
@@ -253,6 +256,7 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
       let i = 0;
       // Valittu osa viittaa iskuhetken etummaiseen taistelijaan (rästi ensin). Ylijäämä seuraavaan osuu sen etummaiseen osaan.
       const aimed = queue[0]?.week;
+      if (e.ref && aimed != null) landed[e.ref] = aimed;
       const partFor = (f: Fighter) => (f.week === aimed ? e.part : null);
       while (dmg > 0 && i < queue.length) {
         const f = queue[i];
@@ -325,6 +329,7 @@ export function computeLedger(input: LedgerInput, uptoWeek = BOSS_WEEK, weekOpen
     })),
     killed: done.map((f) => ({ week: f.week, killedAt: f.killedAt })),
     partFalls,
+    landed,
   };
 }
 
