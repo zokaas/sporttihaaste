@@ -130,6 +130,11 @@ assert.equal(r.pot, 200);
   q = computeLedger({ ...pb, events: [pe(1, 1, 'a', 500, null), pe(1, 2, 'b', 100, null), pe(2, 1, 'c', 600, 1)] }, 2, true);
   assert.deepEqual(q.killed.map((k) => k.week), [1]);
   assert.deepEqual(q.alive[0].parts, [{ hp: 300, dead: false }, { hp: 500, dead: false }]);
+  // Kirjanpito kertoo, mihin monsteriin isku osui: viikon 2 isku rästiin (viikko 1)
+  const tagged = computeLedger({ ...pb, events: [{ ...pe(1, 1, 'a', 500, null), ref: 'h1' }, { ...pe(1, 2, 'b', 100, null), ref: 'h2' }, { ...pe(2, 1, 'a', 300, 1), ref: 'h3' }] }, 2, true);
+  assert.deepEqual(tagged.landed, { h1: 1, h2: 1, h3: 1 }, 'rästiviikon isku osui rästiin');
+  const after = computeLedger({ ...pb, events: [{ ...pe(1, 1, 'a', 500, null), ref: 'h1' }, { ...pe(1, 2, 'b', 100, null), ref: 'h2' }, { ...pe(2, 1, 'c', 600, 1), ref: 'h3' }, { ...pe(2, 2, 'a', 100, 1), ref: 'h4' }] }, 2, true);
+  assert.equal(after.landed.h4, 2, 'rästin kaaduttua isku osuu viikon monsteriin');
   // Kun rästi on kaatunut, valinta osuu kaksikon valittuun osaan
   q = computeLedger({ ...pb, events: [pe(1, 1, 'a', 500, null), pe(1, 2, 'b', 100, null), pe(2, 1, 'c', 600, 1), pe(2, 2, 'a', 100, 1)] }, 2, true);
   assert.deepEqual(q.alive[0].parts, [{ hp: 300, dead: false }, { hp: 400, dead: false }]);

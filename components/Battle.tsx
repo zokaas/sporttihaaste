@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { avatarUrl, hitPhotoUrl, monsterImageUrl, resizedImage } from '@/lib/supabase/client';
 import { ZoomImg } from '@/components/ImageViewer';
-import { choosesTarget, type loadBattle } from '@/lib/battle';
+import { choosesTarget, hitRef, landedWeek, stepRef, type loadBattle } from '@/lib/battle';
 import { computeLedger, hitBonusText, potParts, sealView, STEP_DAY_DAMAGE } from '@/lib/rules';
 import { finalBlows, weekRecap } from '@/lib/stats';
 import { addDays, formatDay, helsinkiMs, KELA_TIME, seasonWeek, weekRange, BOSS_WEEK, MONSTER_WEEKS, SEASON_START } from '@/lib/season';
@@ -114,16 +114,18 @@ export default function Battle({ data, userId, ownHit = null, crit = false, trip
     const shown = names.length > 3 ? `${names.slice(0, 3).join(', ')} + ${names.length - 3} muuta` : names.join(', ');
     return `${heroName(userId)}${shown ? ` + ${shown}` : ''}`;
   };
-  // Kohteen valinnassa rivi kertoo, mihin osaan isku osui.
-  const aimed = (part: number | null | undefined) => {
-    const m = monsters.get(week);
-    const name = choosesTarget(m) && part != null ? m?.parts?.[part]?.name : null;
-    return name ? ` → ${name}` : '';
+  // Rivi kertoo, mihin isku osui: rästiin (vanhin ensin) tai kohteen valinnassa valittuun osaan.
+  const aimed = (ref: string, day: string, part: number | null | undefined) => {
+    const w = landedWeek(data, ref, day);
+    const m = monsters.get(w);
+    const partName = choosesTarget(m) && part != null ? m?.parts?.[part]?.name : null;
+    if (w < week) return ` → 😈 ${partName ?? nameOf(w)}`;
+    return partName ? ` → ${partName}` : '';
   };
   // Jokainen rivi samassa muodossa: toiminto otsikkona, tekijä ja päivä alla.
   const log = [
-    ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, icon: '⚔️', title: `${h.sport} ${h.minutes} min${aimed(h.target_part)}`, by: withCompanions(h.user_id, h.companions), day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, triple: h.bonus_pct >= 150, bonus: hitBonusText(h), photo: hitPhotoUrl(h.photo_path) })),
-    ...data.steps.filter((st) => seasonWeek(st.day) === week).map((st) => ({ at: st.created_at, icon: '👣', title: `Askeleet${aimed(st.target_part)}`, by: heroById.get(st.user_id)?.hero_name ?? '?', day: st.day, dmg: STEP_DAY_DAMAGE, crit: false, triple: false, bonus: '', photo: null })),
+    ...data.hits.filter((h) => seasonWeek(h.trained_on) === week).map((h) => ({ at: h.created_at, icon: '⚔️', title: `${h.sport} ${h.minutes} min${aimed(hitRef(h), h.trained_on, h.target_part)}`, by: withCompanions(h.user_id, h.companions), day: h.trained_on, dmg: h.damage, crit: h.bonus_pct >= 100, triple: h.bonus_pct >= 150, bonus: hitBonusText(h), photo: hitPhotoUrl(h.photo_path) })),
+    ...data.steps.filter((st) => seasonWeek(st.day) === week).map((st) => ({ at: st.created_at, icon: '👣', title: `Askeleet${aimed(stepRef(st), st.day, st.target_part)}`, by: heroById.get(st.user_id)?.hero_name ?? '?', day: st.day, dmg: STEP_DAY_DAMAGE, crit: false, triple: false, bonus: '', photo: null })),
     ...data.patrols.filter((p) => seasonWeek(p.day) === week).map((p) => ({ at: p.at, icon: '⭐', title: 'Megamarssi', by: 'Koko porukka', day: p.day, dmg: 250, crit: false, triple: false, bonus: '', photo: null })),
     ...data.kela.filter((k) => seasonWeek(k.day) === week).map((k) => ({ at: new Date(helsinkiMs(k.day, KELA_TIME)).toISOString(), icon: '🏥', title: 'Kela', by: heroName(k.userId), day: k.day, dmg: k.damage, crit: false, triple: false, bonus: '', photo: null })),
   ].sort((a, c) => c.at.localeCompare(a.at)).slice(0, 6);

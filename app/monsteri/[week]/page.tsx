@@ -9,7 +9,7 @@ import { finalBlows } from '@/lib/stats';
 import { STEP_DAY_DAMAGE, hitBonusText, sealView } from '@/lib/rules';
 import { formatDay, seasonWeek, weekRange, BOSS_WEEK } from '@/lib/season';
 import { activeWeaknesses, groupName, stageParts } from '@/lib/trio';
-import { choosesTarget } from '@/lib/battle';
+import { choosesTarget, hitRef, kelaRef, landedWeek, stepRef } from '@/lib/battle';
 import Hint from '@/components/Hint';
 import { ZoomImg } from '@/components/ImageViewer';
 import { parseFx } from '@/lib/fx';
@@ -42,14 +42,16 @@ export default async function Monsteri({ params }: { params: { week: string } })
   const partImages = (parts ?? []).map((x) => x.image).filter((x): x is string => Boolean(x));
   const images = partImages.length ? partImages : [monsterImageUrl(m?.image_path)].filter((x): x is string => Boolean(x));
 
-  // Vahinko monsterin viikolla (iskut ja askeleet) sankareittain
+  // Iskut, jotka osuivat tähän monsteriin: rästissä myös seuraavan viikon iskut (vanhin rästi ottaa iskut ensin),
+  // ja rästin takana odottaneelta pois ne, jotka osuivat rästiin.
+  const onThis = (ref: string, day: string) => landedWeek(b, ref, day) === week;
   const totals = new Map<string, number>();
-  for (const h of b.hits) if (seasonWeek(h.trained_on) === week) totals.set(h.user_id, (totals.get(h.user_id) ?? 0) + h.damage);
-  for (const s of b.steps) if (seasonWeek(s.day) === week) totals.set(s.user_id, (totals.get(s.user_id) ?? 0) + STEP_DAY_DAMAGE);
-  const kela = b.kela.filter((k) => seasonWeek(k.day) === week).sort((a, c) => c.day.localeCompare(a.day));
+  for (const h of b.hits) if (onThis(hitRef(h), h.trained_on)) totals.set(h.user_id, (totals.get(h.user_id) ?? 0) + h.damage);
+  for (const s of b.steps) if (onThis(stepRef(s), s.day)) totals.set(s.user_id, (totals.get(s.user_id) ?? 0) + STEP_DAY_DAMAGE);
+  const kela = b.kela.filter((k) => onThis(kelaRef(k), k.day)).sort((a, c) => c.day.localeCompare(a.day));
   // Kela ei ole omaa voimaa: se näkyy iskulistassa, mutta ei nosta sijoitusta (sama kuin viikon sankarissa ja sankarilistassa).
   const top = [...totals].sort((a, c) => c[1] - a[1]).slice(0, 5);
-  const hits = b.hits.filter((h) => seasonWeek(h.trained_on) === week).sort((a, c) => c.created_at.localeCompare(a.created_at));
+  const hits = b.hits.filter((h) => onThis(hitRef(h), h.trained_on)).sort((a, c) => c.created_at.localeCompare(a.created_at));
   const photos = hits.filter((h) => h.photo_path);
 
   return (
@@ -129,7 +131,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
 
       {photos.length ? (
         <section className="card">
-          <h2 className="display">Viikon {week} treenikuvat <span className="muted small">{photos.length}</span></h2>
+          <h2 className="display">Treenikuvat <span className="muted small">{photos.length}</span></h2>
           <div className="photo-grid">
             {photos.map((h) => {
               const src = hitPhotoUrl(h.photo_path)!;
@@ -156,6 +158,7 @@ export default async function Monsteri({ params }: { params: { week: string } })
                   <div className="who">{heroName(h.user_id)} <span className="muted" style={{ fontWeight: 400 }}>· {h.sport} {h.minutes} min</span></div>
                   <div className="facts">
                     {formatDay(h.trained_on)}
+                    {seasonWeek(h.trained_on) > week ? ' · rästiviikolla' : ''}
                     {choose && h.target_part != null && m?.parts?.[h.target_part] ? ` · → ${m.parts[h.target_part].name}` : ''}
                     {h.companions.length ? ` · mukana ${h.companions.map(heroName).join(', ')}` : ''}
                     {h.all_together ? ' · kaikki yhdessä!' : ''}
