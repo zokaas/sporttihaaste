@@ -12,6 +12,7 @@ import { isQuietHour } from '@/lib/quiet';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
 import { strikeSummary, type StrikeSummary } from '@/lib/strike';
 import { sealView } from '@/lib/rules';
+import { reportError } from '@/lib/errors';
 
 type Result = { ok: true } | { ok: false; error: string };
 
@@ -43,6 +44,7 @@ export async function toggleStep(day: string, on: boolean, withStrike = false, t
     ? await supabase.from('step_days').upsert(stepRow)
     : await supabase.from('step_days').delete().eq('user_id', user.id).eq('day', day);
   if (on && error && 'target_part' in stepRow && error.message.includes('target_part')) ({ error } = await supabase.from('step_days').upsert({ user_id: user.id, day }));
+  if (error) await reportError('Askelkuittaus', error.message, { userId: user.id, detail: `päivä ${day}, ${on ? 'kuittaus' : 'peruutus'}` });
   if (!error && on) await afterLog(() => afterStep(supabase, day, user.id));
   const res = done(error);
   // Lyö-valikko näyttää iskuikkunan: monsterin tilanne askelten jälkeen.

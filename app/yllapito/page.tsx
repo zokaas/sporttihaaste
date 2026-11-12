@@ -152,6 +152,14 @@ async function sendStoryPush(form: FormData) {
   redirect(`/yllapito?osio=testi&push=${encodeURIComponent(quiet ? `${what} on jonossa: nyt on hiljaiset tunnit, joten se lähtee aamulla klo 9.` : `${what} lähti ${sent} laitteeseen.`)}`);
 }
 
+/** Tyhjentää virhelokin (kun viat on katsottu läpi). */
+async function clearErrorLog() {
+  'use server';
+  const supabase = await requireAdmin();
+  await supabase.from('error_log').delete().gte('id', 0);
+  redirect('/yllapito?osio=nyt#virheet');
+}
+
 /** Uusi laji kaikkien lajilistaan. Nimeä ja arvoa ei voi muuttaa jälkikäteen, jotta vanhat iskut pysyvät oikein. */
 async function addSport(form: FormData) {
   'use server';
@@ -205,6 +213,10 @@ export default async function Yllapito({ searchParams }: { searchParams: { osio?
     // Viimeksi paikalla (migraatio 032); ilman taulua tyhjä.
     supabase.from('last_seen').select('user_id, seen_at'),
   ]);
+  // Virheloki (migraatio 037): viimeiset 14 päivää. Ilman taulua errorLogMissing.
+  const { data: errorRows, error: errorLogError } = await supabase.from('error_log').select('id, at, source, message, path, user_id').gte('at', new Date(Date.now() - 14 * 86_400_000).toISOString()).order('at', { ascending: false }).limit(30);
+  const errorLog = (errorRows ?? []) as { id: number; at: string; source: string; message: string; path: string | null; user_id: string | null }[];
+  const errorLogMissing = Boolean(errorLogError);
   const seenAt = new Map(((seenRows ?? []) as { user_id: string; seen_at: string }[]).map((r) => [r.user_id, r.seen_at]));
   const seenText = (iso: string | undefined) => {
     if (!iso) return 'ei tietoa';
@@ -274,6 +286,29 @@ export default async function Yllapito({ searchParams }: { searchParams: { osio?
 
       {tab === 'nyt' ? (
         <>
+      <section className={`card${errorLog.length ? ' threat' : ''}`} id="virheet">
+        <h2 className="display">🚨 Virheet <span className="muted small">14 pv</span></h2>
+        {errorLogMissing ? (
+          <p className="muted small" style={{ margin: 0 }}>Virheloki ei ole käytössä: aja migraatio 037_virheet.sql Supabasessa.</p>
+        ) : errorLog.length ? (
+          <>
+            <ul className="people">
+              {errorLog.map((e) => (
+                <li key={e.id}>
+                  <div className="grow" style={{ minWidth: 0 }}>
+                    <div className="who">{e.source} <span className="muted" style={{ fontWeight: 400 }}>· {seenText(e.at)}</span></div>
+                    <div className="facts" style={{ overflowWrap: 'anywhere' }}>{e.message}</div>
+                    {e.path || e.user_id ? <div className="facts muted">{[e.path, e.user_id ? (heroes ?? []).find((h) => h.id === e.user_id)?.hero_name ?? null : null].filter(Boolean).join(' · ')}</div> : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <form action={clearErrorLog}>
+              <ConfirmButton message="Tyhjennetäänkö virheloki?" className="btn btn-ghost" style={{ width: '100%' }}>Tyhjennä virheloki</ConfirmButton>
+            </form>
+          </>
+        ) : <p className="muted" style={{ margin: 0 }}>✓ Ei virheitä. Saat pushin, jos jokin kaatuu (sama vika enintään kerran tunnissa).</p>}
+      </section>
       <section className="card">
         <h2 className="display">🤒 Kipeänä nyt</h2>
         <p style={{ margin: 0 }}>{battle.sickNow.length ? battle.sickNow.map((id) => battle.heroes.find((x) => x.id === id)?.hero_name ?? '?').join(', ') : <span className="muted">Kaikki ovat terveinä.</span>}</p>

@@ -9,6 +9,7 @@ import { PREVIEW_ERROR, previewOnly, today } from '@/lib/today';
 import { currentWeaknesses, loadBattle, resolveTarget, strikeWeek } from '@/lib/battle';
 import { afterHit } from '@/lib/events';
 import { isSickOn, type SickPeriod } from '@/lib/weekly';
+import { reportError } from '@/lib/errors';
 
 export type HitInput = { day: string; sport: string; minutes: number; companions: string[]; special?: string | null; photo?: string | null; target?: number | null };
 
@@ -110,6 +111,7 @@ export async function logHit(input: HitInput): Promise<Result> {
   if (error) {
     const photo = ownPhoto(input.photo, user.id);
     if (photo) await supabase.storage.from(PHOTO_BUCKET).remove([photo]).catch(() => {});
+    await reportError('Treenin kirjaus', error.message, { path: '/kirjaa', userId: user.id, detail: JSON.stringify({ day: input.day, sport: input.sport, minutes: input.minutes }) });
     return { ok: false, error: error.message };
   }
   // Ilmoitukset (kaatuminen, sinetti) lähtevät taustalla: kirjaaja pääsee heti katsomaan iskuaan.
