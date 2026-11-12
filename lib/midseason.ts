@@ -6,8 +6,8 @@ import { finalBlows, heroStats, type Battle } from './stats';
 
 /** Raportin päivä (pe, viikko 6). Ilmoitus lähtee aamulla klo 9. */
 export const MID_DAY = '2026-11-06';
-/** Etusivun kortti näkyy raportin päivästä viikon 7 loppuun. */
-export const MID_CARD_UNTIL = '2026-11-15';
+/** Etusivun kortti näkyi raportin päivästä 11.11. asti (piilotettu ylläpidon pyynnöstä; raportti ja tarina toimivat yhä linkillä ja ylläpidon napeista). */
+export const MID_CARD_UNTIL = '2026-11-11';
 
 export const midseasonReady = (b: Battle) => b.today >= MID_DAY;
 
