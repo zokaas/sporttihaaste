@@ -5,6 +5,7 @@ import { fridayReminders } from '@/lib/reminders';
 import { checkKills } from '@/lib/events';
 import { helsinkiHour, QUIET_END } from '@/lib/quiet';
 import { addDays, helsinkiToday, isGateDay, seasonWeek, weekRange, BOSS_WEEK, SEASON_END, SEASON_START } from '@/lib/season';
+import { reportError } from '@/lib/errors';
 import { writeBackup } from '@/lib/backup';
 import { loadBattle } from '@/lib/battle';
 import { sealView } from '@/lib/rules';
@@ -53,6 +54,7 @@ export async function GET(request: Request) {
     try { await fn(); } catch (e) {
       console.error(`Aamuajo: ${name}`, e);
       errors.push(`${name}: ${e instanceof Error ? e.message : String(e)}`);
+      await reportError(`Aamuajo: ${name}`, e, { push: false });
     }
   };
   const day = helsinkiToday();

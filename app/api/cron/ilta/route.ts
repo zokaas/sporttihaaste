@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/errors';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { fridayReminders } from '@/lib/reminders';
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
     global: { fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }) },
   });
   // Ennakkopaljastus: jos viikon monsteri kaatui jo aiemmin, seuraava paljastui su klo 19 ja siitä lähtee ilmoitus nyt.
-  await checkKills(supabase, day).catch((e) => console.error('Ennakkopaljastus', e));
+  await checkKills(supabase, day).catch((e) => reportError('Iltaajo: ennakkopaljastus', e));
   if ((await supabase.from('notifications_sent').insert({ key: `sunday-${week}` })).error) return NextResponse.json({ skipped: 'Jo lähetetty.' });
   try {
     const r = await fridayReminders(supabase, day, undefined, 'sunday');
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
   } catch (e) {
     // Virheestä ilmoitus ylläpitäjille, jotta muistutuksen puuttuminen huomataan.
     const msg = e instanceof Error ? e.message : String(e);
-    console.error('Iltaajo', e);
+    await reportError('Iltaajo (sunnuntain muistutus)', e, { push: false });
     // Avain pois, jotta ajon voi ajaa uudelleen käsin (jo muistutuksen saaneet voivat saada sen toiseen kertaan).
     await supabase.from('notifications_sent').delete().eq('key', `sunday-${week}`);
     const { data: admins } = await supabase.from('profiles').select('id').eq('is_admin', true);

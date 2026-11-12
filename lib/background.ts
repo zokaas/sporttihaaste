@@ -2,13 +2,14 @@ import 'server-only';
 import { waitUntil } from '@vercel/functions';
 import { earlyRevealMs, seasonWeek } from './season';
 import { today } from './today';
+import { reportError } from './errors';
 
 /**
  * Ajetaan vastauksen jälkeen (ilmoitukset, kaatumistarkistus), jottei käyttäjän nappi odota niitä.
  * Vercel pitää funktion käynnissä, kunnes tehtävä on valmis.
  */
 export function background(task: Promise<unknown>) {
-  waitUntil(task.catch((e) => console.error('Taustatehtävä epäonnistui', e)));
+  waitUntil(task.catch((e) => reportError('Taustatehtävä (ilmoitukset, kaatumiset)', e)));
 }
 
 /**
@@ -17,6 +18,6 @@ export function background(task: Promise<unknown>) {
  */
 export async function afterLog(task: () => Promise<unknown>) {
   const week = seasonWeek(today());
-  if (week >= 1 && Date.now() >= earlyRevealMs(week)) await task().catch((e) => console.error('Jälkitarkistus epäonnistui', e));
+  if (week >= 1 && Date.now() >= earlyRevealMs(week)) await task().catch((e) => reportError('Jälkitarkistus (ilmoitukset, kaatumiset)', e));
   else background(task());
 }
