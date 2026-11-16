@@ -199,6 +199,10 @@ export default function MonsterStage(p: Props) {
   const sel = choose && picked != null && parts?.[picked] && !parts[picked].dead ? picked : firstAlive;
   const front = parts ? parts[sel] ?? parts[parts.length - 1] : null;
   const deadParts = parts ? parts.filter((x) => x.dead).length : 0;
+  // Kaksikon tai kolmikon osa jo kaatunut (esim. rästissä): palkki ja luku näyttävät etummaisen osan omaa HP:ta,
+  // ja koko ryhmän yhteis-HP näkyy erikseen (kuten kohteen valinnassa).
+  const solo = Boolean(parts && !choose && !p.dead && deadParts > 0 && front && !front.dead);
+  const focus = choose || solo;
   const deadKey = parts ? parts.map((x, i) => (x.dead ? i : -1)).filter((i) => i >= 0).join(',') : '';
   const pick = (i: number) => { if (parts?.[i] && !parts[i].dead) { setPicked(i); if (p.effects) writeTarget(i); } };
   const step = (dir: 1 | -1) => {
@@ -325,7 +329,7 @@ export default function MonsterStage(p: Props) {
   }, [p.effects, p.week, p.hp, p.maxHp, p.ownHit, p.crit, p.triple, p.revealed, p.boss, p.potStrike]);
 
   // Kohteen valinnassa palkki näyttää valitun osan HP:n (oma isku valuu siihen).
-  const pct = choose && front
+  const pct = focus && front
     ? Math.max(0, Math.min(100, ((front.left + Math.max(0, shownHp - p.hp)) / Math.max(1, front.hp)) * 100))
     : Math.max(0, Math.min(100, (shownHp / p.maxHp) * 100));
   // Pato näytetään suhteessa kolmannekseen monsterin HP:sta, jotta pienikin pato näkyy.
@@ -425,17 +429,17 @@ export default function MonsterStage(p: Props) {
           </div>
         ) : <h2 className="display stage-title">{title}</h2>}
         {weakness ? <span className="pill">Heikkous: {weakness} +50 %</span> : null}
-        <div className={`stage-hp${parts && !choose ? ' segmented' : ''}`} role="meter" aria-label={choose ? `${title}: HP` : 'Monsterin HP'} aria-valuemin={0} aria-valuemax={choose && front ? front.hp : p.maxHp} aria-valuenow={choose && front ? front.left : p.hp}>
+        <div className={`stage-hp${parts && !focus ? ' segmented' : ''}`} role="meter" aria-label={focus && front ? `${choose ? title : front.name}: HP` : 'Monsterin HP'} aria-valuemin={0} aria-valuemax={focus && front ? front.hp : p.maxHp} aria-valuenow={focus && front ? front.left : p.hp}>
           <span style={{ width: `${pct}%` }} />
-          {parts && !choose ? parts.slice(0, -1).reduce<{ at: number; marks: number[] }>((acc, x) => { acc.at += x.hp; acc.marks.push(acc.at); return acc; }, { at: 0, marks: [] }).marks.map((at) => <i key={at} style={{ left: `${100 - (at / p.maxHp) * 100}%` }} />) : null}
+          {parts && !focus ? parts.slice(0, -1).reduce<{ at: number; marks: number[] }>((acc, x) => { acc.at += x.hp; acc.marks.push(acc.at); return acc; }, { at: 0, marks: [] }).marks.map((at) => <i key={at} style={{ left: `${100 - (at / p.maxHp) * 100}%` }} />) : null}
         </div>
         <div className="stage-hptext">
           {/* Kohteen valinnassa valitun osan HP näkyy sen kortissa. */}
-          <span>{choose ? '' : `${fmt(Math.max(0, p.hp))} / ${fmt(p.maxHp)} HP`}</span>
+          <span>{choose ? '' : solo && front ? `${fmt(Math.max(0, front.left))} / ${fmt(front.hp)} HP` : `${fmt(Math.max(0, p.hp))} / ${fmt(p.maxHp)} HP`}</span>
           <span className="stage-state">{state === 'dead' ? 'Kaatunut' : state === 'shielded' ? 'Sinetti kesken' : state === 'dying' ? 'Horjuu!' : state === 'hurt' ? 'Haavoittunut' : ''}</span>
         </div>
         {/* Kohteen valinnassa palkki näyttää valitun osan: koko kaksikon tai kolmikon yhteis-HP erikseen. */}
-        {choose && parts ? (
+        {focus && parts ? (
           <div className="stage-hptext stage-hptotal">
             <span>{groupName(parts.length)} yhteensä</span>
             <strong>{fmt(Math.max(0, p.hp))} / {fmt(p.maxHp)} HP</strong>
