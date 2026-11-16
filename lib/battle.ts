@@ -51,16 +51,27 @@ const HIT_COLS = 'id, user_id, trained_on, sport, minutes, damage, bonus_pct, al
  * muistetaan palvelimen instanssissa, jottei jokainen sivulataus tee turhia uusintakyselyjä.
  */
 const working: Record<string, { i: number; at: number }> = {};
+/** Puuttuva sarake (ajamaton migraatio): vain silloin kokeillaan suppeampaa kyselyä. */
+function missingColumn(error: unknown) {
+  const e = error as { code?: string; message?: string } | null;
+  return Boolean(e && (e.code === '42703' || e.code === 'PGRST204' || /column .*does not exist|could not find the .* column/i.test(e.message ?? '')));
+}
+
 async function withFallback<T extends { error: unknown }>(key: string, extras: string[], run: (extra: string) => PromiseLike<T>): Promise<T> {
   // Muistettu vaihtoehto vanhenee 5 minuutissa, jotta juuri ajettu migraatio otetaan käyttöön.
   const known = working[key];
   const from = known && Date.now() - known.at < 5 * 60_000 ? known.i : 0;
   for (let i = from; i < extras.length; i++) {
-    const res = await run(extras[i]);
-    if (!res.error || i === extras.length - 1) {
-      if (!res.error) working[key] = { i, at: known?.i === i && from === i ? known.at : Date.now() };
+    let res = await run(extras[i]);
+    // Hetkellinen vika (verkko, aikakatkaisu): sama kysely uudelleen. Ilman tätä ohimenevä virhe pudotti
+    // esim. kohteen valinnan (choose_target) tai iskujen kohteet pois viideksi minuutiksi ja taistelu laskettiin väärin.
+    if (res.error && !missingColumn(res.error)) res = await run(extras[i]);
+    if (!res.error) {
+      working[key] = { i, at: known?.i === i && from === i ? known.at : Date.now() };
       return res;
     }
+    if (!missingColumn(res.error)) throw new Error(`Tietojen haku epäonnistui (${key}): ${(res.error as { message?: string }).message ?? String(res.error)}`);
+    if (i === extras.length - 1) return res;
   }
   throw new Error('unreachable');
 }
