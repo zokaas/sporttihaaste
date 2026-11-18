@@ -5,6 +5,7 @@ import { isSickOn } from '@/lib/weekly';
 import { avatarUrl } from '@/lib/supabase/client';
 import { weekDifficulty } from '@/lib/outlook';
 import { activeWeaknesses } from '@/lib/trio';
+import { strikeWeek } from '@/lib/battle';
 
 /** Tänään: päivän askeltilanne ja juhlapäivä. Tulevat juhlapäivät ilmoitetaan viikkoa etukäteen. */
 export default function TodayCard({ b, showNextReveal = true }: { b: Battle; showNextReveal?: boolean }) {
@@ -20,7 +21,9 @@ export default function TodayCard({ b, showNextReveal = true }: { b: Battle; sho
   const patrol = b.patrols.some((p) => p.day === b.today);
   // Viikon vaikeus: kuinka moni treeni kymmenestä tarvitsee bonuksen, jotta viikon monsteri kaatuu.
   const difficulty = b.ledger ? weekDifficulty(b) : null;
-  const weak = activeWeaknesses(b.monsters.get(b.week), b.monsters.get(b.week)?.hp ?? 0).join(', ');
+  // Heikkous sen monsterin mukaan, johon iskut nyt osuvat (rästi ensin).
+  const aim = b.monsters.get(strikeWeek(b, b.week));
+  const weak = activeWeaknesses(aim, aim?.hp ?? 0).join(', ');
 
   return (
     <section className="card">

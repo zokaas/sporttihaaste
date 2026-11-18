@@ -102,18 +102,29 @@ function loadSteps(supabase: SupabaseClient) {
 /** Kohteen valinta päällä: moniosainen monsteri, jolle ylläpito on sallinut valinnan (migraatio 036). */
 export const choosesTarget = (m: { parts?: unknown[] | null; choose_target?: boolean | null } | null | undefined) => Boolean(m?.choose_target && (m.parts?.length ?? 0) >= 2);
 
+/**
+ * Pakollinen kysely: hetkellinen virhe yritetään kerran uudelleen, ja toistuva virhe heitetään. Aiemmin virhe
+ * muuttui hiljaa tyhjäksi listaksi (esim. 0 osallistujaa → "Askeleet 0/0", Megamonsteri ja väärä HP).
+ */
+async function must<T extends { error: unknown }>(key: string, run: () => PromiseLike<T>): Promise<T> {
+  let res = await run();
+  if (res.error) res = await run();
+  if (res.error) throw new Error(`Tietojen haku epäonnistui (${key}): ${(res.error as { message?: string }).message ?? String(res.error)}`);
+  return res;
+}
+
 /** Lataa kauden tilanteen ja laskee sen kirjauksista. Kuluva viikko on vielä auki. */
 export async function loadBattle(supabase: SupabaseClient, today: string) {
   const t0 = Date.now();
   const [{ data: heroes }, { data: monsters }, { data: publicMonsters }, { data: hits }, { data: steps }, { data: sick }, { data: changes }, sports, { data: gateRow }] = await Promise.all([
-    supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at'),
+    must('profiles', () => supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at, pledge_hours, birthday, name_day').order('created_at')),
     // Ylläpitäjä saa koko taulun (RLS), muut näkymän, joka piilottaa paljastamattomat tiedot. Haetaan rinnakkain.
     loadMonsters(supabase),
-    supabase.from('monsters_public').select('*').order('week'),
+    must('monsters_public', () => supabase.from('monsters_public').select('*').order('week')),
     loadHits(supabase),
     loadSteps(supabase),
-    supabase.from('sick_periods').select('user_id, starts_on, ends_on'),
-    supabase.from('pledge_changes').select('user_id, from_week, hours'),
+    must('sick_periods', () => supabase.from('sick_periods').select('user_id, starts_on, ends_on')),
+    must('pledge_changes', () => supabase.from('pledge_changes').select('user_id, from_week, hours')),
     loadSports(supabase),
     // Portinvartija (migraatio 027). Ilman taulua käytetään oletuksia.
     supabase.from('gate').select('name, description, image_path, hp, taunt').eq('id', 1).maybeSingle(),
@@ -129,6 +140,9 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const changeList = (changes ?? []) as PledgeChange[];
   const participants = heroList.filter((h) => h.pledge_locked_at).map((h) => h.id);
   const week = Math.min(BOSS_WEEK, Math.max(1, seasonWeek(today)));
+  // Kauden aikana osallistujia on aina. Nolla tarkoittaa vajaata hakua (esim. istunto vanhentunut kesken):
+  // silloin taistelua ei lasketa, koska sinetti, Kela, megamarssit ja vaikeus menisivät väärin.
+  if (participants.length === 0 && heroList.length === 0 && monsterList.some((m) => m.hp != null)) throw new Error('Sankareita ei saatu haettua (0 profiilia), taistelua ei laskettu.');
 
   // Ennen tavoitteen lukitusta HP:t lasketaan esikatseluna nykyisistä lupauksista (sama kaava kuin lukituksessa),
   // jotta monsterin ja taistelun näkee jo testitilassa.
