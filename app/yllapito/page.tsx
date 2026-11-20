@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 import webpush from 'web-push';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl } from '@/lib/supabase/client';
-import { CATEGORIES, SPORT_VALUES, PATROL_DAY_DAMAGE, STEP_DAY_DAMAGE, seasonHp, type Category } from '@/lib/rules';
+import { CATEGORIES, SPORT_VALUES, PATROL_DAY_DAMAGE, STEP_DAY_DAMAGE, normalizeWeakness, seasonHp, type Category } from '@/lib/rules';
 import { loadBattle } from '@/lib/battle';
 import { bonusTenths, hpPlan, weekActual, type WeekActual } from '@/lib/hpcheck';
 import { weekRecap } from '@/lib/stats';
@@ -359,7 +359,7 @@ export default async function Yllapito({ searchParams }: { searchParams: { osio?
       <section className="card">
         <h2 className="display">Monsterit</h2>
         <Hint id="admin-monsters" className="muted">Nimi, kuvaus, heikkous ja kuva näkyvät muille vasta monsterin viikon alkaessa (viikko 1: to 1.10., muut maanantaisin klo 00.00).</Hint>
-        <MonsterEditor currentWeek={battle.week} monsters={(monsters ?? []) as Monster[]} sports={battle.sports.filter((x) => x.active)} />
+        <MonsterEditor currentWeek={battle.week} monsters={((monsters ?? []) as Monster[]).map((m) => ({ ...m, weakness: normalizeWeakness(m.weakness), parts: m.parts ? m.parts.map((x) => ({ ...x, weakness: normalizeWeakness(x.weakness) })) : m.parts }))} sports={battle.sports.filter((x) => x.active)} />
       </section>
       {helsinkiToday() > GATE_DAY ? (
         <details className="card admin-past">

@@ -1,5 +1,5 @@
 // Moniosainen monsteri (kaksikko tai kolmikko): osat jakavat viikon HP:n tasan ja kaatuvat järjestyksessä.
-import type { Weakness } from './rules';
+import { normalizeWeakness, type Weakness } from './rules.ts';
 
 export type MonsterPart = {
   name: string; description?: string | null; weakness?: Weakness | null; image_path?: string | null;
@@ -32,8 +32,8 @@ export function partStates(total: number, hpLeft: number, count: number, killed:
 
 /** Kaikki viikon heikkoudet (moniosaisella kaikkien osien). Iskun bonukseen käytä activeWeaknesses. */
 export function weaknessesOf(m: { weakness?: Weakness | null; parts?: MonsterPart[] | null } | null | undefined): Weakness[] {
-  if (m?.parts?.length) return [...new Set(m.parts.map((p) => p.weakness).filter(Boolean) as Weakness[])];
-  return m?.weakness ? [m.weakness] : [];
+  if (m?.parts?.length) return [...new Set(m.parts.map((p) => normalizeWeakness(p.weakness)).filter(Boolean) as Weakness[])];
+  return m?.weakness ? [normalizeWeakness(m.weakness)] : [];
 }
 
 /**
