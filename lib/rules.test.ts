@@ -20,15 +20,19 @@ assert.equal(hitDamage({ minutes: 60, sportValue: 100, category: 'Kestävyys', s
 // Lajiryhmä toimii kuten ennen, ja laji + ryhmä samassa kaksikossa ei tuplaa bonusta
 assert.equal(hitDamage({ minutes: 60, sportValue: 200, category: 'Kestävyys', sport: 'Uinti', groupSize: 1, celebration: false, weakness: ['Uinti', 'Kestävyys'] }).pct, 50);
 // Erikoisheikkoudet: bonus vain, kun kirjaaja merkitsee juuri viikon erikoisheikkouden
-import { FAMILY_WEAKNESS, SPECIAL_WEAKNESSES, specialOf } from './rules.ts';
+import { FAMILY_WEAKNESS, SPECIAL_WEAKNESSES, normalizeWeakness, specialOf } from './rules.ts';
 const sali = { minutes: 60, sportValue: 100, category: 'Voimailu' as const, sport: 'Sali', groupSize: 1, celebration: false };
 for (const w of Object.keys(SPECIAL_WEAKNESSES)) {
   assert.equal(hitDamage({ ...sali, weakness: w, special: w }).pct, 50, w);
   assert.equal(hitDamage({ ...sali, weakness: w }).pct, 0, `${w} ilman merkintää`);
 }
-assert.equal(hitDamage({ ...sali, weakness: 'Urheilija on nainen', special: FAMILY_WEAKNESS }).pct, 0, 'väärä merkintä ei anna bonusta');
+assert.equal(hitDamage({ ...sali, weakness: 'Nainen tai urheilu naisen kanssa', special: FAMILY_WEAKNESS }).pct, 0, 'väärä merkintä ei anna bonusta');
+assert.equal(hitDamage({ ...sali, weakness: 'Nainen tai urheilu naisen kanssa', special: 'Nainen tai urheilu naisen kanssa' }).pct, 50, 'nainen tai naisen kanssa: bonus');
+assert.equal(normalizeWeakness('Urheilija on nainen'), 'Nainen tai urheilu naisen kanssa', 'vanha nimi luetaan uutena');
+assert.equal(normalizeWeakness('Urheilu kenen tahansa isän kanssa'), 'Isä tai urheilu isän kanssa');
+assert.equal(normalizeWeakness('Kestävyys'), 'Kestävyys');
 assert.equal(hitDamage({ ...sali, weakness: 'Uinti', special: FAMILY_WEAKNESS }).pct, 0, 'merkintä ei anna bonusta muulla viikolla');
-assert.equal(specialOf(['Kestävyys', 'Urheilija on nainen']), 'Urheilija on nainen');
+assert.equal(specialOf(['Kestävyys', 'Isä tai urheilu isän kanssa']), 'Isä tai urheilu isän kanssa');
 assert.equal(specialOf(['Kestävyys']), null);
 // Uinti 30 min yksin = 100
 assert.equal(hitDamage({ minutes: 30, sportValue: 200, category: 'Kestävyys', groupSize: 1, celebration: false, weakness: null }).damage, 100);

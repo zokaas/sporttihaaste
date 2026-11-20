@@ -47,7 +47,7 @@ export default function HitForm({ days, sports, companions, weakness: weekWeakne
   const [minutes, setMinutes] = useState(60);
   const [withIds, setWithIds] = useState<string[]>([]);
   const [groupOpen, setGroupOpen] = useState(false);
-  // Viikon erikoisheikkous (esim. "Urheilija on nainen"): kirjaaja merkitsee itse, täyttyikö ehto.
+  // Viikon erikoisheikkous (esim. "Nainen tai urheilu naisen kanssa"): kirjaaja merkitsee itse, täyttyikö ehto.
   const special = specialOf(weakness);
   const [claimed, setClaimed] = useState(false);
   const claim = special && claimed ? special : null;

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { avatarUrl, monsterImageUrl, resizedImage } from '@/lib/supabase/client';
-import { SPECIAL_WEAKNESSES, pledgeNote, sealView, type Category } from '@/lib/rules';
+import { SPECIAL_WEAKNESSES, normalizeWeakness, pledgeNote, sealView, type Category } from '@/lib/rules';
 import { activeSports, loadSports } from '@/lib/sports';
 import { addDays, formatDay, graceWeek, loggableDays, monthDay, seasonWeek, weekRange, SEASON_START } from '@/lib/season';
 import { today } from '@/lib/today';
@@ -93,7 +93,7 @@ export default async function Kirjaa() {
                     {` · ${pledgeNote(h.minutes, sports.find((s) => s.name === h.sport)?.value ?? 100)}`}
                     {h.bonus_pct ? ` · bonus +${h.bonus_pct} %` : ''}
                     {h.companions.length ? ` · mukana ${h.companions.map((id: string) => names.get(id)).filter(Boolean).join(', ')}` : ''}
-                    {h.special && SPECIAL_WEAKNESSES[h.special] ? ` · ${SPECIAL_WEAKNESSES[h.special].log}` : h.with_family ? ' · mamun tai lapsen kanssa' : ''}
+                    {h.special && SPECIAL_WEAKNESSES[normalizeWeakness(h.special)] ? ` · ${SPECIAL_WEAKNESSES[normalizeWeakness(h.special)].log}` : h.with_family ? ' · mamun tai lapsen kanssa' : ''}
                   </div>
                 </div>
                 <DeleteHitButton id={h.id} />
