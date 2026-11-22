@@ -1,7 +1,7 @@
 import 'server-only';
 import { redirect } from 'next/navigation';
 import { createClient } from './supabase/server';
-import { loadBattle } from './battle';
+import { loadBattle, must } from './battle';
 import { today } from './today';
 import { currentUser } from './auth';
 import { navVisibility } from './nav';
@@ -16,7 +16,7 @@ export async function requireHero() {
   // Profiili ja kauden tilanne haetaan rinnakkain, jotta sivu ei odota kahta peräkkäistä kierrosta.
   // Viimeisin käynti (migraatio 032) tallentuu samalla, korkeintaan kerran 15 minuutissa. Virhe ei estä sivua.
   const [{ data: me }, battle] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    must('oma profiili', () => supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()),
     loadBattle(supabase, today()),
     Promise.resolve(supabase.rpc('touch_last_seen')).catch(() => null),
   ]);
