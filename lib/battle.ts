@@ -61,7 +61,8 @@ async function fail(key: string, error: unknown): Promise<never> {
   const e = error as { message?: string; code?: string } | null;
   const message = `Tietojen haku epäonnistui (${key}): ${e?.message ?? String(error)}${e?.code ? ` [${e.code}]` : ''}`;
   await reportError('Tietojen haku', message);
-  throw new Error(message);
+  // Merkintä: virhe on jo kirjattu, joten sivun yleinen kirjaus ei tee siitä toista riviä.
+  throw Object.assign(new Error(message), { reported: true });
 }
 
 /** Puuttuva sarake (ajamaton migraatio): vain silloin kokeillaan suppeampaa kyselyä. */
@@ -119,7 +120,7 @@ export const choosesTarget = (m: { parts?: unknown[] | null; choose_target?: boo
  * Pakollinen kysely: hetkellinen virhe yritetään kerran uudelleen, ja toistuva virhe heitetään. Aiemmin virhe
  * muuttui hiljaa tyhjäksi listaksi (esim. 0 osallistujaa → "Askeleet 0/0", Megamonsteri ja väärä HP).
  */
-async function must<T extends { error: unknown }>(key: string, run: () => PromiseLike<T>): Promise<T> {
+export async function must<T extends { error: unknown }>(key: string, run: () => PromiseLike<T>): Promise<T> {
   let res = await run();
   if (res.error) { await new Promise((r) => setTimeout(r, 300)); res = await run(); }
   if (res.error) await fail(key, res.error);

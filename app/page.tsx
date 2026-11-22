@@ -7,7 +7,8 @@ import SeasonFinale from '@/components/SeasonFinale';
 import { seasonFinale } from '@/lib/finale';
 import BossShadow from '@/components/BossShadow';
 import Battle from '@/components/Battle';
-import { loadBattle } from '@/lib/battle';
+import { loadBattle, must } from '@/lib/battle';
+import { reportError } from '@/lib/errors';
 import { helsinkiMs, isGateDay, seasonWeek, AFTER_SEASON, BOSS_WEEK, SEASON_START } from '@/lib/season';
 import GateBattle from '@/components/GateBattle';
 import Countdown from '@/components/Countdown';
@@ -21,7 +22,23 @@ import { requestStart } from '@/lib/timing';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Home({ searchParams }: { searchParams: { esikatselu?: string; isku?: string; krit?: string; finaali?: string; kohde?: string; askel?: string } }) {
+type HomeProps = { searchParams: { esikatselu?: string; isku?: string; krit?: string; finaali?: string; kohde?: string; askel?: string } };
+
+/**
+ * Etusivun kaatuminen kirjataan palvelimella varsinaisella virhetekstillä (selain näkee tuotannossa vain
+ * yleisen "Server Components render" -viestin). Ohjaukset (kirjautuminen, ilmoittautuminen) eivät ole virheitä.
+ */
+export default async function Home(props: HomeProps) {
+  try {
+    return await HomePage(props);
+  } catch (e) {
+    const x = e as { digest?: string; reported?: boolean } | null;
+    if (!x?.digest?.startsWith('NEXT_') && !x?.reported) await reportError('Etusivu (palvelin)', e, { path: '/' });
+    throw e;
+  }
+}
+
+async function HomePage({ searchParams }: HomeProps) {
   const req = requestStart();
   const supabase = createClient();
   navVisibility().catch(() => {});
@@ -32,8 +49,9 @@ export default async function Home({ searchParams }: { searchParams: { esikatsel
   // Portinvartijan taistelu (ti 29.9.–ke 30.9.) ennen kauden alkua.
   const gateDay = isGateDay(today());
   const [{ data: me }, { data: heroes }, maybeBattle, { data: firstMonster }] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at').order('created_at'),
+    // Hetkellinen virhe ei saa ohjata ilmoittautumiseen tai näyttää tyhjää porukkaa: uusinta, sitten virhe.
+    must('oma profiili', () => supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()),
+    must('profiles', () => supabase.from('profiles').select('id, hero_name, avatar_path, pledge_locked_at').order('created_at')),
     // Kauden aikana taistelu haetaan samaan aikaan profiilin kanssa.
     week >= 1 || gateDay ? loadBattle(supabase, today()) : Promise.resolve(null),
     // Ennen kautta: ensimmäisen monsterin arvoitus (näkymä paljastaa sen 3 pv ennen paljastusta).
