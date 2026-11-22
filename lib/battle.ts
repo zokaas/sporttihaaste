@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { activeWeaknesses, partHps, type MonsterPart } from './trio';
+import { reportError } from './errors';
 import { computeLedger, pledgeHours, seasonHp, STEP_DAY_DAMAGE, PATROL_DAY_DAMAGE, type Sport, type Weakness, type LedgerEvent } from './rules';
 import { loadSports } from './sports';
 import { testSkipPast } from './today';
@@ -51,6 +52,17 @@ const HIT_COLS = 'id, user_id, trained_on, sport, minutes, damage, bonus_pct, al
  * muistetaan palvelimen instanssissa, jottei jokainen sivulataus tee turhia uusintakyselyjä.
  */
 const working: Record<string, { i: number; at: number }> = {};
+/**
+ * Haun lopullinen epäonnistuminen: varsinainen virheteksti (esim. "JWT expired") virhelokiin ja ylläpidolle,
+ * koska selain näkee tuotannossa vain yleisen "Server Components render" -viestin.
+ */
+async function fail(key: string, error: unknown): Promise<never> {
+  const e = error as { message?: string; code?: string } | null;
+  const message = `Tietojen haku epäonnistui (${key}): ${e?.message ?? String(error)}${e?.code ? ` [${e.code}]` : ''}`;
+  await reportError('Tietojen haku', message);
+  throw new Error(message);
+}
+
 /** Puuttuva sarake (ajamaton migraatio): vain silloin kokeillaan suppeampaa kyselyä. */
 function missingColumn(error: unknown) {
   const e = error as { code?: string; message?: string } | null;
@@ -65,12 +77,12 @@ async function withFallback<T extends { error: unknown }>(key: string, extras: s
     let res = await run(extras[i]);
     // Hetkellinen vika (verkko, aikakatkaisu): sama kysely uudelleen. Ilman tätä ohimenevä virhe pudotti
     // esim. kohteen valinnan (choose_target) tai iskujen kohteet pois viideksi minuutiksi ja taistelu laskettiin väärin.
-    if (res.error && !missingColumn(res.error)) res = await run(extras[i]);
+    if (res.error && !missingColumn(res.error)) { await new Promise((r) => setTimeout(r, 300)); res = await run(extras[i]); }
     if (!res.error) {
       working[key] = { i, at: known?.i === i && from === i ? known.at : Date.now() };
       return res;
     }
-    if (!missingColumn(res.error)) throw new Error(`Tietojen haku epäonnistui (${key}): ${(res.error as { message?: string }).message ?? String(res.error)}`);
+    if (!missingColumn(res.error)) await fail(key, res.error);
     if (i === extras.length - 1) return res;
   }
   throw new Error('unreachable');
@@ -108,8 +120,8 @@ export const choosesTarget = (m: { parts?: unknown[] | null; choose_target?: boo
  */
 async function must<T extends { error: unknown }>(key: string, run: () => PromiseLike<T>): Promise<T> {
   let res = await run();
-  if (res.error) res = await run();
-  if (res.error) throw new Error(`Tietojen haku epäonnistui (${key}): ${(res.error as { message?: string }).message ?? String(res.error)}`);
+  if (res.error) { await new Promise((r) => setTimeout(r, 300)); res = await run(); }
+  if (res.error) await fail(key, res.error);
   return res;
 }
 
@@ -142,7 +154,7 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const week = Math.min(BOSS_WEEK, Math.max(1, seasonWeek(today)));
   // Kauden aikana osallistujia on aina. Nolla tarkoittaa vajaata hakua (esim. istunto vanhentunut kesken):
   // silloin taistelua ei lasketa, koska sinetti, Kela, megamarssit ja vaikeus menisivät väärin.
-  if (participants.length === 0 && heroList.length === 0 && monsterList.some((m) => m.hp != null)) throw new Error('Sankareita ei saatu haettua (0 profiilia), taistelua ei laskettu.');
+  if (participants.length === 0 && heroList.length === 0 && monsterList.some((m) => m.hp != null)) await fail('profiles', 'Sankareita ei saatu haettua (0 profiilia, istunto vanhentunut?), taistelua ei laskettu.');
 
   // Ennen tavoitteen lukitusta HP:t lasketaan esikatseluna nykyisistä lupauksista (sama kaava kuin lukituksessa),
   // jotta monsterin ja taistelun näkee jo testitilassa.
