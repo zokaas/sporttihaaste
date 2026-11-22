@@ -77,9 +77,20 @@ export type Weakness = Category | string;
  */
 export const SPECIAL_WEAKNESSES: Record<string, { check: string; log: string }> = {
   'Urheilu mamun tai lapsen kanssa': { check: 'Urheilin mamun tai lapsen kanssa', log: 'mamun tai lapsen kanssa' },
-  'Urheilija on nainen': { check: 'Olen nainen', log: 'nainen' },
-  'Urheilu kenen tahansa isän kanssa': { check: 'Urheilin jonkun isän kanssa', log: 'isän kanssa' },
+  // Olemisen ja kanssa liikkumisen heikkoudet: jokainen pääsee mukaan, mutta teema säilyy
+  // (Leijonan kaatavat naaraat, Pökäleen isä). Nainen tai isä saa bonuksen myös yksin treenatessaan.
+  'Nainen tai urheilu naisen kanssa': { check: 'Olen nainen tai urheilin naisen kanssa', log: 'nainen tai naisen kanssa' },
+  'Isä tai urheilu isän kanssa': { check: 'Olen isä tai urheilin isän kanssa', log: 'isä tai isän kanssa' },
 };
+/** Vanhat nimet, jotka voivat olla tallessa monstereilla ja iskuilla (ennen 20.11.2026): luetaan uusina. */
+const SPECIAL_ALIASES: Record<string, string> = {
+  'Urheilija on nainen': 'Nainen tai urheilu naisen kanssa',
+  'Urheilu kenen tahansa isän kanssa': 'Isä tai urheilu isän kanssa',
+};
+/** Heikkouden nykyinen nimi (vanha erikoisheikkous → uusi). */
+export function normalizeWeakness<T extends string | null | undefined>(w: T): T {
+  return (w && SPECIAL_ALIASES[w] ? SPECIAL_ALIASES[w] : w) as T;
+}
 export const FAMILY_WEAKNESS = 'Urheilu mamun tai lapsen kanssa';
 /** Viikon erikoisheikkous, jos sellainen on (moniosaisella ensimmäinen). */
 export const specialOf = (weaknesses: Weakness[]) => weaknesses.find((w) => w in SPECIAL_WEAKNESSES) ?? null;

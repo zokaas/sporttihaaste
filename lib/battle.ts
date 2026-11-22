@@ -8,6 +8,7 @@ import { addDays, graceWeek, helsinkiMs, helsinkiToday, KELA_HOUR, KELA_TIME, se
 import { gateResult, type GateRow } from './gate';
 import { kelaDays, patrolDays, pledgeForWeek, requiredForSeal, sickDaysBetween, isSickOn, weekPledgeTarget, type SickPeriod } from './weekly';
 import { helsinkiHour } from './quiet';
+import { normalizeWeakness } from './rules';
 
 export type Hero = {
   id: string;
@@ -145,6 +146,13 @@ export async function loadBattle(supabase: SupabaseClient, today: string) {
   const heroList = (heroes ?? []) as Hero[];
   let monsterList = (monsters ?? []) as unknown as PublicMonster[];
   if (monsterList.length === 0) monsterList = (publicMonsters ?? []) as PublicMonster[];
+  // Vanhat erikoisheikkouksien nimet uusiksi (esim. "Urheilija on nainen" → "Nainen tai urheilu naisen kanssa").
+  monsterList = monsterList.map((m) => ({
+    ...m,
+    weakness: normalizeWeakness(m.weakness),
+    parts: m.parts ? m.parts.map((p) => ({ ...p, weakness: normalizeWeakness(p.weakness) })) : m.parts,
+    teaser_weaknesses: m.teaser_weaknesses ? m.teaser_weaknesses.map((w) => normalizeWeakness(w)) : m.teaser_weaknesses,
+  }));
   const hitList = (hits ?? []) as unknown as Hit[];
   const periods = (sick ?? []) as SickPeriod[];
   // Sairaspäivänä ei tule askelvoimaa (Kela korvaa), vaikka vanha merkintä olisi jäänyt tietokantaan.
