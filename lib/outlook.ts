@@ -1,6 +1,6 @@
 // Viikon vaikeus ja oma bonustavoite HP-laskurin (lib/hpcheck.ts) pohjalta.
 import type { Battle } from './stats';
-import { PATROL_DAY_DAMAGE, STEP_DAY_DAMAGE } from './rules';
+import { PATROL_DAY_DAMAGE, STEP_DAY_DAMAGE, computeLedger } from './rules';
 import { BOSS_WEEK, helsinkiToday, seasonWeek, weekRange } from './season';
 import { bonusTenths, hpPlan, usualBonusPct, weekActual, type WeekActual } from './hpcheck';
 
@@ -13,8 +13,8 @@ function avgHitBase(b: NonNullable<Battle>) {
 }
 
 /** HP-laskelma kaudelle nykyisillä lupauksilla ja toteutuneella tahdilla. */
-export function seasonPlan(b: NonNullable<Battle>, totalPledgeHours = b.participants.reduce((a, u) => a + b.pledgeOf(u, b.week), 0)) {
-  const hpByWeek = Array.from({ length: BOSS_WEEK }, (_, i) => b.monsters.get(i + 1)?.hp ?? 0);
+export function seasonPlan(b: NonNullable<Battle>, totalPledgeHours = b.participants.reduce((a, u) => a + b.pledgeOf(u, b.week), 0), extraHp: Record<number, number> = {}) {
+  const hpByWeek = Array.from({ length: BOSS_WEEK }, (_, i) => (b.monsters.get(i + 1)?.hp ?? 0) + (extraHp[i + 1] ?? 0));
   const actuals: Record<number, WeekActual> = {};
   for (let w = 1; w <= Math.min(b.week, BOSS_WEEK); w++) {
     actuals[w] = weekActual(
@@ -31,6 +31,15 @@ export function seasonPlan(b: NonNullable<Battle>, totalPledgeHours = b.particip
   return { plan: hpPlan(totalPledgeHours, hpByWeek, actuals, closedWeeks), actuals, closedWeeks, totalPledgeHours, avgHitBase: avgHitBase(b) };
 }
 
+/**
+ * Rästien HP viikon alussa (edellisen viikon sunnuntain jälkeen): se pitää lyödä ennen viikon omaa monsteria,
+ * joten se lasketaan viikon tarpeeseen.
+ */
+export function backlogHpAtStart(b: NonNullable<Battle>, week = b.week) {
+  if (!b.ledgerInput || week < 2) return 0;
+  return computeLedger(b.ledgerInput, week - 1).alive.filter((f) => f.week < week).reduce((a, f) => a + f.hp, 0);
+}
+
 /** Onko viikon oma monsteri jo kaatunut (silloin vaikeutta ei enää näytetä). */
 const weekKilled = (b: NonNullable<Battle>, week: number) => Boolean(b.ledger?.killed.some((k) => k.week === week));
 
@@ -42,7 +51,8 @@ const weekKilled = (b: NonNullable<Battle>, week: number) => Boolean(b.ledger?.k
  */
 export function weekDifficulty(b: NonNullable<Battle>, week = b.week): Difficulty | null {
   if (week < 1 || week >= BOSS_WEEK || !b.monsters.get(week)?.hp || weekKilled(b, week)) return null;
-  const s = seasonPlan(b);
+  // Rästi on lyötävä ensin: sen HP viikon alussa lisätään viikon omaan tarpeeseen.
+  const s = seasonPlan(b, undefined, { [week]: backlogHpAtStart(b, week) });
   const p = s.plan[week - 1];
   if (!p) return null;
   const tenths = bonusTenths(p.needPctAtPace ?? p.needPct);
