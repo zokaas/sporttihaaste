@@ -1,6 +1,6 @@
 // Viikon vaikeus ja oma bonustavoite HP-laskurin (lib/hpcheck.ts) pohjalta.
 import type { Battle } from './stats';
-import { PATROL_DAY_DAMAGE, STEP_DAY_DAMAGE, computeLedger } from './rules';
+import { PATROL_DAY_DAMAGE, STEP_DAY_DAMAGE, sealView } from './rules';
 import { BOSS_WEEK, helsinkiToday, seasonWeek, weekRange } from './season';
 import { bonusTenths, hpPlan, usualBonusPct, weekActual, type WeekActual } from './hpcheck';
 
@@ -32,12 +32,15 @@ export function seasonPlan(b: NonNullable<Battle>, totalPledgeHours = b.particip
 }
 
 /**
- * Rästien HP viikon alussa (edellisen viikon sunnuntain jälkeen): se pitää lyödä ennen viikon omaa monsteria,
- * joten se lasketaan viikon tarpeeseen.
+ * Rästit Tänään-korttiin erillisenä rivinä: nykyinen HP (sinettirajan kanssa, kuten näyttämöllä) ja karkea
+ * treenimäärä tavallisella perusvoimalla. Viikon vaikeus lasketaan erikseen vain viikon omasta monsterista.
  */
-export function backlogHpAtStart(b: NonNullable<Battle>, week = b.week) {
-  if (!b.ledgerInput || week < 2) return 0;
-  return computeLedger(b.ledgerInput, week - 1).alive.filter((f) => f.week < week).reduce((a, f) => a + f.hp, 0);
+export function backlogNow(b: NonNullable<Battle>) {
+  const fighters = (b.ledger?.alive ?? []).filter((f) => f.week < b.week);
+  if (!fighters.length) return null;
+  const hp = fighters.reduce((a, f) => a + sealView(f, b.required).hp, 0);
+  const names = fighters.map((f) => b.monsters.get(f.week)?.name ?? `Viikon ${f.week} monsteri`);
+  return { names, hp, trainings: Math.max(1, Math.ceil(hp / avgHitBase(b))) };
 }
 
 /** Onko viikon oma monsteri jo kaatunut (silloin vaikeutta ei enää näytetä). */
@@ -51,8 +54,8 @@ const weekKilled = (b: NonNullable<Battle>, week: number) => Boolean(b.ledger?.k
  */
 export function weekDifficulty(b: NonNullable<Battle>, week = b.week): Difficulty | null {
   if (week < 1 || week >= BOSS_WEEK || !b.monsters.get(week)?.hp || weekKilled(b, week)) return null;
-  // Rästi on lyötävä ensin: sen HP viikon alussa lisätään viikon omaan tarpeeseen.
-  const s = seasonPlan(b, undefined, { [week]: backlogHpAtStart(b, week) });
+  // Vain viikon oma monsteri: rästi näytetään omana rivinään (backlogNow), jotta mittari ei liioittele.
+  const s = seasonPlan(b);
   const p = s.plan[week - 1];
   if (!p) return null;
   const tenths = bonusTenths(p.needPctAtPace ?? p.needPct);

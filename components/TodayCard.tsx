@@ -3,7 +3,7 @@ import { upcomingCelebrations } from '@/lib/stats';
 import { BOSS_WEEK, formatDay, weekRange } from '@/lib/season';
 import { isSickOn } from '@/lib/weekly';
 import { avatarUrl } from '@/lib/supabase/client';
-import { weekDifficulty } from '@/lib/outlook';
+import { backlogNow, weekDifficulty } from '@/lib/outlook';
 import { activeWeaknesses } from '@/lib/trio';
 import { strikeWeek } from '@/lib/battle';
 
@@ -21,9 +21,12 @@ export default function TodayCard({ b, showNextReveal = true }: { b: Battle; sho
   const patrol = b.patrols.some((p) => p.day === b.today);
   // Viikon vaikeus: kuinka moni treeni kymmenestä tarvitsee bonuksen, jotta viikon monsteri kaatuu.
   const difficulty = b.ledger ? weekDifficulty(b) : null;
-  // Heikkous sen monsterin mukaan, johon iskut nyt osuvat (rästi ensin).
+  // Vaikeusrivin heikkous on viikon oman monsterin; rästirivillä rästin (iskut osuvat siihen ensin).
+  const own = b.monsters.get(b.week);
+  const weak = activeWeaknesses(own, own?.hp ?? 0).join(', ');
+  const backlog = b.ledger ? backlogNow(b) : null;
   const aim = b.monsters.get(strikeWeek(b, b.week));
-  const weak = activeWeaknesses(aim, aim?.hp ?? 0).join(', ');
+  const backlogWeak = backlog ? activeWeaknesses(aim, aim?.hp ?? 0).join(', ') : '';
 
   return (
     <section className="card">
@@ -41,6 +44,15 @@ export default function TodayCard({ b, showNextReveal = true }: { b: Battle; sho
                 : difficulty.level === 'hard'
                   ? `Nyt tarvitaan lisäefforttia: bonukset ja ylimääräiset treenit.${weak ? ` Heikkous: ${weak}.` : ''}`
                   : `Kaikki peliin! Joka treeni bonuksella.${weak ? ` Heikkous: ${weak}.` : ''}`}
+          </span>
+        </div>
+      ) : null}
+      {backlog ? (
+        <div className="row">
+          <span aria-hidden="true">😈</span>
+          <span>
+            <strong>Ensin rästi: {backlog.names.join(' ja ')} {backlog.hp.toLocaleString('fi-FI')} HP</strong>
+            {` ≈ ${backlog.trainings} treeniä. Se vie viikon alun iskut.${backlogWeak ? ` Heikkous: ${backlogWeak}.` : ''}`}
           </span>
         </div>
       ) : null}
